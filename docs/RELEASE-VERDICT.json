@@ -1,0 +1,33 @@
+{
+  "ship_ready": true,
+  "date_utc": "2026-10-15T12:48:53.784559+00:00",
+  "sha256": "5086625a8055b0cd55d0d164e9b508a3a1673958a3ad53873584c17c54772fc3",
+  "acceptance_scope": "Bug-focused release on the tested Chromium configuration; not exhaustive campaign-completion or zero-possible-bugs certification.",
+  "gates": {
+    "six_confirmed_issues_fixed_and_regressed": true,
+    "final_frozen_source_16_of_16_pass": true,
+    "109_scenario_invariants_pass": true,
+    "77_result_renders_pass": true,
+    "critical_branch_gates_and_preview_verified": true,
+    "final_M7_true_hold_native_win_Next_saved_reload": true,
+    "M1_M14_exact_hold_and_node_regression": true,
+    "land_and_naval_movement_coverage_with_limits_recorded": true,
+    "artifact_syntax_copy_assets_integrity": true,
+    "coverage_limits_explicit_no_false_wins": true
+  },
+  "known_coverage_limits": [
+    "M3/M12 full native victories remain unverified; tactical difficulty warrants follow-up.",
+    "Not all branches or browser families were exercised end to end.",
+    "Primary runtime Chromium156; Firefox/Safari uncertified.",
+    "52-clip English/Hebrew starter pack, not every dynamic narration line."
+  ],
+  "final_player_result": {
+    "mission": 7,
+    "time": "05:31",
+    "win": true,
+    "next": 8,
+    "saved_reload_time": "05:31"
+  },
+  "confirmed_unresolved_software_blockers": [],
+  "images_profiles_native_saves_input_logs": "Excluded from distribution; package utility validates whitelist and ZIP CRC."
+}

@@ -1,0 +1,50 @@
+[
+  {
+    "id": "Q45-001",
+    "severity": "medium mission timing",
+    "area": "M1/M7/M14 node-control hold clock",
+    "baseline": "Hardcoded +0.25 at30 evaluations/s makes nominal120/180/90-second holds complete in16/24/12 mission seconds.",
+    "fix": "Anchor to mission clock; reset when required ownership count lost; repeated same-clock checks cannot advance.",
+    "status": "fixed_actual_engine_M1_M7_M14_elapsed_clock_M1_M7_full_wins_and_M14_real_UI_90s_passed"
+  },
+  {
+    "id": "Q45-002",
+    "severity": "medium briefing accuracy",
+    "area": "Future chapter opening preview",
+    "baseline": "M30 Automatic and A/B/C selections show static C evacuation objectives even when the actual launch resolves A military/audit objectives; selector did not refresh preview.",
+    "fix": "Share one saved-consequence resolver between preview and Start; refresh actual opening/sector, briefing and objectives immediately for all future A/B/C/Automatic choices. Preview is read-only.",
+    "status": "fixed_33_developer_contract_cases_and_native_UI_A_B_C_Automatic_portrait_retest_passed"
+  },
+  {
+    "id": "Q45-003",
+    "severity": "medium movement",
+    "area": "Global terrain shortcut visibility",
+    "baseline": "Actual M3 tank stuck at city corner through20 mission seconds; sampled shortcut skipped a blocked cell, movement repeatedly snapped back.",
+    "fix": "Grid DDA checks every crossed cell and diagonal corner using existing land/naval passability. No damage, AI or balance changes.",
+    "status": "fixed_independent_actual_engine_corner_bridge_ridge_naval_air_and_2000_cast_oracle_passed_actual_M3_city_traversal_seen"
+  },
+  {
+    "id": "Q45-004",
+    "severity": "medium objective correctness",
+    "area": "M1 fence crossing identity",
+    "baseline": "Rear supply point plus two fence crossings incorrectly starts all-three-crossings hold, independently reproduced on screen.",
+    "fix": "Require named n0/n1/n2 fence nodes, with live controlled/required point count on generic hold rows.",
+    "status": "fixed_false_arrangements_rejected_loss_reset_M1_actual_120s_hold_full_victory_and_Next_passed"
+  },
+  {
+    "id": "Q45-005",
+    "severity": "low state consistency",
+    "area": "M7 post-command scripted waves/barrages",
+    "baseline": "Six fighters respawn and recurring barrages launch after Hamas is marked eliminated and its shafts are removed.",
+    "fix": "An opt-in requireActiveSide gate on M7 wave/barrage events suppresses both announcement and attack after local elimination; other mission events retain their behavior.",
+    "status": "fixed_independent_actual_engine_alive_dead_controls_and_final_508_M7_full_win_through_180_320_times_passed"
+  },
+  {
+    "id": "Q45-006",
+    "severity": "medium scripted timing",
+    "area": "M1/M3/M4/M7/M9/M15 repeating attacks",
+    "baseline": "Duplicate from keys overwrite six numeric first-fire times with launch-coordinate arrays, scheduling attacks on the first mission step.",
+    "fix": "Use existing at schedule field for the first firing and preserve from as launch origin; repeat counts/intervals unchanged.",
+    "status": "fixed_six_actual_engine_first_fire_recurrence_origin_cases_M9_after_port_and_final_508_full_suite_passed"
+  }
+]
