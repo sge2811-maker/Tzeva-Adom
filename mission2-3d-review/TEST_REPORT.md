@@ -19,6 +19,12 @@ In-engine captures inspected support vehicles, infantry walking/fallen poses and
 
 Current PCK: **103,012,224 bytes**, SHA-256 `10506fa0b59c5bb49c855b3deb862da0650153b68ff8206ba16db0f9b93bc589`. The export remains below GitHub's 100 MiB per-file ceiling. Smaller pickup atlases and bevel subdivision keep the download near **141 MB** including WASM.
 
+## Direct public-browser verification
+
+Gameplay commit `628164e08923a667fe7b74f82adff619fb8f8c39` is deployed. The direct hosted Chromium/WebGL check **passed with zero page/browser errors**: briefing, start, seven-unit selection, expanded tactical map, right-click movement verified by actual tank displacement, factory production and pause. Final observer state: 27.8415 simulated seconds, 1609 credits, one queued job, 1 FPS on SwiftShader. Evidence: `tests/evidence/browser-motion-hosted-2026-10-17.json`. This is a real hosted browser interaction check, not a full browser mission playthrough; the complete controls-driven run above used native Godot.
+
+Verified HTTPS downloads of the public HTML, JavaScript, WASM and PCK match the local export byte-for-byte. The original public game's index hash is unchanged. Evidence: `tests/evidence/hosted-integrity-motion-2026-10-17.txt`. Browser certificate verification remained enabled, using the environment's configured managed CA.
+
 ## Limits
 
 The cloud still has no physical GPU. Native gameplay used llvmpipe, approximately 3–4 FPS in Low; that does not predict a target gaming PC's performance. Locomotion and two authored falls improve the prototype but do not replace a complete production animation set, reloads or blended ragdolls. Asset proportions, destruction variety, authentic local vegetation and full audio production remain unfinished. Town architecture is reference-informed; mission geography is compressed.
