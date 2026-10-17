@@ -29,3 +29,11 @@ The original release repository remains clean. Its `index.html` SHA-256 remains 
 ## Browser verification
 
 Chromium/WebGL 2 loaded the exported mission and briefing. Actual Playwright keyboard/mouse input selected all seven initial mobile units, opened the Tab map, issued an order on that map, closed it, moved the Merkava, purchased a factory, and paused. No browser/page runtime errors were recorded. The initial pass reported 1 FPS in High on SwiftShader; that revealed that Godot's generic WebGL adapter label did not identify software rendering. The final build also queries the browser renderer string and starts software adapters in Low. Hosted verification is recorded separately after deployment.
+
+Final local browser input run passed with **zero errors** and automatic **Low** on SwiftShader. It verified all seven selected units, map-issued movement, a queued factory, and pause at mission time 25.74 seconds. Software browser rendering still reported 1 FPS, so this is functional verification, not a performance pass.
+
+GitHub Pages built deployment `0b6bb001732add2268873d6441d28aada5a7f0b8`. The public review URL, JavaScript, WASM and PCK were fetched with normal HTTPS certificate validation and matched the local export byte-for-byte. The original public game page also retained its exact SHA-256. Direct Chromium navigation encounters the cloud's HTTPS inspection certificate trust error; no browser certificate verification was disabled.
+
+Final High captures (`aa-overview.png`, `aa-tactical.png`) measured 1431.8 and 1452.8 ms/frame on llvmpipe.
+
+A further hosted-origin probe using TLS-verified response fulfillment closed before the engine finished loading; it is **not** recorded as a pass. Final verification therefore consists of the clean local browser input pass, byte-identical hosted assets over verified HTTPS, the successful Pages build, and the native controls-driven mission victory.
