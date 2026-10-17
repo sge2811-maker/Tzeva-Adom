@@ -34,4 +34,8 @@ Only `mission2-3d-review/` is published. Existing original-game files remain unc
 
 ## Browser publication
 
-Public runtime verification is recorded below after the final export and deployment.
+GitHub Pages deployed gameplay commit `52e3b97481ec6f2fd58af24832d429dfc99d4fa6`. A **direct public-origin Chromium/WebGL run passed with zero browser/page errors**. It loaded the briefing, automatically selected Low for SwiftShader, began the mission, selected all seven initial units, opened the Tab map, issued a right-click map order, verified actual Merkava displacement, queued a factory and paused. Final observed state: 30.35 simulated seconds, 1645 credits, one queued job, 1 FPS on software WebGL. Evidence: `tests/evidence/browser-polish-hosted-2026-10-17.json`; browser screenshots `benchmark-polish-hosted-tactical.png` and `benchmark-polish-hosted-overview.png`.
+
+Browser HTTPS certificate verification remained enabled. The environment's configured managed CA was registered with the browser NSS trust store; no certificate-error bypass and no response-fulfillment workaround were used.
+
+The public HTML, JavaScript, WASM and PCK matched the local export byte-for-byte over verified HTTPS. The original public game retained its original hash. PCK: **97,218,260 bytes**, SHA-256 `a64ca21d39662113106371974b1f790bfe3469faed8b5454e9ef399e769b16c3`. First download is approximately 135 MB including WASM. The source and offline-browser archives are rebuilt and CRC-checked separately.
