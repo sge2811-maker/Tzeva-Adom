@@ -1,4 +1,33 @@
-# Mission 2 polish verification — 17 October 2026
+# Mission 2 motion and support-model verification — 17 October 2026
+
+This latest pass remains isolated from the original game. It improves the benchmark, but AA art approval and target-PC performance are still open.
+
+## Current changes
+
+- Infantry: eight baked skeletal actions, with hip/spine motion during walking, terrain grounding per soldier, DeathFront/DeathBack fall clips, slight stance/height variation, and frozen casualty motion while paused. Infantry deaths no longer emit vehicle-sized explosions.
+- Vehicles: independent track circulation during turns, chassis pitch/roll from the terrain footprint, original shaped generic pickups with weathered atlases and rotating wheels, and more detailed launcher service/support fittings.
+- Hermes: high wing, V-tail, pusher propeller, sensor housing and fixed gear informed by Elbit's product imagery. These are game-scale studies, not certified replicas.
+- Pause: rocket-trail particles now stop with other effects. Command portraits refreshed from the actual models.
+
+## Verified results
+
+`tests/mission_smoke.gd`: **51 checks pass**, including casualty animation start/pause/resume, rocket trail pause, imported wheel nodes, and the existing full mission logic checks. `tests/track_render_check.gd` passes against actual OpenGL: pivoting displaced the two tread samples by **−0.174 / +0.174** along their straight sections. The headless dummy renderer does not retain MultiMesh transforms, so that rendering assertion is deliberately tested separately. Both infantry GLBs retain their rigs, rifles, occlusion and all eight actions. Final Godot import has no script/resource errors.
+
+A fresh native run used ordinary XTest mouse/keyboard input with an observer recording only visible state. It won at **186.2331 simulated seconds**, with **five sites destroyed and three towns alive**: Kiryat Shmona **1968.69 HP**, Metula **1013.145 HP**, Shlomi **2058.69 HP**. It bought a factory/four tanks, selected units and issued map orders. Completion correctly paused the mission. Evidence: `tests/evidence/native-motion-2026-10-17.json`, `native-input-motion-2026-10-17.txt`. The final pickup atlas budget reduction followed this run; it changes rendering assets only.
+
+In-engine captures inspected support vehicles, infantry walking/fallen poses and the standard mission views. Support captures deliberately arrange the models for inspection; they are marked separately from gameplay captures. No generated concept art substitutes for engine screenshots.
+
+Current PCK: **103,012,112 bytes**, SHA-256 `8961b839dcd89b3ba875c7c376934cde2c2a0d877d42c9bed1e3cb9a583a80b8`. The export remains below GitHub's 100 MiB per-file ceiling. Smaller pickup atlases and bevel subdivision keep the download near **141 MB** including WASM.
+
+## Limits
+
+The cloud still has no physical GPU. Native gameplay used llvmpipe, approximately 3–4 FPS in Low; that does not predict a target gaming PC's performance. Locomotion and two authored falls improve the prototype but do not replace a complete production animation set, reloads or blended ragdolls. Asset proportions, destruction variety, authentic local vegetation and full audio production remain unfinished. Town architecture is reference-informed; mission geography is compressed.
+
+The older report below records prior passes and is retained as historical evidence. Its build hash, sizes and test counts are superseded by this section.
+
+---
+
+# Earlier vehicle/environment polish verification — 17 October 2026
 
 This report covers the isolated Godot mission. AA art approval and target-PC performance remain open; a mission victory is not an art certification.
 

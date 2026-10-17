@@ -20,13 +20,13 @@ The modernized map combines mission-derived cartography, distinct launcher targe
 
 ## Running
 
-Open `project.godot` with Godot 4.6.3 and run the project, or use `godot --path .`. The Web export needs an HTTP server and a browser with WebGL 2. No Godot installation is needed to play the hosted Web version. First load downloads about 135 MB; mouse and keyboard are required.
+Open `project.godot` with Godot 4.6.3 and run the project, or use `godot --path .`. The Web export needs an HTTP server and a browser with WebGL 2. No Godot installation is needed to play the hosted Web version. First load downloads about 141 MB; mouse and keyboard are required.
 
 The Compatibility renderer targets broader GPU support. High enables shadows, contact shading and 4× MSAA; Low reduces 3D resolution and foliage and disables shadows/contact shading. Software adapters automatically start in Low. Gad-El hardware performance is unmeasured.
 
 ## Verification and provenance
 
-Two new OS-input-driven native runs completed all five sites with all three towns alive; the final spacing-enabled run won at 172.71 simulated seconds. `TEST_REPORT.md` distinguishes that run, automated checks, later changes and remaining limits. Automated checks: `godot --headless --path . --script res://tests/mission_smoke.gd`.
+The latest OS-input-driven native run completed all five sites with all three towns alive at 186.23 simulated seconds. It includes the updated infantry fall/walk animations, vehicle motion and support models. `TEST_REPORT.md` distinguishes that run, automated checks, later changes and remaining limits. Automated checks: `godot --headless --path . --script res://tests/mission_smoke.gd`.
 
 `ARCHITECTURE_REFERENCES.md` records actual Map/street-photo research for Metula, Kiryat Shmona and Shlomi. Architecture is reference-informed; geography is compressed. `assets/ATTRIBUTION.md` credits CC0 models/materials/audio and font licenses. Original authored Blender builders are included. The original game's MIT license is in `LICENSE`.
 

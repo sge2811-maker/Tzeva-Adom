@@ -21,3 +21,6 @@ The October 17 visual revision adds Poly Haven CC0 albedo, normal, roughness and
 
 ## Vehicle and motion polish, 17 October 2026
 The vehicle atlas rasterizer, scene-BVH occlusion bake, mechanical fittings, distance-driven track links, aiming/crouch/recoil clips, settlement fixtures, impact marks and HUD production indicators are original project work. No additional third-party artwork was introduced in this pass. The vehicle atlases use authored colors, deterministic grain and lower-hull dust, with baked occlusion; they are not photographic scans or reference-locked military reproductions.
+
+## Support vehicles and motion follow-up, 17 October 2026
+`build_light_vehicles.py` authors generic pickup/launcher studies, with no specific manufacturer or weapon variant claimed. The Hermes silhouette was compared with [Elbit Systems' Hermes 450 product page](https://www.elbitsystems.com/autonomous/aerial/tactical-uas/hermes-450) and its main banner on 17 October 2026: high straight wing, V-tail, rear pusher, underbody sensor and fixed gear. That photograph is reference-only and is not shipped. The game-scale airframe, support details, wheel/track motion, skeletal walk/fall clips and terrain alignment are original project work. These remain game studies, not dimensionally certified replicas.
