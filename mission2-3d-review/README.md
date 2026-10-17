@@ -14,7 +14,7 @@ Destroy all five launch sites while keeping at least two of the three towns stan
 - Ctrl+A: select all mobile units. Ctrl+1–9: store a group. 1–9: recall it.
 - Minimap: left click or drag to pan; right click to order selected units.
 - Tab or the minimap's `[ + ]` button: expand / close the tactical map.
-- Support cards: queue reinforcements and buildings. Prices and prerequisites are shown on each card.
+- Support cards: queue reinforcements and buildings. Prices, prerequisites, live production progress and counts appear on the cards.
 
 The modernized map combines mission-derived cartography, distinct launcher targets, vehicle headings, selected-unit rings, town labels/health arcs and a clipped camera footprint. Concealed enemy positions remain hidden. The larger tactical map supports the same controls.
 
@@ -26,7 +26,7 @@ The Compatibility renderer targets broader GPU support. High enables shadows, co
 
 ## Verification and provenance
 
-An OS-input-driven native run completed all five sites with all three towns alive. `TEST_REPORT.md` distinguishes that run, automated checks, later changes and remaining limits. Automated checks: `godot --headless --path . --script res://tests/mission_smoke.gd`.
+Two new OS-input-driven native runs completed all five sites with all three towns alive; the final spacing-enabled run won at 172.71 simulated seconds. `TEST_REPORT.md` distinguishes that run, automated checks, later changes and remaining limits. Automated checks: `godot --headless --path . --script res://tests/mission_smoke.gd`.
 
 `ARCHITECTURE_REFERENCES.md` records actual Map/street-photo research for Metula, Kiryat Shmona and Shlomi. Architecture is reference-informed; geography is compressed. `assets/ATTRIBUTION.md` credits CC0 models/materials/audio and font licenses. Original authored Blender builders are included. The original game's MIT license is in `LICENSE`.
 

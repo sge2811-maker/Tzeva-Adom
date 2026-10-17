@@ -18,3 +18,6 @@ The October 17 visual revision adds Poly Haven CC0 albedo, normal, roughness and
 ## Benchmark audio pass
 - `audio/rifle.wav`: SKS recording from Tabasco / OpenGameArt, **Gunshot Sounds**, CC0. https://opengameart.org/content/gunshot-sounds . Original archive's CC0 notice retained as `audio/Gunshot-CC0.txt`. Used as a generic rifle report, not a claim to reproduce a specific issued weapon.
 - `audio/explosion1.ogg` through `explosion3.ogg`: **Explosions**, EZduzziteh / OpenGameArt, CC0. https://opengameart.org/content/explosions-4 . Attribution follows the source page; these are game sound effects, not documentary recordings.
+
+## Vehicle and motion polish, 17 October 2026
+The vehicle atlas rasterizer, scene-BVH occlusion bake, mechanical fittings, distance-driven track links, aiming/crouch/recoil clips, settlement fixtures, impact marks and HUD production indicators are original project work. No additional third-party artwork was introduced in this pass. The vehicle atlases use authored colors, deterministic grain and lower-hull dust, with baked occlusion; they are not photographic scans or reference-locked military reproductions.
