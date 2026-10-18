@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111916">
+  <meta name="description" content="Actual in-engine images and a movement clip from the isolated Northern Front mission. Review on your phone without loading the game.">
+  <title>The Northern Front · Visual review</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <style>
+    :root { color-scheme: dark; --bg:#101713; --panel:#18211c; --line:#35443a; --text:#f0efe5; --muted:#b9c4b7; --accent:#e0cf9f; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; scroll-padding-top:76px; }
+    body { margin:0; background:var(--bg); color:var(--text); font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    a { color:inherit; text-underline-offset:4px; }
+    a:focus-visible,video:focus-visible { outline:3px solid var(--accent); outline-offset:5px; }
+    .wrap { width:min(1160px,100%); margin:auto; padding-inline:max(20px,env(safe-area-inset-left)); }
+    .masthead { display:flex; justify-content:space-between; align-items:center; gap:16px; padding-block:22px; border-bottom:1px solid var(--line); }
+    .wordmark { font-size:13px; letter-spacing:.15em; font-weight:700; text-decoration:none; }
+    .stamp { color:var(--muted); font-size:12px; text-align:right; }
+    .intro { padding-block:40px 28px; max-width:800px; }
+    .eyebrow { color:var(--accent); font-size:12px; letter-spacing:.13em; text-transform:uppercase; }
+    h1 { margin:8px 0 12px; font-size:clamp(36px,7vw,68px); line-height:1.06; letter-spacing:-.045em; font-weight:650; }
+    .intro p { color:var(--muted); max-width:650px; margin:16px 0 0; font-size:17px; }
+    .nav { position:sticky; top:0; z-index:2; background:var(--bg); border-block:1px solid var(--line); }
+    .nav-inner { display:flex; gap:4px; overflow-x:auto; scrollbar-width:thin; padding-block:7px; }
+    .nav a { flex-shrink:0; display:flex; align-items:center; min-height:44px; padding:8px 14px; border-radius:3px; text-decoration:none; font-size:14px; color:var(--muted); }
+    .nav a:hover,.nav a:focus-visible { background:var(--panel); color:var(--text); }
+    main { padding-top:28px; padding-bottom:40px; }
+    figure { margin:0; }
+    .capture { background:var(--panel); border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+    .picture-link { display:block; background:#080c09; }
+    img,video { display:block; width:100%; height:auto; }
+    .picture-link img { aspect-ratio:8/5; object-fit:contain; }
+    .caption { padding:20px; }
+    .caption-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+    h2 { margin:0; font-size:22px; line-height:1.3; font-weight:600; }
+    .number { color:var(--accent); font-size:12px; letter-spacing:.1em; flex-shrink:0; }
+    .caption p { color:var(--muted); font-size:15px; margin:10px 0 8px; }
+    .image-action { display:inline-flex; align-items:center; min-height:44px; color:var(--accent); font-size:14px; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; margin-top:24px; }
+    .wide { grid-column:1/-1; }
+    video { background:#080c09; aspect-ratio:8/5; }
+    .note { border-left:2px solid var(--accent); padding-left:12px; }
+    .review-note { margin-top:32px; padding:24px; border:1px solid var(--line); border-radius:8px; }
+    .review-note h2 { font-size:19px; }
+    .review-note p { color:var(--muted); margin:10px 0 0; }
+    .button { display:inline-flex; justify-content:center; align-items:center; min-height:48px; padding:10px 18px; margin-top:18px; border:1px solid var(--accent); border-radius:4px; color:var(--accent); text-decoration:none; background:transparent; font:inherit; cursor:pointer; }
+    button:focus-visible { outline:3px solid var(--accent); outline-offset:5px; }
+    #clip-status { display:block; font-size:14px; color:var(--muted); margin-top:8px; }
+    footer { border-top:1px solid var(--line); padding-block:24px max(24px,env(safe-area-inset-bottom)); color:var(--muted); font-size:13px; }
+    footer a { display:inline-flex; align-items:center; min-height:44px; margin-right:20px; }
+    @media(max-width:700px) { .grid { grid-template-columns:1fr; gap:20px; } .intro { padding-top:30px; } .caption { padding:17px; } .stamp { max-width:120px; } }
+    @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+  </style>
+</head>
+<body>
+  <header class="wrap">
+    <div class="masthead"><a class="wordmark" href="#top">TZEVA ADOM</a><span class="stamp">VISUAL REVIEW<br>18 OCTOBER 2026</span></div>
+    <div class="intro" id="top">
+      <span class="eyebrow">Mission 02 · Isolated 3D mission</span>
+      <h1>The Northern Front</h1>
+      <p>Inspect the mission on your phone. These are actual in-engine captures. Tap an image to open the full-size original and pinch to inspect the details.</p>
+    </div>
+  </header>
+  <nav class="nav" aria-label="Review sections"><div class="wrap nav-inner">
+    <a href="#overview">Overview</a><a href="#motion">Motion</a><a href="#infantry">Infantry</a><a href="#armor">Armor</a><a href="#support">Support</a><a href="#map">Minimap</a>
+  </div></nav>
+  <main class="wrap">
+    <figure class="capture" id="overview">
+      <a class="picture-link" href="../preview-overview.png" target="_blank" rel="noopener" aria-label="Open full-size mission overview in a new tab"><img src="media/overview.webp" width="1280" height="800" fetchpriority="high" alt="High-quality engine capture showing Metula-style houses, the road junction, infantry, a Merkava and the mission interface."></a>
+      <figcaption class="caption"><div class="caption-head"><h2>The encounter</h2><span class="number">01 / SCENE</span></div><p>Town architecture, terrain, lighting and the interface at the RTS camera distance. Building styles use local references; the mission geography is compressed.</p><a class="image-action" href="../preview-overview.png" target="_blank" rel="noopener">Open full-size image ↗</a></figcaption>
+    </figure>
+    <div class="grid">
+      <figure class="capture wide" id="motion">
+        <video controls playsinline preload="none" poster="media/motion.webp" aria-label="Three-second in-engine infantry movement review"><source src="../animation-review.mp4" type="video/mp4">Your browser cannot play this clip. <a href="../animation-review.mp4">Open the MP4</a>.</video>
+        <figcaption class="caption"><div class="caption-head"><h2>Movement in detail</h2><span class="number">02 / MOTION</span></div><p>Three seconds of the updated infantry gait, captured from the engine. Use the video controls to replay or expand it.</p><button class="button" id="play-clip" type="button">Play the movement clip</button><span id="clip-status" role="status"></span><p class="note">This clip was rendered offline at 24 frames per second. Its playback speed is not a measurement of live gameplay performance.</p><a class="image-action" href="../animation-review.mp4">Open the video ↗</a></figcaption>
+      </figure>
+      <figure class="capture" id="infantry">
+        <a class="picture-link" href="../preview-infantry.png" target="_blank" rel="noopener" aria-label="Open full-size infantry capture in a new tab"><img src="media/infantry.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Close view of infantry clothing, equipment and reload poses at High graphics quality."></a>
+        <figcaption class="caption"><div class="caption-head"><h2>Infantry</h2><span class="number">03 / UNITS</span></div><p>Clothing, equipment and the reload pose. Close-up anatomy and field-kit detail remain part of the art refinement work.</p><a class="image-action" href="../preview-infantry.png" target="_blank" rel="noopener">Open full-size image ↗</a></figcaption>
+      </figure>
+      <figure class="capture" id="armor">
+        <a class="picture-link" href="../preview-armor.png" target="_blank" rel="noopener" aria-label="Open full-size armor capture in a new tab"><img src="media/armor.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Close engine view of the Merkava study with hull, turret, track and surface details."></a>
+        <figcaption class="caption"><div class="caption-head"><h2>Armor</h2><span class="number">04 / UNITS</span></div><p>The current Merkava study: hull materials, track geometry and turret fittings. Captured during the 17 October vehicle pass.</p><a class="image-action" href="../preview-armor.png" target="_blank" rel="noopener">Open full-size image ↗</a></figcaption>
+      </figure>
+      <figure class="capture" id="support">
+        <a class="picture-link" href="../preview-support.png" target="_blank" rel="noopener" aria-label="Open full-size support asset gallery in a new tab"><img src="media/support.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Staged engine gallery of a Hermes aircraft, Iron Dome launcher and two generic support vehicles."></a>
+        <figcaption class="caption"><div class="caption-head"><h2>Support assets</h2><span class="number">05 / UNITS</span></div><p>An inspection lineup of aircraft, launcher and support-vehicle studies from 17 October. These models are deliberately arranged for review.</p><a class="image-action" href="../preview-support.png" target="_blank" rel="noopener">Open full-size image ↗</a></figcaption>
+      </figure>
+      <figure class="capture" id="map">
+        <a class="picture-link" href="../preview-tactical.png" target="_blank" rel="noopener" aria-label="Open full-size tactical map capture in a new tab"><img src="media/tactical.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Expanded tactical map with terrain, roads, town labels, friendly units and mission objectives."></a>
+        <figcaption class="caption"><div class="caption-head"><h2>Map and interface</h2><span class="number">06 / UI</span></div><p>The expanded tactical map uses the mission terrain, with town labels and unit markers. Inspect label contrast, icon separation and the command panels.</p><a class="image-action" href="../preview-tactical.png" target="_blank" rel="noopener">Open full-size image ↗</a></figcaption>
+      </figure>
+    </div>
+    <aside class="review-note" aria-labelledby="review-heading">
+      <h2 id="review-heading">What to look for</h2>
+      <p>Tell me the section and what looks off: soldier shape, tank material, house style, ground detail or map readability. A screenshot with the area marked is useful too.</p>
+      <p>This is a visual review of a work-in-progress mission. Playing the mission requires a computer with a mouse and keyboard.</p>
+      <a class="button" href="../">Open playable mission on a computer ↗</a>
+    </aside>
+  </main>
+  <footer><div class="wrap">Isolated review · Original game unchanged<br><a href="../TEST_REPORT.md">Verification report</a><a href="../ATTRIBUTION.md">Asset credits</a><a href="#top">Back to top ↑</a></div></footer>
+  <script>
+    const clip=document.querySelector('video');
+    const play=document.getElementById('play-clip');
+    const status=document.getElementById('clip-status');
+    play.addEventListener('click',async()=>{
+      status.textContent='Loading the movement clip…';
+      if(clip.readyState>0)clip.currentTime=0;
+      try{
+        await clip.play();
+        play.textContent='Replay the movement clip';
+        clip.scrollIntoView({block:'center',behavior:'instant'});
+      }catch(error){status.textContent='Use “Open the video” below if playback is unavailable in this browser.';}
+    });
+    clip.addEventListener('playing',()=>{status.textContent='Playing the three-second clip.';});
+    clip.addEventListener('ended',()=>{status.textContent='Clip finished. Replay it or open it full screen using the video controls.';});
+  </script>
+</body>
+</html>

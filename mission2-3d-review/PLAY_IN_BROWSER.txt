@@ -1,5 +1,8 @@
 Open the hosted review URL in a desktop browser with WebGL 2.
 For local play: python3 -m http.server 8000, then http://localhost:8000
-Mouse and keyboard required. First launch downloads approximately 135 MB.
+Mouse and keyboard required. First launch downloads approximately 140 MB.
 Space begins/pauses. Tab expands the map. G switches High/Low graphics.
 This isolated review never modifies original campaign saves.
+
+Phone visual review: https://sge2811-maker.github.io/Tzeva-Adom/mission2-3d-review/review/
+This gallery shows actual engine images and an offline movement clip; it does not load the game.
