@@ -39,3 +39,6 @@ The latest OS-input-driven native run completed all five sites with all three to
 `ARCHITECTURE_REFERENCES.md` records actual Map/street-photo research for Metula, Kiryat Shmona and Shlomi. Architecture is reference-informed; geography is compressed. `assets/ATTRIBUTION.md` credits CC0 models/materials/audio and font licenses. Original authored Blender builders are included. The original game's MIT license is in `LICENSE`.
 
 Mission data was extracted one-way from original release commit `faf2121673d281808c75494cefd97a89bec1dc5b`; source index SHA-256: `5086625a8055b0cd55d0d164e9b508a3a1673958a3ad53873584c17c54772fc3`.
+
+
+The 18 October reference pass adds a [whole-game research snapshot](docs/asset-research/README.md) and a phone catalogue at `review/research/`. Golani’s visual rifle now follows the user’s current-equipment requirement: M4 family, supported by 2026 IDF sources. The earlier X95 blockout is superseded. The original game and legacy gameplay balance remain unchanged.

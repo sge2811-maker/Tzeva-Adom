@@ -33,3 +33,12 @@ The distance-calibrated walk/run cycles, reload poses, cloth weave normal baking
 Original authored work in `models/infantry_finish.py`: sewn pouches and carrier cutouts, localized garment folds, skin color variation, muted textile/camouflage shaders, and a deep combat helmet shell with fitted cover, bound rim and four-point retention. Existing MakeHuman CC0 anatomical mesh and weights remain the base. No downloaded reference photograph is used as an asset or texture.
 
 Helmet shape reference: [Dalitex ACH/MICH low-cut helmet](https://dalitextactical.com/products/ach-mich-tactical-ballistic-helment-nij-l3a-low-cut-olive-green), viewed 18 October 2026. The model is an original generic combat-helmet study, not a verified reproduction of a particular issued variant. Israeli field infantry must use combat headgear rather than a beret; this is a user-established art requirement.
+
+
+## Reference-based rifle studies — 18 October 2026
+
+`models/reference_rifles.py` and `models/current_golani_rifle.py` are original exterior game-art geometry with authored materials. The current Golani target is M4-family equipment, following the user’s explicit request for what Golani uses nowadays. Official IDF reporting dated 14 July 2026 describes the transition to M4; Golani training photographs dated 12 August 2026 were visually inspected. The Colt 2026 MLE catalogue, page 8, provides supporting exterior profiles. Accessory brands and exact individual soldier configurations are not asserted. Sources and the decision are recorded in `data/visual_equipment.json`.
+
+The AKM exterior study uses both profiles of a 1971 Swedish Army Museum specimen: https://commons.wikimedia.org/wiki/File:AKM_automatkarbin,_Ryssland_-_7,62x39mm_-_Arm%C3%A9museum.jpg (Armémuseum, CC BY 4.0). The photograph is not shipped as a texture. Wood grain and surface maps were authored procedurally. This is an AK-family appearance candidate, not proof of a uniform Radwan loadout.
+
+The earlier X95 blockout used IWI’s 2021 X95 brochure (https://iwi.net/wp-content/uploads/2021/03/IWI_X95_brochure_2021_EN.pdf) and is retained separately as a superseded historical study. It is not the current-day Golani selection. The research gallery links references without redistributing the downloaded photo collection.

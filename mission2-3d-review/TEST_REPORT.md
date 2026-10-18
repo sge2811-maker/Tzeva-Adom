@@ -1,3 +1,23 @@
+# Reference-based equipment and whole-game research — 18 October 2026
+
+Build fingerprint `c32d1bc00e6a72cf`; PCK 103,213,108 bytes; first download about 141 MB.
+
+The current-day Golani visual rifle is an original M4-family Blender study. The user explicitly requested equipment Golani uses nowadays; an official IDF article dated 14 July 2026 describes the transition to M4, and Golani training photographs dated 12 August 2026 were inspected. Exact attachment brands remain approximate. The earlier X95 blockout is superseded for this target. The opposing infantry now use a distinct fixed-stock AKM-family study based on two museum profiles. Sources and the decision are recorded in `data/visual_equipment.json` and `docs/asset-research/`. No original-game files or balance values changed.
+
+The catalogue reconciles all 39 units, 78 structure definitions, 20 weapon profiles and 7 faction powers with the existing 474-record production plan. There are 154 required geometry work items (76 masters, 78 modules). 154 reference images/manufacturer pages were visually inspected; source candidates are attached to 117 required geometry records. Wrong-system, scale-model, replica and wrong-era images are explicitly rejected; unresolved variants remain open. These counts do not imply all assets are modeled or reference-locked.
+
+Both infantry GLBs retain exactly ten clips, deformation rigs, separate rifle meshes, baked AO and textile normals. Golani now has six material surfaces and opposing infantry four; automatic import LOD generation remains enabled. Standing, crouch and cosmetic reload poses were inspected under actual mission lighting. Reload clips remain cosmetic poses, not complete magazine handling. All 53 mission smoke checks and 17 motion/navigation/report checks pass; planted-foot drift is 0.003011 metres in the checked stance. Evidence: `tests/evidence/current-rifle-assets-2026-10-18.txt` and `current-rifle-regressions-2026-10-18.txt`.
+
+The searchable research gallery passes browser checks at widths 320, 390, 844 and 1440 pixels: 39-unit/78-structure/474-production coverage, faction/search filters, current Golani M4 notes, image decoding and no horizontal overflow or page errors. Blender/GLB downloads are original authored models. Studio renders are labeled separately from in-engine captures. Reference photographs are linked rather than redistributed. Evidence: `tests/evidence/research-gallery-2026-10-18.json`.
+
+The final local Web export passed a Chromium/WebGL input run with zero browser/page errors: briefing, start, all-seven selection, tactical map order, actual tank displacement, factory production and pause. Final simulation time 28.5841 seconds; 1621 credits; one queued job. Renderer is SwiftShader at about 1 FPS, not a target-GPU benchmark. Evidence: `tests/evidence/browser-current-rifle-local-2026-10-18.json`.
+
+The refreshed main phone gallery also passes at 390×844, 320×568, 844×390 and 1440×900, including before/after image switching, full-size links and actual video playback with no PCK/WASM download. This is Chromium mobile/touch emulation, not physical iPhone/Safari testing. Evidence: `tests/evidence/phone-current-rifle-local-2026-10-18.json`.
+
+AA/AAA visual sign-off remains open. These are study models; the cloud has no physical GPU. Prior complete native mission victory remains the latest full playthrough; this pass changes visual assets and documentation. Later sections are historical reports and their build IDs, material counts and asset descriptions refer to earlier versions.
+
+---
+
 # Mission 2 acceptance work — 18 October 2026
 
 ## Infantry and combat headgear refinement
