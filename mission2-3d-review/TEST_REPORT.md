@@ -1,5 +1,11 @@
 # Mission 2 acceptance work — 18 October 2026
 
+## Phone review gallery — 18 October 2026
+
+Published `review/` at commit `93a17ed348e2e00a747c2170f007491b4b53c5ac`. It presents actual engine captures, compressed WebP previews, links to original PNGs and an explicit touch-friendly Play button for the existing offline three-second clip. Its six previews total about 1.6 MB; the video loads on demand. The caption distinguishes offline animation rendering from live performance. The existing playable mission still requires keyboard and mouse.
+
+Local and direct hosted-browser checks passed at 390×844, 320×568, 844×390 and 1440×900, with no page errors or horizontal document overflow. Image decoding, section navigation, full-size image opening, actual touch activation of the Play button and video progression passed. No PCK or WASM requests occurred. These are Chromium mobile/touch emulation checks, **not physical iPhone or Safari verification**. Evidence: `tests/evidence/phone-review-local-2026-10-18.json` and `phone-review-hosted-2026-10-18.json`. Gameplay PCK and original release files were not changed by this gallery pass.
+
 Build fingerprint: `ab362411a7ec7f1a`. This pass is confined to the isolated mission. **Full AA sign-off remains open**: character/equipment and environmental art still have study-quality limitations, and the cloud has no physical GPU.
 
 ## Changes
