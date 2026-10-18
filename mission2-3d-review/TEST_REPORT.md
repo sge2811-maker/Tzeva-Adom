@@ -1,3 +1,34 @@
+# Mission 2 acceptance work — 18 October 2026
+
+Build fingerprint: `ab362411a7ec7f1a`. This pass is confined to the isolated mission. **Full AA sign-off remains open**: character/equipment and environmental art still have study-quality limitations, and the cloud has no physical GPU.
+
+## Changes
+
+- Distance-driven walk/run gait with planted-foot stance, closed loops and scale compensation; ten clips per faction including cosmetic reload and two falls. A manual simulation clock keeps clips coherent across variable frame time and freezes them on pause. Firing/movement cancels reload without changing weapon cooldowns.
+- Looser fabric geometry, woven normal maps, reduced specular response and refreshed unit portraits.
+- Cached radius-aware routes, obstacle-safe segment smoothing, acceleration, turn limits and approach braking. Building changes invalidate routes; production uses a clear spawn cell. This is clearance-aware navigation, not full oriented-body collision.
+- F9 records actual frame times after a two-second warm-up for 30 seconds. F10/the save button exports a JSON report with build, renderer, resolution, quality and percentiles. Software/unidentified renderers cannot pass the proposed hardware gate. Pauses, focus loss, changed settings and insufficient samples invalidate a capture. Art approval is always separate.
+- Durable export-pack and GLB texture-extraction tools. Explicit texture extraction fixes missing baked PNGs and cached-import UID warnings.
+
+## Verified locally
+
+- **53 mission smoke checks**, **17 focused motion/navigation/report checks** and both infantry asset validations pass. Planted foot drift measured **0.003011 m** during the tested run stance; loop closure is checked. Clean import has no resource/script errors.
+- Ordinary OS mouse/keyboard input completed the native mission at **183.742 simulated seconds**: five sites destroyed and all three towns alive (Kiryat Shmona 1972.33 HP, Metula 868.74 HP, Shlomi 2089.72 HP). It purchased a factory and four tanks and issued group/map orders. Later loop closure, scale compensation and reload-duration fixes are covered by focused checks; mission rules did not change. Evidence: `tests/evidence/native-acceptance-2026-10-18.json`.
+- A real native performance capture on llvmpipe Low measured **2.91 average FPS**, **522.56 ms p99**, with 88 samples. It correctly fails hardware acceptance and flags insufficient samples. This is a software-renderer observation, not a forecast for Gad-El.
+- The 72-frame in-engine movement clip is rendered offline and encoded at 24 FPS. It shows the actual assets and animation, but is **not real-time performance evidence**.
+
+## Export and hosted review
+
+PCK: **101,843,344 bytes**; SHA-256 `9b06a82f2fdec9feb935d13cb03169c889129a0a6d61ccbeeeadff3e09630d65`. About 140 MB on first download including WASM. The browser runtime remains the verified Godot 4.6.3 build. The final public-origin input/download and byte-integrity checks are pending deployment at the time of this export; their results will be appended after the checks.
+
+## Remaining acceptance limits
+
+Locomotion correctness and the tested mission flow are verified. Close-up anatomy/equipment, authentic local vegetation, structural damage variety and complete ambient/engine/footstep audio still require production work. There is no physical GPU in this cloud, and Gad-El specifications remain unknown. A hardware capture at a defined resolution/quality plus review of representative combat scenes is required before performance sign-off. The proposed 1080p High target is >=60 average FPS and p99 <=22.23 ms; that is not an art certification.
+
+The historical reports below are retained for provenance; their counts, sizes and build hashes are superseded by this section.
+
+---
+
 # Mission 2 motion and support-model verification — 17 October 2026
 
 This latest pass remains isolated from the original game. It improves the benchmark, but AA art approval and target-PC performance are still open.

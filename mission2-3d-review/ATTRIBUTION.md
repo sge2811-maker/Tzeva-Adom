@@ -24,3 +24,6 @@ The vehicle atlas rasterizer, scene-BVH occlusion bake, mechanical fittings, dis
 
 ## Support vehicles and motion follow-up, 17 October 2026
 `build_light_vehicles.py` authors generic pickup/launcher studies, with no specific manufacturer or weapon variant claimed. The Hermes silhouette was compared with [Elbit Systems' Hermes 450 product page](https://www.elbitsystems.com/autonomous/aerial/tactical-uas/hermes-450) and its main banner on 17 October 2026: high straight wing, V-tail, rear pusher, underbody sensor and fixed gear. That photograph is reference-only and is not shipped. The game-scale airframe, support details, wheel/track motion, skeletal walk/fall clips and terrain alignment are original project work. These remain game studies, not dimensionally certified replicas.
+
+## Locomotion and acceptance work, 18 October 2026
+The distance-calibrated walk/run cycles, reload poses, cloth weave normal baking, radius-aware navigation, performance report and export/texture-extraction helpers are original project work. No additional third-party assets were imported. The infantry retain the MakeHuman CC0 base and licensing described above.

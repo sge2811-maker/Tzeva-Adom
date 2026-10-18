@@ -20,13 +20,19 @@ The modernized map combines mission-derived cartography, distinct launcher targe
 
 ## Running
 
-Open `project.godot` with Godot 4.6.3 and run the project, or use `godot --path .`. The Web export needs an HTTP server and a browser with WebGL 2. No Godot installation is needed to play the hosted Web version. First load downloads about 141 MB; mouse and keyboard are required.
+Open `project.godot` with Godot 4.6.3 and run the project, or use `godot --path .`. The Web export needs an HTTP server and a browser with WebGL 2. No Godot installation is needed to play the hosted Web version. First load downloads about 140 MB; mouse and keyboard are required.
 
 The Compatibility renderer targets broader GPU support. High enables shadows, contact shading and 4× MSAA; Low reduces 3D resolution and foliage and disables shadows/contact shading. Software adapters automatically start in Low. Gad-El hardware performance is unmeasured.
 
+## Performance capture
+
+During active gameplay, press **F9** to record a 30-second frame-time sample (after a two-second warm-up). Keep playing at a fixed resolution and graphics setting. Press **F10** or use **Save performance report** to download the JSON. On native Godot it is saved in the user-data folder. The report records the build fingerprint, actual renderer, resolution, quality, average FPS and frame-time percentiles. Software rendering, paused play, focus loss, changed settings or too few frames cannot clear the hardware gate. The proposed target is 1920×1080 High, at least 60 average FPS and p99 frame time at most 22.23 ms. This is a performance check, not art approval.
+
+[Watch the in-engine movement review](https://sge2811-maker.github.io/Tzeva-Adom/mission2-3d-review/animation-review.mp4). This is an offline frame capture encoded at 24 FPS, not a real-time performance demonstration.
+
 ## Verification and provenance
 
-The latest OS-input-driven native run completed all five sites with all three towns alive at 186.23 simulated seconds. It includes the updated infantry fall/walk animations, vehicle motion and support models. `TEST_REPORT.md` distinguishes that run, automated checks, later changes and remaining limits. Automated checks: `godot --headless --path . --script res://tests/mission_smoke.gd`.
+The latest OS-input-driven native run completed all five sites with all three towns alive at 183.74 simulated seconds, using footprint-aware routes, acceleration and the updated infantry locomotion. Final gait-loop and foot-scale corrections are additionally covered by focused animation checks. `TEST_REPORT.md` distinguishes that run, automated checks, later changes and remaining limits. Automated checks: `godot --headless --path . --script res://tests/mission_smoke.gd`.
 
 `ARCHITECTURE_REFERENCES.md` records actual Map/street-photo research for Metula, Kiryat Shmona and Shlomi. Architecture is reference-informed; geography is compressed. `assets/ATTRIBUTION.md` credits CC0 models/materials/audio and font licenses. Original authored Blender builders are included. The original game's MIT license is in `LICENSE`.
 
