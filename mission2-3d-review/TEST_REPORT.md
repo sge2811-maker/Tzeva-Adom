@@ -19,7 +19,9 @@ Build fingerprint: `ab362411a7ec7f1a`. This pass is confined to the isolated mis
 
 ## Export and hosted review
 
-PCK: **101,843,344 bytes**; SHA-256 `9b06a82f2fdec9feb935d13cb03169c889129a0a6d61ccbeeeadff3e09630d65`. About 140 MB on first download including WASM. The browser runtime remains the verified Godot 4.6.3 build. The final public-origin input/download and byte-integrity checks are pending deployment at the time of this export; their results will be appended after the checks.
+PCK: **101,843,344 bytes**; SHA-256 `9b06a82f2fdec9feb935d13cb03169c889129a0a6d61ccbeeeadff3e09630d65`. About 140 MB on first download including WASM. The browser runtime remains the verified Godot 4.6.3 build. Gameplay commit `b6540102bad840c02614e861b7eccb95bc94139d` is deployed. **Direct hosted-browser checks passed with zero browser/page errors**: briefing, start, selection of all seven initial units, tactical map, right-click order with verified tank displacement, factory production, report capture, visible save-button JSON download, report close and pause. The downloaded report matches the captured sample count and identifies build `ab362411a7ec7f1a`. SwiftShader recorded about 1 FPS and 2032.1 ms p99 (31 samples); the report correctly leaves hardware acceptance false and marks the sample count insufficient. The UI was inspected in the actual browser screenshot. This is a browser interaction check; the full mission completion above used native Godot.
+
+Public HTML, JS, WASM and PCK match the export byte-for-byte over verified HTTPS. The original game's public index hash is unchanged, and the repository diff outside `mission2-3d-review/` remains empty against `faf2121`. Browser TLS verification was enabled throughout. Evidence: `tests/evidence/browser-acceptance-hosted-2026-10-18.json`, `performance-browser-2026-10-18.json`, and `hosted-integrity-acceptance-2026-10-18.txt`.
 
 ## Remaining acceptance limits
 
