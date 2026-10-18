@@ -27,3 +27,9 @@ The vehicle atlas rasterizer, scene-BVH occlusion bake, mechanical fittings, dis
 
 ## Locomotion and acceptance work, 18 October 2026
 The distance-calibrated walk/run cycles, reload poses, cloth weave normal baking, radius-aware navigation, performance report and export/texture-extraction helpers are original project work. No additional third-party assets were imported. The infantry retain the MakeHuman CC0 base and licensing described above.
+
+
+### Infantry material and combat-headgear refinement — 18 October 2026
+Original authored work in `models/infantry_finish.py`: sewn pouches and carrier cutouts, localized garment folds, skin color variation, muted textile/camouflage shaders, and a deep combat helmet shell with fitted cover, bound rim and four-point retention. Existing MakeHuman CC0 anatomical mesh and weights remain the base. No downloaded reference photograph is used as an asset or texture.
+
+Helmet shape reference: [Dalitex ACH/MICH low-cut helmet](https://dalitextactical.com/products/ach-mich-tactical-ballistic-helment-nij-l3a-low-cut-olive-green), viewed 18 October 2026. The model is an original generic combat-helmet study, not a verified reproduction of a particular issued variant. Israeli field infantry must use combat headgear rather than a beret; this is a user-established art requirement.

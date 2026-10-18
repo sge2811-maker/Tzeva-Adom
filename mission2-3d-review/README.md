@@ -2,7 +2,7 @@
 
 Play the [isolated browser review](https://sge2811-maker.github.io/Tzeva-Adom/mission2-3d-review/).
 
-On iPhone or another phone, open the [visual review gallery](https://sge2811-maker.github.io/Tzeva-Adom/mission2-3d-review/review/): compressed previews, full-size engine captures and an inline movement clip. The gallery does not load the game engine. Its video is rendered offline and does not establish real-time performance. The playable mission still needs a mouse and keyboard.
+On iPhone or another phone, open the [visual review gallery](https://sge2811-maker.github.io/Tzeva-Adom/mission2-3d-review/review/): compressed previews, a matched before/after infantry comparison, full-size engine captures and an inline movement clip. The gallery does not load the game engine. Its video is rendered offline and does not establish real-time performance. The playable mission still needs a mouse and keyboard.
 
 A separate Godot 4.6.3 mission prototype for Operation 02. The original game and its campaign/save data are untouched. This is a review candidate for the game's visual benchmark; study assets and unmeasured target-PC performance remain below final production sign-off.
 
@@ -22,7 +22,7 @@ The modernized map combines mission-derived cartography, distinct launcher targe
 
 ## Running
 
-Open `project.godot` with Godot 4.6.3 and run the project, or use `godot --path .`. The Web export needs an HTTP server and a browser with WebGL 2. No Godot installation is needed to play the hosted Web version. First load downloads about 140 MB; mouse and keyboard are required.
+Open `project.godot` with Godot 4.6.3 and run the project, or use `godot --path .`. The Web export needs an HTTP server and a browser with WebGL 2. No Godot installation is needed to play the hosted Web version. First load downloads about 139 MB; mouse and keyboard are required.
 
 The Compatibility renderer targets broader GPU support. High enables shadows, contact shading and 4× MSAA; Low reduces 3D resolution and foliage and disables shadows/contact shading. Software adapters automatically start in Low. Gad-El hardware performance is unmeasured.
 

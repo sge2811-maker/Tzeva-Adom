@@ -1,5 +1,20 @@
 # Mission 2 acceptance work — 18 October 2026
 
+## Infantry and combat headgear refinement
+
+Current build fingerprint: `b77710d0c4e05609`; PCK 101,459,760 bytes; first download about 139 MB. Earlier acceptance sections below describe their respective older builds.
+
+Both infantry models now use localized cloth folds, padded sewn pouches, shaped carriers, subdued textile shading, warmer skin variation and smaller boots with soles and laces. Weapon materials are dark steel/polymer. Combat helmets have a deeper protective shell, fitted cover, a bound rim and four-point chin retention; the old shallow cap silhouette was removed following the user’s correction. These remain authored study models rather than verified reproductions of every issued kit item.
+
+Albedo atlases remain 2048px; normal, roughness and AO are 1024px. Each soldier retains three material surfaces. Removing orphaned cross-character actions gives exactly ten animation clips per faction. The asset check now rejects duplicate or unexpected clips. Boot soles/laces and sleeve details inherit nearby garment deformation so they follow bent ankles and arms rather than a mismatched rigid bone. No gameplay rules changed.
+
+The phone gallery gains a matched before/after infantry comparison in the actual mission lighting. Both close-ups are deliberately staged asset inspections. The motion clip, mission overview and portraits are refreshed from the rebuilt models. All changes remain in the isolated mission.
+
+Final rebuild: both exact-ten-clip asset checks, 17 motion/navigation/report checks and 53 mission smoke checks pass. Clean import has no script/resource errors. Standing, crouch and reload close-ups were inspected in native Godot; visible boot-lace drift found in an intermediate crouch capture was corrected before release. Evidence: `tests/evidence/infantry-assets-2026-10-18.txt`, `infantry-motion-2026-10-18.txt`, `infantry-smoke-2026-10-18.txt`. These checks establish functional regression coverage, not AA art or target-PC performance approval.
+
+The final local Web export passed a real Chromium/WebGL input run with zero browser/page errors: briefing, start, all-seven selection, tactical map order, verified Merkava displacement, factory production and pause. Final observed simulation time 35.60 seconds, 1705 credits, one queued job. This run uses SwiftShader (about 1 FPS), not a hardware GPU. Evidence: `browser-infantry-local-2026-10-18.json` and `.txt`. The previous full native victory run remains the most recent full playthrough; this pass changes character presentation and leaves mission rules intact.
+
+
 ## Phone review gallery — 18 October 2026
 
 Published `review/` at commit `93a17ed348e2e00a747c2170f007491b4b53c5ac`. It presents actual engine captures, compressed WebP previews, links to original PNGs and an explicit touch-friendly Play button for the existing offline three-second clip. Its six previews total about 1.6 MB; the video loads on demand. The caption distinguishes offline animation rendering from live performance. The existing playable mission still requires keyboard and mouse.
@@ -31,7 +46,7 @@ Public HTML, JS, WASM and PCK match the export byte-for-byte over verified HTTPS
 
 ## Remaining acceptance limits
 
-Locomotion correctness and the tested mission flow are verified. Close-up anatomy/equipment, authentic local vegetation, structural damage variety and complete ambient/engine/footstep audio still require production work. There is no physical GPU in this cloud, and Gad-El specifications remain unknown. A hardware capture at a defined resolution/quality plus review of representative combat scenes is required before performance sign-off. The proposed 1080p High target is >=60 average FPS and p99 <=22.23 ms; that is not an art certification.
+Locomotion correctness and the tested mission flow are verified. Close-up anatomy/equipment, authentic local vegetation, structural damage variety and complete ambient/engine/footstep audio still require production work. There is no physical GPU in this cloud, and performance on Gad-El and Shir-GE remains unmeasured (their specifications are saved in tests/evidence). A hardware capture at a defined resolution/quality plus review of representative combat scenes is required before performance sign-off. The proposed 1080p High target is >=60 average FPS and p99 <=22.23 ms; that is not an art certification.
 
 The historical reports below are retained for provenance; their counts, sizes and build hashes are superseded by this section.
 
