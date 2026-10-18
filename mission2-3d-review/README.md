@@ -42,3 +42,7 @@ Mission data was extracted one-way from original release commit `faf2121673d2818
 
 
 The 18 October reference pass adds a [whole-game research snapshot](docs/asset-research/README.md) and a phone catalogue at `review/research/`. Golani’s visual rifle now follows the user’s current-equipment requirement: M4 family, supported by 2026 IDF sources. The earlier X95 blockout is superseded. The original game and legacy gameplay balance remain unchanged.
+
+
+### Latest armor review — 18 October 2026
+The isolated mission now uses a rebuilt conventional Merkava Mk4M exterior. Compare matched engine views, inspect the references and download the editable Blender master at https://sge2811-maker.github.io/Tzeva-Adom/mission2-3d-review/review/armor/ . Mk3 and Barak are not built. Full native OS-input victory and final local browser controls passed; art and real-PC performance approval remain open.

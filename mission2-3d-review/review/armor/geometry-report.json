@@ -1,0 +1,26 @@
+{
+  "variant": "Merkava Mk4M exterior approximation",
+  "reference_date": "2026-10-18",
+  "art_signoff": false,
+  "assemblies": {
+    "Hull": {
+      "vertices": 16012,
+      "triangles": 30632
+    },
+    "Turret": {
+      "vertices": 12682,
+      "triangles": 23000
+    },
+    "Gun": {
+      "vertices": 1704,
+      "triangles": 3292
+    }
+  },
+  "moving_parts": [
+    "Turret",
+    "Gun"
+  ],
+  "muzzle": "Turret/Gun/Muzzle",
+  "reference_photos_used_as_textures": false,
+  "markings": "Fictional tactical chevrons for game identification"
+}

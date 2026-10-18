@@ -42,3 +42,12 @@ Helmet shape reference: [Dalitex ACH/MICH low-cut helmet](https://dalitextactica
 The AKM exterior study uses both profiles of a 1971 Swedish Army Museum specimen: https://commons.wikimedia.org/wiki/File:AKM_automatkarbin,_Ryssland_-_7,62x39mm_-_Arm%C3%A9museum.jpg (Armémuseum, CC BY 4.0). The photograph is not shipped as a texture. Wood grain and surface maps were authored procedurally. This is an AK-family appearance candidate, not proof of a uniform Radwan loadout.
 
 The earlier X95 blockout used IWI’s 2021 X95 brochure (https://iwi.net/wp-content/uploads/2021/03/IWI_X95_brochure_2021_EN.pdf) and is retained separately as a superseded historical study. It is not the current-day Golani selection. The research gallery links references without redistributing the downloaded photo collection.
+
+
+## Merkava Mk4M exterior refinement — 18 October 2026
+
+`models/build_merkava_refined.py` authors a new exterior study from six inspected real-vehicle photographs. Sources, image hashes, observations and limits are in `docs/asset-research/merkava-refinement.json`, and linked from the phone armor review. They include IDF field/training photographs and Zachi Evenor exhibition views on Wikimedia Commons. No downloaded photograph is shipped or used as a texture. Geometry, colors, grain, surface normals and occlusion atlases are original project work.
+
+The model approximates a conventional Trophy-equipped Mk4M, rather than Mk3 or Barak. Rear-view reference coverage and exact equipment shapes remain incomplete. The hull/turret/gun assemblies, barrel-bound muzzle marker and revised track-shoe geometry are authored for the isolated mission.
+
+The painted side chevrons are fictional tactical markings for game identification. They do not identify a verified real tank or unit.

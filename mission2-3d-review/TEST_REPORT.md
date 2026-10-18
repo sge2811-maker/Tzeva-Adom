@@ -150,3 +150,22 @@ GitHub Pages deployed gameplay commit `52e3b97481ec6f2fd58af24832d429dfc99d4fa6`
 Browser HTTPS certificate verification remained enabled. The environment's configured managed CA was registered with the browser NSS trust store; no certificate-error bypass and no response-fulfillment workaround were used.
 
 The public HTML, JavaScript, WASM and PCK matched the local export byte-for-byte over verified HTTPS. The original public game retained its original hash. PCK: **97,218,260 bytes**, SHA-256 `a64ca21d39662113106371974b1f790bfe3469faed8b5454e9ef399e769b16c3`. First download is approximately 135 MB including WASM. The source and offline-browser archives are rebuilt and CRC-checked separately.
+
+
+## Merkava Mk4M exterior pass — 18 October 2026
+
+The conventional Trophy-equipped Mk4M study replaces the earlier box-based tank. Six additional real-vehicle photographs were downloaded and visually inspected; reference notes, hashes and limitations are recorded in `docs/asset-research/merkava-refinement.json`. Rear detail remains an approximation. Mk3 and Barak are not built.
+
+The new model has a lower engine-forward hull, separate sloped turret modules, six road wheels per side, track-shoe end connectors, Trophy exterior fittings, open barrel bore, thermal sleeve bands, rear basket, authored canvas stowage and linked ball-chain curtain. Tactical side chevrons are fictional game identification. The portable authored atlases include normal maps, restrained occlusion and dust. No reference photograph is shipped as a texture.
+
+The turret has an explicit rearward yaw pivot. Gun recoil moves a separate gun assembly, and the actual cannon tracer/flash/audio origin uses the gun’s muzzle marker. A first capture caught a duplicated parent offset; it was corrected before release. Imported assembly tests cover seated geometry, physical muzzle location, yaw, actual flash emission, unchanged damage, fixed pivot, recoil, return and pause. Existing 53 mission and 17 motion/navigation/report checks pass; the real-renderer track test verifies opposite tread movement in a pivot.
+
+A dedicated phone armor gallery provides matched before/after views, front/rear/profile captures, reference links and Blender/GLB downloads. Local comparison/navigation/full-size-image checks pass at 320, 390, 844 and 1440 widths. The main phone gallery also passes at all four viewports. These are Chromium touch-emulation checks, not physical iPhone/Safari tests.
+
+Art acceptance remains open. The model is an improved exterior study; fine fittings, cloth, plate surfacing and wear need further refinement. Native llvmpipe and browser SwiftShader runs establish compatibility and tested controls, not target-PC performance.
+
+Full native OS-input play-through completed the updated mission at 147.106 simulation seconds: all five launch sites destroyed, all three towns alive. Factory production and four tank orders were exercised through ordinary keyboard/mouse controls. Town HP at victory: [{'id': 3, 'hp': 2324.23000000005}, {'id': 4, 'hp': 1298.3}, {'id': 5, 'hp': 2468.10000000001}]. Result and command log are in `tests/evidence/merkava-native-*`. This is a software-renderer functional run at 4× game speed, not a real-GPU benchmark.
+
+Current export: build `37694d61bc3473b7`, PCK101,083,128 bytes (96.40MiB), SHA256`9904d65784462311e7aea8387bc05bff0fde47c50ee69903741a01e122ddca4e`, first game download approximately139MB.
+
+The final local Chromium WebGL build passed briefing/start, all-seven selection, expanded map, an issued movement order with verified tank displacement, factory production and pause. Browser errors:0; state build`37694d61bc3473b7`, simulation time72.676. SwiftShader reports1FPS and cannot qualify as target-PC performance.

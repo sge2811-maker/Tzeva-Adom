@@ -51,3 +51,7 @@ Armor now has UV-baked color/roughness/occlusion, hull dust, cooling grilles, ca
 | Target-PC performance | F9/F10 capture implemented; only llvmpipe/SwiftShader available here | Open until a defined hardware-rendered encounter is measured |
 
 The performance report proposes 1080p High at 60 average FPS with p99 frame time <=22.23 ms. This target is deliberately separate from art approval. Passing that sample does not certify the entire mission or the AA art gate. Review several representative combat/camera situations on the chosen PC before hardware sign-off.
+
+
+### Mk4M refinement checkpoint, 18 October 2026
+The isolated mission now uses a photo-informed Mk4M exterior with independent hull/turret/gun assemblies and a barrel-bound muzzle marker. The downloadable armor review shows actual engine captures at matched camera positions. This pass does not establish AA/AAA art approval. Detailed fittings, cloth, plate surfacing, broader infantry/environment quality and physical gaming-PC review remain open.
