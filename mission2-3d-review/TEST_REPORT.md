@@ -1,3 +1,23 @@
+# Three-project realism pass — 18 October 2026
+
+Studied pinned source and licensing from **0 A.D., Beyond All Reason and Terrain3D**, plus published visual references. They are qualified technique references, not three verified Godot AA RTS games, and were not played or benchmarked in this pass. Precise source paths, commits, engine differences and reuse decisions: [THREE_REFERENCE_STUDY.md](THREE_REFERENCE_STUDY.md) (source: `docs/THREE_REFERENCE_STUDY.md`). No outside code or art was copied.
+
+Applied original implementations: a bounded mip-filtered context map connects ground treatment to actual tree roots, limestone outcrops and house plots; worn approaches connect southern homes to the road. Terrain blends coordinated near/far albedo and normalized normal samples, with fewer samples on Low. Surface-specific armor/concrete/earth hits replace destruction-scale blasts on ordinary hits. Explosions separate flash, falling dust and rising smoke using an original density texture. Command notices gain a readable panel. Low omits impact lights and uses unshaded dust/smoke; High retains their lighting. The High contact-shading pass now runs before transparent effects, fixing its previous overwriting of dust/smoke; particle materials apply lifetime alpha, and hard-surface hits use exterior visual bounds. Unit models, mission rules and the original game are unchanged.
+
+**Passed:** 53 mission regressions, 20 focused realism checks, 11 actual-renderer landscape checks, and the armor assembly/firing/recoil suite. Native High overview, terrain, armor, tactical and staged combat captures inspected without script/shader errors; tactical terrain rebaked. The combat still pre-rolls the layers separately and slows progression for inspection; it is not normal gameplay timing footage. The earlier infantry close-up and offline motion clip remain labeled as earlier staged/offline captures.
+
+**Native OS-input play-through:** victory at **143.70 simulated seconds**, **5/5 launch sites**, **3/3 towns**; town HP 2331.51 / 1817.21 / 2444.44. It exercised a factory, four tank orders, group selection and minimap orders. Low, 4× simulation, llvmpipe. This is functional completion, not a gaming-PC benchmark.
+
+Final Chromium/WebGL input check passes with zero console/page errors: briefing/start, all seven selected, factory production, tactical-map order, actual tank displacement and pause. Final simulation time 11.6167 seconds, 1417 credits, one queued job; build matches the export. SwiftShader reports 1 FPS, so this is functional evidence only. The initial run timed out awaiting the production click after movement; its failure is preserved in `three-study-browser-initial-timeout.log`. The retest uses deliberate input timing, early production and paused screenshot capture, alongside the lower-cost Low effects path.
+
+The local phone gallery passes four viewports (390×844, 320×568, 844×390, 1440×900), both comparison toggles, image decoding/full-size links and actual touch video activation, with no errors, overflow or engine download. Final hosted checks are recorded in release evidence. Touch checks use Chromium emulation, not physical iPhone/Safari.
+
+Build **`4f5182df86605d8f`**, PCK **101,072,596 bytes** (96.39 MiB), SHA-256 `452a18ea0eb5e362ecb5a51f83f054e5a9ccfdad9e61fe1e83f13463bd021a30`; first download approximately 139 MB. Godot 4.6.3 Compatibility/Web runtime retained. Evidence: `tests/evidence/three-reference-release-2026-10-18.md` and `three-study-*` files.
+
+AA/AAA sign-off remains open: infantry anatomy/cloth, authentic vegetation variety, settlement density, vehicle surface detail and structural destruction still need production work. Cloud llvmpipe/SwiftShader cannot qualify physical gaming-GPU performance. The techniques improve the isolated benchmark and are reusable for later game work; no original-game files were changed. Historical reports below refer to their earlier builds.
+
+---
+
 # Godot RTS source study — landscape pass, 18 October 2026
 
 Research: Ironbound (`destinjones/ironbound`, commit `2993c773483af8b28f1fb05627f4029322097470`), MIT; creator confirms Claude-assisted/vibe-coded development. Published screenshots and actual environment source inspected. AA qualification is not established. See `docs/GODOT_RTS_STUDY.md` (browser bundle: `GODOT_RTS_STUDY.md`) for candidate checks and precise source-to-implementation mapping.

@@ -1,4 +1,4 @@
-Latest visual pass (18 October): [Godot RTS source study](docs/GODOT_RTS_STUDY.md). Ironbound-informed terrain, coordinated Galilee lighting, chunked low scrub and paused foliage wind are integrated into the isolated mission. The phone gallery includes a matched landscape before/after. AA/AAA quality remains unverified.
+Latest visual pass (18 October): [0 A.D., Beyond All Reason and Terrain3D study](docs/THREE_REFERENCE_STUDY.md). The isolated mission now ties ground materials to trees, rocks and buildings, coordinates near/far normal detail, separates surface hits from explosions, and improves command-notice contrast. The phone gallery includes matched before/after views and a staged combat-effects inspection. AA/AAA quality remains unverified.
 
 # Tzeva Adom — The Northern Front: isolated 3D review
 
@@ -36,7 +36,7 @@ During active gameplay, press **F9** to record a 30-second frame-time sample (af
 
 ## Verification and provenance
 
-The latest OS-input-driven native run completed all five sites with all three towns alive at 183.74 simulated seconds, using footprint-aware routes, acceleration and the updated infantry locomotion. Final gait-loop and foot-scale corrections are additionally covered by focused animation checks. `TEST_REPORT.md` distinguishes that run, automated checks, later changes and remaining limits. Automated checks: `godot --headless --path . --script res://tests/mission_smoke.gd`.
+`TEST_REPORT.md` records the latest complete native OS-input run, exported browser checks, focused graphics regressions and remaining limits. Automated mission checks: `godot --headless --path . --script res://tests/mission_smoke.gd`.
 
 `ARCHITECTURE_REFERENCES.md` records actual Map/street-photo research for Metula, Kiryat Shmona and Shlomi. Architecture is reference-informed; geography is compressed. `assets/ATTRIBUTION.md` credits CC0 models/materials/audio and font licenses. Original authored Blender builders are included. The original game's MIT license is in `LICENSE`.
 
