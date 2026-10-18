@@ -1,3 +1,5 @@
+Latest visual pass (18 October): [Godot RTS source study](docs/GODOT_RTS_STUDY.md). Ironbound-informed terrain, coordinated Galilee lighting, chunked low scrub and paused foliage wind are integrated into the isolated mission. The phone gallery includes a matched landscape before/after. AA/AAA quality remains unverified.
+
 # Tzeva Adom — The Northern Front: isolated 3D review
 
 Play the [isolated browser review](https://sge2811-maker.github.io/Tzeva-Adom/mission2-3d-review/).

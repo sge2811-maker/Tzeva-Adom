@@ -1,3 +1,19 @@
+# Godot RTS source study — landscape pass, 18 October 2026
+
+Research: Ironbound (`destinjones/ironbound`, commit `2993c773483af8b28f1fb05627f4029322097470`), MIT; creator confirms Claude-assisted/vibe-coded development. Published screenshots and actual environment source inspected. AA qualification is not established. See `docs/GODOT_RTS_STUDY.md` (browser bundle: `GODOT_RTS_STUDY.md`) for candidate checks and precise source-to-implementation mapping.
+
+Applied: shared Galilee lighting/terrain/wind preset; authored orchard/scrub vertex weights; scale-aware terrain variation and normal attenuation; 84 low shrubs in 27 cullable chunks with road/house clearance; root-preserving, simulation-time wind for grass/garden/scrub; Low quality scales shrub density to 25%; updated actual-terrain minimap and phone before/after overview.
+
+Verified: 53 mission regressions; 11 actual-renderer landscape checks (clearance, ground contact, <=68cm height, budget, wind pause, Low/High restoration); native High overview/infantry/terrain/armor/tactical captures; local phone gallery at four viewports with both landscape/infantry toggles, full-size original, video and no engine downloads. No script/shader errors in the rendered captures. Cloud llvmpipe/SwiftShader and emulated touch cannot qualify real gaming-PC or physical-iPhone performance.
+
+Native OS-input play-through also won at 143.0 simulation seconds, all five launch sites destroyed and all three towns alive (HP2333.33/1907.21/2459.0). Factory and four tank orders exercised. Low quality, 4× simulation, llvmpipe; not a hardware benchmark.
+
+Final browser WebGL input check passes with zero console/page errors: briefing/start, all seven units selected, tactical map, actual tank movement, factory production and pause. Build identity matches the exported package. SwiftShader reported 1 FPS; this is functional verification only.
+
+Build `991d564d40ee3075`, PCK101,043,828 bytes (96.36 MiB); SHA256`751643e6b06248d7d2d6bf0d01904f9e28b6fbebd644a25c89e2de4b1c49d044`. Full release evidence follows in `tests/evidence/godot-rts-study-release-2026-10-18.md`.
+
+---
+
 # Reference-based equipment and whole-game research — 18 October 2026
 
 Build fingerprint `c32d1bc00e6a72cf`; PCK 103,213,108 bytes; first download about 141 MB.
