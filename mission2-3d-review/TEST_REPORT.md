@@ -1,3 +1,21 @@
+# Merkava color correction — 18 October 2026
+
+The Merkava's embedded albedo is olive-grey (hull median RGB108/105/95), not white. The High contact-shadow shader sampled the already tone-mapped screen image and returned it as spatial ALBEDO. Godot 4.6 Compatibility tone-maps each spatial draw, so the scene passed through ACES a second time. Sunlit armor was brightened and washed out; the same bug affected terrain contrast.
+
+The replacement reads depth only and alpha-blends black contact shadows. It cannot brighten the underlying scene or reprocess its colors. The pass retains priority -100, ahead of transparent dust/smoke. No tank tint, texture, geometry, Blender master, light settings or gameplay data changed. The original game remains outside this release.
+
+Evidence: `contact_color_review.gd` renders the imported tank and a ground plane under mission ACES lighting with 4x MSAA. The old shader fails: zero strength alters channels by up to44/255 and brightens248,236 pixels. The fixed shader passes: zero strength is pixel-identical; default strength brightens zero pixels and darkens25,302 contact pixels. Old shader retained as a test fixture; both reports retained. Twenty focused realism/effect checks pass. Native High overview, tank, front/rear/profile and staged combat captures inspected; no script/shader errors. Smoke remains visible. The armor gallery compares the same model/camera with only contact rendering changed.
+
+Source verification: Godot4.6 `drivers/gles3/shaders/scene.glsl`, ALBEDO sRGB decoding followed by per-draw tonemapping and output encoding; `tonemap_inc.glsl`, ACES implementation. https://github.com/godotengine/godot/blob/4.6-stable/drivers/gles3/shaders/scene.glsl . The bug is repeated tone mapping, not a claim that the GLB was double-gamma baked.
+
+Build `553348baa84daaa8`; PCK101,072,756 bytes; SHA256 `348c8a19d301392268dd05c79e83a99903b169f9ef5944965ee6a5d99ca6a78c`; same Godot4.6.3 Web runtime, about139MB first download.
+
+This is a focused rendering correction. Previous full mission play-through evidence remains in the historical reports; it is not represented as a fresh full play-through. llvmpipe/SwiftShader testing does not establish gaming-GPU performance or AA/AAA art sign-off.
+
+Final exported Web build passes start/pause and normal High/Low key controls in Chromium/WebGL, with both screenshots inspected, matching build identity and zero console/page errors. Both local galleries pass390x844,320x568,844x390 and1440x900: image decoding, comparison buttons, full-size links, no overflow/errors or engine downloads. The main gallery also checks actual touch video activation. These are software-renderer and Chromium touch-emulation checks, not physical iPhone/Safari tests.
+
+---
+
 # Three-project realism pass — 18 October 2026
 
 Studied pinned source and licensing from **0 A.D., Beyond All Reason and Terrain3D**, plus published visual references. They are qualified technique references, not three verified Godot AA RTS games, and were not played or benchmarked in this pass. Precise source paths, commits, engine differences and reuse decisions: [THREE_REFERENCE_STUDY.md](THREE_REFERENCE_STUDY.md) (source: `docs/THREE_REFERENCE_STUDY.md`). No outside code or art was copied.

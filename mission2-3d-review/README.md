@@ -1,3 +1,5 @@
+Latest correction (18 October): the contact-shadow pass no longer tone-maps scene color twice. The Merkava retains its authored olive-grey paint. [Matched tank comparison](https://sge2811-maker.github.io/Tzeva-Adom/mission2-3d-review/review/armor/?v=paint-20261018).
+
 Latest visual pass (18 October): [0 A.D., Beyond All Reason and Terrain3D study](docs/THREE_REFERENCE_STUDY.md). The isolated mission now ties ground materials to trees, rocks and buildings, coordinates near/far normal detail, separates surface hits from explosions, and improves command-notice contrast. The phone gallery includes matched before/after views and a staged combat-effects inspection. AA/AAA quality remains unverified.
 
 # Tzeva Adom — The Northern Front: isolated 3D review

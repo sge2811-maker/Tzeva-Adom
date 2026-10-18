@@ -8,15 +8,15 @@
 <nav><a href="../#armor">Mission gallery</a><a href="../research/">Asset research</a><a href="../../">Play on a computer</a></nav>
 <div class="eyebrow">MISSION 02 · 18 OCTOBER 2026</div>
 <h1>Merkava Mk 4M</h1>
-<p>A rebuilt exterior study: lower hull, sloped turret armor, six road wheels per side, Trophy fittings, thermal sleeve, rear basket and chain curtain. All views below are rendered by the game engine under the mission’s lighting.</p>
+<p>The olive-grey paint now survives the mission lighting. A rendering correction removes the washed-out appearance while preserving the authored dust, panel variation and dark recesses. Compare the same model and camera before and after the correction below.</p>
 <figure class="panel">
  <div class="toolbar" role="group" aria-label="Armor comparison"><button type="button" data-version="after" aria-pressed="true">Updated tank</button><button type="button" data-version="before" aria-pressed="false">Previous tank</button></div>
- <a id="comparison-link" href="after-front.png" target="_blank" rel="noopener"><img id="comparison" src="after-front.webp" width="1440" height="900" fetchpriority="high" alt="Updated Merkava exterior under the mission lighting."></a>
- <figcaption class="caption"><h2>Front quarter</h2><p id="version" role="status">Updated tank · Same camera and lighting as the previous version.</p><a id="full-link" href="after-front.png" target="_blank" rel="noopener">Open full-size capture</a></figcaption>
+ <a id="comparison-link" href="after-front.png?v=paint-20261018" target="_blank" rel="noopener"><img id="comparison" src="after-front.webp?v=paint-20261018" width="1440" height="900" fetchpriority="high" alt="Updated Merkava exterior under the mission lighting."></a>
+ <figcaption class="caption"><h2>Front quarter</h2><p id="version" role="status">Updated tank · Corrected contact shadows; original paint retained.</p><a id="full-link" href="after-front.png?v=paint-20261018" target="_blank" rel="noopener">Open full-size capture</a></figcaption>
 </figure>
 <div class="grid">
- <figure class="panel"><a href="after-rear.png" target="_blank" rel="noopener"><img src="after-rear.webp" width="1440" height="900" loading="lazy" alt="Engine view showing rear storage bins, turret basket, canvas bags and chain curtain."></a><figcaption class="caption"><h2>Rear quarter</h2><p>Open basket, canvas stowage, access door and linked chain curtain.</p></figcaption></figure>
- <figure class="panel"><a href="after-profile.png" target="_blank" rel="noopener"><img src="after-profile.webp" width="1440" height="900" loading="lazy" alt="Side view showing the low hull, sloped turret and road-wheel layout."></a><figcaption class="caption"><h2>Side profile</h2><p>Lower silhouette, separate skirt modules, road wheels and moving track shoes.</p></figcaption></figure>
+ <figure class="panel"><a href="after-rear.png?v=paint-20261018" target="_blank" rel="noopener"><img src="after-rear.webp?v=paint-20261018" width="1440" height="900" loading="lazy" alt="Engine view showing rear storage bins, turret basket, canvas bags and chain curtain."></a><figcaption class="caption"><h2>Rear quarter</h2><p>Open basket, canvas stowage, access door and linked chain curtain.</p></figcaption></figure>
+ <figure class="panel"><a href="after-profile.png?v=paint-20261018" target="_blank" rel="noopener"><img src="after-profile.webp?v=paint-20261018" width="1440" height="900" loading="lazy" alt="Side view showing the low hull, sloped turret and road-wheel layout."></a><figcaption class="caption"><h2>Side profile</h2><p>Lower silhouette, separate skirt modules, road wheels and moving track shoes.</p></figcaption></figure>
 </div>
 <h2>Inspect the model</h2><p>The editable Blender master and the game GLB contain the hull, turret and recoiling gun as separate assemblies. The muzzle flash now follows the barrel attachment point.</p>
 <div class="downloads"><a class="download" href="merkava-mk4m-master.blend" download>Blender master</a><a class="download" href="merkava-mk4m.glb" download>Game GLB</a><a class="download" href="geometry-report.json">Geometry report</a></div>
@@ -35,10 +35,10 @@
 <script>
 document.querySelectorAll('[data-version]').forEach(button=>button.addEventListener('click',()=>{
  const version=button.dataset.version;
- document.getElementById('comparison').src=version+'-front.webp';
- document.getElementById('comparison').alt=(version==='after'?'Updated':'Previous')+' tank under the same mission lighting and camera.';
- document.getElementById('comparison-link').href=version+'-front.png';document.getElementById('full-link').href=version+'-front.png';
- document.getElementById('version').textContent=(version==='after'?'Updated':'Previous')+' tank · Same camera and lighting.';
+ document.getElementById('comparison').src=version+'-front.webp?v=paint-20261018';
+ document.getElementById('comparison').alt=(version==='after'?'Updated':'Previous')+' tank with the same paint and camera; contact-shadow rendering corrected in the updated view.';
+ document.getElementById('comparison-link').href=version+'-front.png?v=paint-20261018';document.getElementById('full-link').href=version+'-front.png?v=paint-20261018';
+ document.getElementById('version').textContent=version==='after'?'Updated tank · Corrected contact shadows; original paint retained.':'Previous tank · Washed out by repeated tone mapping.';
  document.querySelectorAll('[data-version]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
 }));
 </script></html>
