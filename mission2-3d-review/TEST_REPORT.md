@@ -15,6 +15,8 @@ Final rebuild: both exact-ten-clip asset checks, 17 motion/navigation/report che
 The final local Web export passed a real Chromium/WebGL input run with zero browser/page errors: briefing, start, all-seven selection, tactical map order, verified Merkava displacement, factory production and pause. Final observed simulation time 35.60 seconds, 1705 credits, one queued job. This run uses SwiftShader (about 1 FPS), not a hardware GPU. Evidence: `browser-infantry-local-2026-10-18.json` and `.txt`. The previous full native victory run remains the most recent full playthrough; this pass changes character presentation and leaves mission rules intact.
 
 
+The updated phone gallery passes local checks at390×844,320×568,844×390 and1440×900: before/after image and full-size link switching, image decoding, navigation, explicit touch Play and video progression, with no page errors, body overflow or PCK/WASM downloads. Its seven WebP previews total about1.8MB; the3-second H.264 clip loads on request. This is Chromium mobile/touch emulation, not physical iPhone/Safari testing. Evidence: `phone-infantry-local-2026-10-18.json`. The previous and updated soldier views use matching mission light, camera and staged positions.
+
 ## Phone review gallery — 18 October 2026
 
 Published `review/` at commit `93a17ed348e2e00a747c2170f007491b4b53c5ac`. It presents actual engine captures, compressed WebP previews, links to original PNGs and an explicit touch-friendly Play button for the existing offline three-second clip. Its six previews total about 1.6 MB; the video loads on demand. The caption distinguishes offline animation rendering from live performance. The existing playable mission still requires keyboard and mouse.
