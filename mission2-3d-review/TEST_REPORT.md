@@ -1,3 +1,21 @@
+# Armor and canopy surface pass — 19 October 2026
+
+Build `c2b9903ca408e1ec`; PCK101,613,628 bytes (96.91 MiB), SHA256 `251a017f06396a33281c4c0c267b1221fd18fd6ce0ee236a6ea1e5b9f9b622d4`; first download about140MB. Same Godot4.6.3 Compatibility/Web runtime. Previous hardware capture is from build553348baa84daaa8, not this release.
+
+Authored armor: object-space non-slip grain, gravity-aligned grime, uneven settled dust, modest physical-panel paint variation and sparse wear on bevels. Normal maps are512/512/256 with mipmaps; color and packed roughness/metal/occlusion maps preserve material separation. The prior atlas had no metallic mask and only a128px generic grain normal. No photograph was used as a texture. Runtime uses the same three atlas materials, plus the existing marking material; geometry counts remain56,924 triangles across the three assemblies. Blender master and GLB were rebuilt together. Track surfaces now use shared vertex colors for darker cast metal and brighter raised contact surfaces, with mild per-link variation, retaining one MultiMesh draw and96 links per vehicle. Track motion logic is unchanged.
+
+Trees: complete leaf polygons reduced from66,252 to22,084 triangles per canopy, retaining more foliage at the normal RTS distance. Leaf tint/backlighting is adjusted. All51 rooted tree markers remain;153 trunk/branch/leaf meshes become42 spatial batches across24m chunks. Original transforms, litter placement and mesh coverage are preserved. Shared geometry replaces duplicate draws, without changing navigation or mission rules.
+
+Same cloud overview counters: High1290 ->1168 draw calls (-9.46%),1,848,064 ->1,557,457 rendered primitives (-15.72%). With grass/contact/shadows removed,725 ->674 calls and812,678 ->724,955 primitives. These are scene-complexity measurements, not a gaming-GPU FPS prediction. Software frame times varied and were slower in this run; full logs are retained. Actual performance of this build on Shir-GE has not been measured.
+
+Validation passed:53 mission regressions; imported armor PBR maps/mipmaps plus assembly seating, muzzle, yaw, actual fire/damage/recoil/pause; actual-renderer preservation of every tree transform with no duplicate source geometry; opposite tread motion on pivot; contact-color regression with exact zero-strength identity and zero brightened pixels under default shading. Native High overview, orchard, armor front/rear/profile and staged combat captures inspected, without script/shader errors. The combat still is staged/slowed for effect inspection. Older infantry/motion/support/map captures keep their earlier context.
+
+The user's earlier valid hardware report identified RTX3070 Laptop GPU at2679x1676 High:26.63 averageFPS, p99 48.1ms, worst849.2ms,800frames, no invalid flags. That resolution has2.17x the pixels of1080p. The target was not met in that capture; it does not establish the new build's performance or an exact1080p result. AA/AAA art sign-off remains open; infantry/cloth, fine equipment geometry, environment variety and destruction still need production work.
+
+Final exported Chromium/WebGL check passes: briefing/start, all seven selected, factory queue, tactical-map order, actual tank displacement, pause and normal G switch to High. Both Low and High report build c2b9903ca408e1ec; zero console/page errors. Final time 14.0668 simulated seconds, 1468 credits, one queued job. High screenshot inspected. SwiftShader reports 1 FPS: functional evidence only. This pass did not repeat the historical full mission victory. Both local review galleries pass four viewports, comparison controls, image decoding and full-size links without errors, overflow or engine downloads; the main gallery also passes touch video activation. Touch checks use Chromium emulation, not physical iPhone/Safari.
+
+---
+
 # Merkava color correction — 18 October 2026
 
 The Merkava's embedded albedo is olive-grey (hull median RGB108/105/95), not white. The High contact-shadow shader sampled the already tone-mapped screen image and returned it as spatial ALBEDO. Godot 4.6 Compatibility tone-maps each spatial draw, so the scene passed through ACES a second time. Sunlit armor was brightened and washed out; the same bug affected terrain contrast.

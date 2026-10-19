@@ -1,6 +1,4 @@
-Latest correction (18 October): the contact-shadow pass no longer tone-maps scene color twice. The Merkava retains its authored olive-grey paint. [Matched tank comparison](https://sge2811-maker.github.io/Tzeva-Adom/mission2-3d-review/review/armor/?v=paint-20261018).
-
-Latest visual pass (18 October): [0 A.D., Beyond All Reason and Terrain3D study](docs/THREE_REFERENCE_STUDY.md). The isolated mission now ties ground materials to trees, rocks and buildings, coordinates near/far normal detail, separates surface hits from explosions, and improves command-notice contrast. The phone gallery includes matched before/after views and a staged combat-effects inspection. AA/AAA quality remains unverified.
+Latest visual pass (19 October): baked armor grain, grime, dust and material separation; varied track finish; fuller tree canopies using simpler leaves and spatial batching. [Tank comparison](https://sge2811-maker.github.io/Tzeva-Adom/mission2-3d-review/review/armor/?v=surface-20261019).
 
 # Tzeva Adom — The Northern Front: isolated 3D review
 
@@ -8,7 +6,7 @@ Play the [isolated browser review](https://sge2811-maker.github.io/Tzeva-Adom/mi
 
 On iPhone or another phone, open the [visual review gallery](https://sge2811-maker.github.io/Tzeva-Adom/mission2-3d-review/review/): compressed previews, a matched before/after infantry comparison, full-size engine captures and an inline movement clip. The gallery does not load the game engine. Its video is rendered offline and does not establish real-time performance. The playable mission still needs a mouse and keyboard.
 
-A separate Godot 4.6.3 mission prototype for Operation 02. The original game and its campaign/save data are untouched. This is a review candidate for the game's visual benchmark; study assets and unmeasured target-PC performance remain below final production sign-off.
+A separate Godot 4.6.3 mission prototype for Operation 02. The original game and its campaign/save data are untouched. This is a review candidate for the game's visual benchmark; study assets and performance remain below final production sign-off.
 
 Destroy all five launch sites while keeping at least two of the three towns standing. Three sites exist initially; two more appear during the mission. Reconnaissance and enemy firing reveal concealed sites. The mission includes production, income, supply capture, waves, reserve armor, Iron Dome and Trophy interception.
 
@@ -26,9 +24,9 @@ The modernized map combines mission-derived cartography, distinct launcher targe
 
 ## Running
 
-Open `project.godot` with Godot 4.6.3 and run the project, or use `godot --path .`. The Web export needs an HTTP server and a browser with WebGL 2. No Godot installation is needed to play the hosted Web version. First load downloads about 139 MB; mouse and keyboard are required.
+Open `project.godot` with Godot 4.6.3 and run the project, or use `godot --path .`. The Web export needs an HTTP server and a browser with WebGL 2. No Godot installation is needed to play the hosted Web version. First load downloads about 140 MB; mouse and keyboard are required.
 
-The Compatibility renderer targets broader GPU support. High enables shadows, contact shading and 4× MSAA; Low reduces 3D resolution and foliage and disables shadows/contact shading. Software adapters automatically start in Low. Gad-El hardware performance is unmeasured.
+The Compatibility renderer targets broader GPU support. High enables shadows, contact shading and 4× MSAA; Low reduces 3D resolution and foliage and disables shadows/contact shading. Software adapters automatically start in Low. Gad-El hardware performance is unmeasured. A user-supplied RTX 3070 Laptop capture of the previous build averaged 26.6 FPS at 2679×1676 High (p99 48.1 ms). The new build and exact 1080p target still require hardware retesting.
 
 ## Performance capture
 

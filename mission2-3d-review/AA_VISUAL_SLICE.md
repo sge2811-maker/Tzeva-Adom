@@ -48,7 +48,7 @@ Armor now has UV-baked color/roughness/occlusion, hull dust, cooling grilles, ca
 | Navigation clearance | Radius-aware routes and sampled-segment smoothing; tank turns before translating; a full controls-driven mission victory | Pass for tested routes, not oriented-body physics or all props |
 | Mission playability | 53 smoke checks and full native controls run, all five sites and all three towns | Pass for the tested mission run |
 | AA character/environment art | Close-up engine capture still shows study-level equipment, faces and vegetation; structural damage and ambient mix remain limited | Open |
-| Target-PC performance | F9/F10 capture implemented; only llvmpipe/SwiftShader available here | Open until a defined hardware-rendered encounter is measured |
+| Target-PC performance | Previous build measured on RTX 3070 Laptop: 26.6 FPS at 2679×1676 High, p99 48.1 ms; cloud checks use software rendering | Open: target not met in that capture; new build and exact 1080p target need hardware retesting |
 
 The performance report proposes 1080p High at 60 average FPS with p99 frame time <=22.23 ms. This target is deliberately separate from art approval. Passing that sample does not certify the entire mission or the AA art gate. Review several representative combat/camera situations on the chosen PC before hardware sign-off.
 

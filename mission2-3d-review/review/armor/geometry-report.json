@@ -22,5 +22,14 @@
   ],
   "muzzle": "Turret/Gun/Muzzle",
   "reference_photos_used_as_textures": false,
-  "markings": "Fictional tactical chevrons for game identification"
+  "markings": "Fictional tactical chevrons for game identification",
+  "surface_revision": "2026-10-19",
+  "surface_layers": [
+    "object-space paint grain",
+    "gravity-aligned grime",
+    "settled dust",
+    "panel variation",
+    "packed metal and roughness",
+    "mip-filtered normals"
+  ]
 }
