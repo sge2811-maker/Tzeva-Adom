@@ -1,3 +1,25 @@
+# Spatial rifle rendering — 21 October 2026
+
+Build `a269be0d02bc229a`; PCK102111408bytes (97.38MiB), SHA256`f8e57523321c272572697f95d5b11f9f32ad903fd83b5b031a043b6eb9cdb3ed`. Same Godot4.6.3 Compatibility/Web runtime. Original game and game balance unchanged.
+
+The user reports a fresh JSON-verified1920x1080High baseline for previous buildcd92a40393618bb2 on RTX3070Laptop/ANGLED3D11:26.04averageFPS,p9544.4ms,p9948.6ms,worst62.1ms,782samples,average828draws,scale1,noinvalidflags. Target failed. Raw JSON remains on Shir-GE; this cloud session saved the pasted summary with provenance, not an invented raw report. This is a corrected1080p baseline; older schema1 resolution-affected samples do not establish a comparable FPS gain. This new release has not been measured on Shir-GE.
+
+New `scripts/weapon_batches.gd` groups the existing rigid rifle meshes by exact geometry/material finish and12m spatial cells. Full vertex/index/UV/normal arrays and material maps are retained. Skinned bodies, clips, aiming, picking and combat stay separate. The current wrist-bone pose drives each instance; source BoneAttachment nodes can update later in a frame, so copying their stale node transform was rejected. Original rifle draws are hidden while their bones/animation hierarchy remain. Hidden actors leave no rifle/shadow instances; actors crossing cells, newly produced squads and freed sources are handled. Reused batches grow capacity only when needed. Source meshes and finish resources are retained for the renderer fallback.
+
+Enabled for identified hardware renderers. Software and unidentified renderers retain individual rifle draws: the cloud's instancing path was slower, so no software FPS improvement is claimed. The explicit batch path was forced for native QA; it was not disguised as hardware. Performance JSON now identifies the actual weapon path and CPU-side synchronization duration, plus capture start/end mission time, camera, speed and scene-visible unit counts. A simulation-speed change invalidates a capture. Scene visibility counts are not camera-frustum counts. Metadata helps assess future workload comparability; it does not make different camera paths identical.
+
+Same960x600High paused overview:1023->817draws (-20.14%),1521117->1414949rendered primitives (-6.98%). Independent still comparison:3of576000pixels change by more than3/255, mean absolute RGB error0.00127/255,max10/255. This is an initial still/LOD comparison, not all animation/camera coverage. Software frame times were slower with instancing; the new hardware FPS benefit remains unmeasured. Earlier probes sharing identical materials369->52saved no draws; changing to one directional cascade saved only7draws. Neither alternative was adopted. Shadow atlas, cascades, exposure, MSAA and model art are unchanged.
+
+Validation passed:53mission checks,17motion/navigation/report checks;7060 assertions across10rifle-animation clips, direct bone versus deferred node/world transforms, every weapon surface/array/finish, concealment, cross-cell movement, production, removal and pause; reporting diagnostics and speed-change invalidation. Initial attachment-node copy failed the pose test and was corrected before release; log retained. The initial test's artificial freed-actor fixture was also corrected to remove the actor from the game's unit list before freeing it.
+
+Native OS-input exported-pack play-through with batching explicitly forced: victory147.3843simseconds,5/5sites,3/3towns (HP2324.23/1267.91/2452.63). Factory and four tank orders exercised. Low,4xsimulation,llvmpipe; functional completion only. Exact build identity confirmed. Final native screenshot rifle-native-result.png is an actual window capture. The temporary source setup was restarted against the exported PCK to make build identity exact.
+
+Final exported Chromium/WebGL software-fallback run: briefing,start,7selection,factoryqueue,tacticalmaporder,actualtankmovement,pause,F9capture andF10JSONdownload all pass; errors0,buildmatches. Finaltime29.5706,credits1633,queue0. New report identifies individual rifle draws on SwiftShader, includes workload context and correctly leaves hardware qualification false. Fourteen slow software frames are insufficient for the target gate. This browser run checks fallback and export integration; the hardware-selected Web path still needs a physical-GPU capture. Stiff infantry,armor crowding,sparse foliage and the AA/AAA art gate remain open.
+
+Final exact-export A/B confirmation (build a269be0d02bc229a): 1023 -> 817 draws, 1521117 -> 1414949 primitives. Final paired still: 3/576000 pixels differ by more than 3/255, mean absolute RGB difference 0.00106481/255, maximum 10/255. Software frame timings are not hardware performance evidence. See rifle-final-budget.json/log and rifle-final-source/batched.png.
+
+---
+
 # Display-size correction and supply batching — 21 October 2026
 
 Build `cd92a40393618bb2`; PCK 102,090,804 bytes, SHA256 `854057c5dd56d00c9eba750cc7d0f5ba55388ddfdf61fa6cc2755afb5237080b`. Same Godot4.6.3 Compatibility/Web runtime. Only the isolated review is in scope.

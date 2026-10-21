@@ -48,7 +48,7 @@ Armor now has UV-baked color/roughness/occlusion, hull dust, cooling grilles, ca
 | Navigation clearance | Radius-aware routes and sampled-segment smoothing; tank turns before translating; a full controls-driven mission victory | Pass for tested routes, not oriented-body physics or all props |
 | Mission playability | 53 smoke checks and full native controls run, all five sites and all three towns | Pass for the tested mission run |
 | AA character/environment art | Close-up engine capture still shows study-level equipment, faces and vegetation; structural damage and ambient mix remain limited | Open |
-| Target-PC performance | RTX3070 Laptop: earlier26.6FPS/p9948.1ms and user-reported local18.39/22.31FPS; schema1 dimensions are unreliable under UI stretching; cloud checks use software rendering | Open: target not met in that capture; new build and exact 1080p target need hardware retesting |
+| Target-PC performance | RTX3070Laptop corrected1920x1080High baseline:26.04FPS,p9948.6ms,828averagecalls,buildcd92a40393618bb2; cloud checks use software rendering | Open: target not met in that capture; new build and exact 1080p target need hardware retesting |
 
 The performance report proposes 1080p High at 60 average FPS with p99 frame time <=22.23 ms. This target is deliberately separate from art approval. Passing that sample does not certify the entire mission or the AA art gate. Review several representative combat/camera situations on the chosen PC before hardware sign-off.
 
@@ -60,3 +60,5 @@ The isolated mission now uses a photo-informed Mk4M exterior with independent hu
 ## Local hardware follow-up — 21 October 2026
 
 The user reports a browser-controlled victory on Shir-GE with buildc2b9903ca408e1ec:5/5sites,3/3towns,08:02simulation. High captures on RTX3070 Laptop GPU averaged18.39/22.31FPS, below target. Raw JSONs remain on the PC; the pasted summary is retained with provenance. Schema1 reported dimensions are unreliable because ViewportTexture.get_size() applies UI stretch again. Schema2 and explicit display modes correct the measurement and fixed-aspect letterboxing; this release is not yet measured on Shir-GE. Reported visual issues remain open: stiff poses, armor crowding, sparse foliage. Crate batching improves workload without changing those art issues.
+
+Spatial rifle pass:20.14% fewer draw calls in one matched cloud overview, exact weapon surfaces and bone attachment checks, native forced-path mission victory. GPU timing for builda269be0d02bc229a remains unmeasured; this does not close the performance or art gates.
