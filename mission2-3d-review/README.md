@@ -1,3 +1,5 @@
+Latest release (21 October): explicit Web display resolutions, corrected physical render-size reporting, and supply-crate batching. Use [1920×1080 mode](https://sge2811-maker.github.io/Tzeva-Adom/mission2-3d-review/?v=display-20261021&render=1920x1080) or **Display [F8]**. High/Low quality stays independent.
+
 Latest visual pass (19 October): baked armor grain, grime, dust and material separation; varied track finish; fuller tree canopies using simpler leaves and spatial batching. [Tank comparison](https://sge2811-maker.github.io/Tzeva-Adom/mission2-3d-review/review/armor/?v=surface-20261019).
 
 # Tzeva Adom — The Northern Front: isolated 3D review
@@ -14,6 +16,7 @@ Destroy all five launch sites while keeping at least two of the three towns stan
 
 - Left click / drag: select. Shift adds to selection. Right click: move or attack.
 - WASD: pan. Q/E: rotate. Wheel: zoom.
+- Web Display [F8]: Auto (up to1080p),720p,1080p,1440p or native window pixels. Fixed modes fit the window without changing their pixel dimensions.
 - Space: begin / pause. F: 1× / 4× speed. G: High / Low graphics. M: audio.
 - Ctrl+A: select all mobile units. Ctrl+1–9: store a group. 1–9: recall it.
 - Minimap: left click or drag to pan; right click to order selected units.
@@ -26,11 +29,11 @@ The modernized map combines mission-derived cartography, distinct launcher targe
 
 Open `project.godot` with Godot 4.6.3 and run the project, or use `godot --path .`. The Web export needs an HTTP server and a browser with WebGL 2. No Godot installation is needed to play the hosted Web version. First load downloads about 140 MB; mouse and keyboard are required.
 
-The Compatibility renderer targets broader GPU support. High enables shadows, contact shading and 4× MSAA; Low reduces 3D resolution and foliage and disables shadows/contact shading. Software adapters automatically start in Low. Gad-El hardware performance is unmeasured. A user-supplied RTX 3070 Laptop capture of the previous build averaged 26.6 FPS at 2679×1676 High (p99 48.1 ms). The new build and exact 1080p target still require hardware retesting.
+The Compatibility renderer targets broader GPU support. High enables shadows, contact shading and 4× MSAA; Low reduces 3D resolution and foliage and disables shadows/contact shading. Software adapters automatically start in Low. Gad-El hardware performance is unmeasured. The user reports a complete local victory on RTX3070 Laptop GPU with buildc2b9903ca408e1ec and High captures averaging18.39/22.31FPS. The original schema1 render-size field was incorrect under UI stretching; its reported dimensions must not be treated as physical pixels. Adapter and frame-time evidence remain useful. New schema2 records actual viewport/render dimensions, requested display mode, canvas/CSS/DPR/WebGL size and average draw/primitive counts. This release still needs its own hardware capture.
 
 ## Performance capture
 
-During active gameplay, press **F9** to record a 30-second frame-time sample (after a two-second warm-up). Keep playing at a fixed resolution and graphics setting. Press **F10** or use **Save performance report** to download the JSON. On native Godot it is saved in the user-data folder. The report records the build fingerprint, actual renderer, resolution, quality, average FPS and frame-time percentiles. Software rendering, paused play, focus loss, changed settings or too few frames cannot clear the hardware gate. The proposed target is 1920×1080 High, at least 60 average FPS and p99 frame time at most 22.23 ms. This is a performance check, not art approval.
+During active gameplay, press **F9** to record a 30-second frame-time sample (after a two-second warm-up). Keep playing at a fixed resolution and graphics setting. Press **F10** or use **Save performance report** to download the JSON. On native Godot it is saved in the user-data folder. The report records the build fingerprint, actual renderer, physical display/render resolution, quality, average FPS, frame-time percentiles and average draw/primitive counts. Requested, canvas and WebGL sizes are cross-checked; mismatches invalidate the capture. Software rendering, paused play, focus loss, changed settings or too few frames cannot clear the hardware gate. The proposed target is 1920×1080 High, at least 60 average FPS and p99 frame time at most 22.23 ms. This is a performance check, not art approval.
 
 [Watch the in-engine movement review](https://sge2811-maker.github.io/Tzeva-Adom/mission2-3d-review/animation-review.mp4). This is an offline frame capture encoded at 24 FPS, not a real-time performance demonstration.
 

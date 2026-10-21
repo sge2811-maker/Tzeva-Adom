@@ -19,6 +19,7 @@ body {
 }
 
 #canvas {
+	position: fixed;
 	display: block;
 }
 
@@ -105,6 +106,17 @@ body{background:#0a1418;font-family:Segoe UI,Arial,sans-serif}
 #load-label{font-size:12px;letter-spacing:.06em;color:#b5c7bf;margin:0}
 .loading-controls{position:absolute;bottom:28px;color:#7e9c98;font-size:11px;letter-spacing:.08em}
 #status-notice{max-width:650px}
+#status{z-index:10}
+#display-toggle{position:fixed;right:20px;top:82px;z-index:3;padding:7px 11px;font-size:10px;letter-spacing:.08em}
+#display-panel{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(360px,calc(100vw - 64px));z-index:4;background:#0d1b20f5;color:#dce5df;border:1px solid #50615e;border-radius:7px;padding:24px;box-shadow:0 12px 55px #0008}
+#display-panel h2{margin:0 0 18px;font-size:18px;font-weight:500;color:#e5d3a0}
+#display-panel label{display:block;font-size:13px;margin:14px 0 7px}
+#display-panel select{width:100%;padding:10px;background:#1c2b32;color:#e6e9df;border:1px solid #50615e;border-radius:4px}
+#display-panel p{font-size:12px;line-height:1.6;color:#a8bbb6}
+#display-readout{color:#e5d3a0!important;font-variant-numeric:tabular-nums}
+#display-panel button,#display-toggle{background:#1c2b32;color:#dce5df;border:1px solid #50615e;border-radius:4px;cursor:pointer}
+#display-panel button{padding:10px 17px;margin:8px 9px 0 0}
+#display-panel button:hover,#display-toggle:hover{border-color:#d4ba82}
 </style>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <meta name="description" content="Play the isolated Northern Front 3D mission review. Protect the towns, deploy reconnaissance, and destroy five launch sites.">
@@ -129,9 +141,25 @@ body{background:#0a1418;font-family:Segoe UI,Arial,sans-serif}
 <p class="loading-controls">MOUSE + KEYBOARD &nbsp; / &nbsp; TAB TACTICAL MAP &nbsp; / &nbsp; G GRAPHICS</p>
 		</div>
 
-		<script src="index.js"></script>
+		<button id="display-toggle" aria-controls="display-panel" aria-expanded="false">DISPLAY [F8]</button>
+<aside id="display-panel" role="dialog" aria-label="Display settings" hidden>
+<h2>DISPLAY</h2>
+<label for="display-mode">Render resolution</label>
+<select id="display-mode">
+<option value="auto">Auto · up to 1080p</option>
+<option value="1280x720">1280 × 720</option>
+<option value="1920x1080">1920 × 1080</option>
+<option value="2560x1440">2560 × 1440</option>
+<option value="native">Window · native pixels</option>
+</select>
+<p id="display-readout" role="status"></p>
+<p>Fixed resolutions fit inside your window with black borders as needed. Graphics quality stays on its current setting.</p>
+<button id="display-apply">APPLY</button><button id="display-close">CLOSE</button>
+</aside>
+<script src="display.js?v=display-20261021"></script>
+<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":101613628,"index.wasm":37700666},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":0,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":102090804,"index.wasm":37700666},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
