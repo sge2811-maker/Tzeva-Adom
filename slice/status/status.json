@@ -99,6 +99,10 @@
   },
   "log": [
     {
+      "when": "2026-10-22T11:25:54.909Z",
+      "text": "14:25 IDT: usage limit reset; all six round-1 builders resumed from where they stopped (container had restarted, no code lost)."
+    },
+    {
       "when": "2026-10-22T06:59:29.347Z",
       "text": "Round 1: all six builders started in parallel (perf in phase A: instrumentation and budgets)."
     },
@@ -107,5 +111,5 @@
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-22T06:59:29.347Z"
+  "updated": "2026-10-22T11:25:54.909Z"
 }
