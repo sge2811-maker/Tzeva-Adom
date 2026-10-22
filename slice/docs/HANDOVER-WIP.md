@@ -28,7 +28,7 @@
   - `docs/AGENT-PROMPTS.md`: exact prompts to relaunch the builders and critics.
   - `../benchmark/TARGET.md`: the written 2020-era 3D RTS bar, per the owner's call. No third-party screenshots.
 
-## In flight at the snapshot
+## In flight at the snapshot (updated 14:43 IDT: builders resumed 14:25, round 1 still in progress; limit at 97%)
 
 Six builder agents had just started round 1: env, VFX, audio, HUD, camera, and perf (phase A). None had landed source changes yet. No critic round has run, so all streams sit at "building" on the status page.
 
