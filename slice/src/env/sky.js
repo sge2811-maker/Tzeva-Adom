@@ -1,6 +1,7 @@
 // Night sky dome: gradient, light-pollution domes, stars, milky way, waxing crescent moon (low in
 // the west at 23:00 on 13 April 2024), and up to 4 transient flash sources from intercepts.
 import * as THREE from 'three';
+import { ATM_GLSL, ATM } from './atmosphere.js';
 
 export const MOON_DIR = new THREE.Vector3(-0.83, 0.26, 0.18).normalize();
 
@@ -13,6 +14,7 @@ export function createSky(ctx) {
     uFlashI: { value: [0, 0, 0, 0] },
     uFlashC: { value: flashes.map((f) => f.c) },
     uGlobalFlash: { value: 0 },
+    uFogC: { value: ATM.fog },
   };
   const mat = new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, depthTest: false, fog: false, uniforms,
@@ -33,20 +35,19 @@ export function createSky(ctx) {
         float c = fract(sin(dot(i + vec2(0, 1), vec2(127.1, 311.7))) * 43758.5453), d = fract(sin(dot(i + vec2(1, 1), vec2(127.1, 311.7))) * 43758.5453);
         return mix(mix(a, b, u.x), mix(c, d, u.x), u.y); }
       vec3 dome(vec3 d, vec3 to, float w, float h) { float a = max(dot(normalize(vec3(d.x, 0.0, d.z)), to), 0.0); return vec3(1.0, 0.62, 0.34) * pow(a, w) * exp(-max(d.y, 0.0) * h); }
+      uniform vec3 uFogC;
+      ${ATM_GLSL}
       void main() {
         vec3 d = normalize(vDir);
         float y = d.y;
-        vec3 zen = vec3(0.0016, 0.0028, 0.0075);
-        vec3 hor = vec3(0.020, 0.026, 0.038);
-        vec3 col = mix(hor, zen, smoothstep(-0.02, 0.55, y));
-        // light pollution: Be'er Sheva (west), Dimona (south), Arad itself (all around, low), Karak (east, faint)
-        vec3 lp = dome(d, normalize(vec3(-1.0, 0.0, 0.08)), 6.0, 9.0) * 0.050
-                + dome(d, normalize(vec3(-0.25, 0.0, 1.0)), 10.0, 14.0) * 0.018
-                + dome(d, normalize(vec3(1.0, 0.0, 0.08)), 14.0, 16.0) * 0.010
-                + vec3(1.0, 0.66, 0.40) * exp(-max(y, 0.0) * 20.0) * 0.010;
-        col += lp;
-        // horizon haze band
-        col += vec3(0.010, 0.012, 0.016) * exp(-abs(y) * 26.0);
+        // space above the haze: deep blue-black with a slight lift toward the horizon
+        vec3 zen = vec3(0.0018, 0.0030, 0.0072);
+        vec3 col = mix(vec3(0.010, 0.014, 0.024), zen, smoothstep(0.0, 0.6, y));
+        // distant light-pollution domes beyond the map: Be'er Sheva (west), Dimona (south), Karak (east)
+        vec3 lp = dome(d, normalize(vec3(-1.0, 0.0, 0.08)), 7.0, 7.0) * 0.050
+                + dome(d, normalize(vec3(-0.25, 0.0, 1.0)), 10.0, 11.0) * 0.016
+                + dome(d, normalize(vec3(1.0, 0.0, 0.08)), 16.0, 14.0) * 0.008;
+        lp *= 1.0 - 0.6 * smoothstep(0.35, 0.95, uGlobalFlash);
         // stars, fading toward the hazy, light-polluted horizon
         vec3 p = d * 420.0; vec3 ip = floor(p); float h = h3(ip);
         if (h > 0.9955) {
@@ -71,6 +72,10 @@ export function createSky(ctx) {
           col += uFlashC[i] * uFlashI[i] * (pow(a, 400.0) * 3.0 + pow(a, 24.0) * 0.25 + pow(a, 3.0) * 0.03);
         }
         col += vec3(0.05, 0.045, 0.05) * uGlobalFlash * (0.4 + 0.6 * smoothstep(-0.1, 0.4, y));
+        // the same haze that fogs the terrain, integrated to the horizon: the land melts into it
+        vec3 rd = vec3(d.x, max(d.y, -0.02), d.z);
+        float od = atmOD(cameraPosition, rd, 60000.0);
+        col = mix(col, atmInscatter(cameraPosition, rd, 60000.0, uFogC), 1.0 - exp(-od)) + lp;
         gl_FragColor = vec4(col, 1.0);
       }`,
   });

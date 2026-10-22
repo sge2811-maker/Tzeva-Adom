@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { heightAt, GEO } from '../world/geo.js';
 import { fbm, smoothstep } from '../core/util.js';
+import { ATM_GLSL, ATM } from './atmosphere.js';
 
 export function createTerrain(ctx) {
   const N = 520, L = 62000, S = 5.0;
@@ -20,7 +21,9 @@ export function createTerrain(ctx) {
       pos[k * 3] = x; pos[k * 3 + 1] = h; pos[k * 3 + 2] = z;
       // night desert: dark ochre sand, greyer rock on the escarpment and Moab, salt near the sea
       const n = fbm(x * 0.002 + 3, z * 0.002, 3), n2 = fbm(x * 0.0003, z * 0.0003 + 7, 3);
-      let r = 0.30 + 0.10 * n, g = 0.25 + 0.08 * n, b = 0.19 + 0.06 * n;
+      let r = 0.33 + 0.10 * n, g = 0.28 + 0.08 * n, b = 0.22 + 0.06 * n;
+      const urb = Math.exp(-((x / 900) ** 2 + (z / 780) ** 2) * 1.6);
+      r = r * (1 - urb * 0.35) + 0.30 * urb * 0.35; g = g * (1 - urb * 0.35) + 0.28 * urb * 0.35; b = b * (1 - urb * 0.35) + 0.25 * urb * 0.35;
       const rock = smoothstep(2600, 6000, x) * (1 - smoothstep(15000, 17000, x)) + smoothstep(16500, 19000, x) * 0.6;
       r = r * (1 - rock * 0.35) + 0.22 * rock * (0.8 + 0.4 * n2); g = g * (1 - rock * 0.35) + 0.19 * rock; b = b * (1 - rock * 0.35) + 0.16 * rock;
       if (h < -390 && x > 7000) { r = 0.42; g = 0.40; b = 0.36; } // salt flats at the shore
@@ -47,19 +50,32 @@ export function createTerrain(ctx) {
   mat.onBeforeCompile = (sh) => {
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', '#include <common>\nattribute float glow; varying float vGlow; varying vec3 vWP;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvGlow = glow; vWP = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+      .replace('#include <common>', '#include <common>\nvarying vec3 vWN;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvGlow = glow; vWP = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normal;');
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
-        varying float vGlow; varying vec3 vWP;
+        varying float vGlow; varying vec3 vWP; varying vec3 vWN;
         float tH(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         float tN(vec2 p) { vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f); return mix(mix(tH(i), tH(i + vec2(1, 0)), u.x), mix(tH(i + vec2(0, 1)), tH(i + vec2(1, 1)), u.x), u.y); }`)
       .replace('#include <color_fragment>', `#include <color_fragment>
         float dcam = length(vWP - cameraPosition);
+        float slope = 1.0 - clamp(normalize(vWN).y, 0.0, 1.0);
+        float m1 = tN(vWP.xz * 0.0035), m2 = tN(vWP.xz * 0.021 + 7.0), m3 = tN(vWP.xz * 0.11 + 3.0);
+        // cliff bands: steep ground turns to banded limestone/chalk with darker ledges
+        float rockK = smoothstep(0.16, 0.40, slope + (m2 - 0.5) * 0.18);
+        float strata = 0.72 + 0.28 * smoothstep(-0.3, 0.6, sin(vWP.y * 0.36 + m1 * 7.0 + m3 * 1.5));
+        vec3 rock = vec3(0.30, 0.27, 0.235) * strata * (0.78 + 0.4 * m2);
+        vec3 col = mix(diffuseColor.rgb, rock, rockK);
+        // flat ground: pale gravel fans and darker reg/scrub patches
+        float flatK = 1.0 - smoothstep(0.03, 0.12, slope);
+        col *= mix(1.0, 0.82 + 0.36 * smoothstep(0.35, 0.75, m2 * 0.6 + m1 * 0.4), flatK);
+        // close-up detail, faded with distance so it never shimmers far away
         float det = tN(vWP.xz * 0.08) * 0.45 + tN(vWP.xz * 0.6) * 0.35 + tN(vWP.xz * 3.1) * 0.2;
-        float fade = 1.0 - smoothstep(800.0, 9000.0, dcam);
-        diffuseColor.rgb *= mix(1.0, 0.72 + 0.56 * det, fade);`)
+        float fade = 1.0 - smoothstep(600.0, 7000.0, dcam);
+        col *= mix(1.0, 0.76 + 0.48 * det, fade);
+        diffuseColor.rgb = col;`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-        totalEmissiveRadiance += vec3(1.0, 0.55, 0.24) * vGlow * 0.030 * diffuseColor.rgb * 3.0;`);
+        totalEmissiveRadiance += vec3(1.0, 0.55, 0.24) * vGlow * vGlow * 0.10 * diffuseColor.rgb;`);
   };
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = 'terrain';
@@ -68,7 +84,7 @@ export function createTerrain(ctx) {
   // Dead Sea
   const sea = new THREE.Mesh(new THREE.PlaneGeometry(14000, 90000, 1, 1).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({
     fog: true,
-    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime: { value: 0 }, uMoon: { value: new THREE.Vector3(-0.83, 0.26, 0.18).normalize() } }]),
+    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime: { value: 0 }, uFogC: { value: ATM.fog } }]),
     vertexShader: /* glsl */`
       #include <fog_pars_vertex>
       varying vec3 vWP;
@@ -77,18 +93,30 @@ export function createTerrain(ctx) {
       }`,
     fragmentShader: /* glsl */`
       #include <fog_pars_fragment>
-      varying vec3 vWP; uniform float uTime; uniform vec3 uMoon;
+      varying vec3 vWP; uniform float uTime; uniform vec3 uFogC;
+      ${ATM_GLSL}
       float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
       float n(vec2 p) { vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f); return mix(mix(h(i), h(i + vec2(1, 0)), u.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), u.x), u.y); }
       void main() {
         vec3 V = normalize(cameraPosition - vWP);
         vec2 p = vWP.xz * 0.004;
         float w = n(p + uTime * 0.05) * 0.6 + n(p * 3.1 - uTime * 0.07) * 0.4;
-        vec3 N = normalize(vec3((w - 0.5) * 0.06, 1.0, (n(p * 2.0 + 3.0) - 0.5) * 0.06));
-        vec3 R = reflect(-V, N);
-        float fres = pow(1.0 - max(dot(N, V), 0.0), 5.0);
-        vec3 col = vec3(0.006, 0.010, 0.016) + vec3(0.02, 0.026, 0.04) * fres;
-        col += vec3(0.9, 0.95, 1.1) * pow(max(dot(R, uMoon), 0.0), 600.0) * 2.0;
+        vec3 N = normalize(vec3((w - 0.5) * 0.05, 1.0, (n(p * 2.0 + 3.0) - 0.5) * 0.05));
+        vec3 R = reflect(-V, N); R.y = abs(R.y);
+        float fres = 0.02 + 0.98 * pow(1.0 - max(dot(N, V), 0.0), 5.0);
+        // the still, dense brine mirrors the hazy sky, the moon and the shore lights
+        vec3 skyR = atmInscatter(vWP, R, 60000.0, uFogC) * (1.0 - exp(-atmOD(vWP, R, 60000.0)));
+        vec3 col = vec3(0.004, 0.007, 0.010) + skyR * (0.35 + 0.65 * fres) * 1.4;
+        col += vec3(0.9, 0.95, 1.1) * pow(max(dot(R, ATM_MOON), 0.0), 500.0) * 3.0;
+        // glitter of shore lights: Ein Bokek hotels, Route 90
+        float sh = smoothstep(9600.0, 9700.0, vWP.x) * (1.0 - smoothstep(10600.0, 11800.0, vWP.x));
+        col += vec3(1.0, 0.6, 0.3) * sh * 0.010 * smoothstep(0.55, 0.9, n(vWP.xz * vec2(0.002, 0.05) + uTime * 0.2));
+        // southern basin: evaporation ponds with pale salt dikes
+        float pond = smoothstep(13000.0, 14000.0, vWP.z);
+        vec2 g = abs(fract(vWP.xz / vec2(1300.0, 950.0)) - 0.5);
+        float dike = 1.0 - smoothstep(0.47, 0.49, max(g.x, g.y));
+        vec3 pc = mix(vec3(0.030, 0.040, 0.042), vec3(0.11, 0.105, 0.095), 1.0 - dike);
+        col = mix(col, pc + skyR * 0.25, pond);
         gl_FragColor = vec4(col, 1.0);
         #include <fog_fragment>
       }`,

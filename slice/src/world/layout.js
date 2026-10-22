@@ -8,6 +8,7 @@ import { makeRng } from '../core/rng.js';
 import { GEO, heightAt } from './geo.js';
 
 const DX = 110, DZ = 95, NI = 6, NJ = 6;
+const KEEP_OUT = [{ x: -60, z: -32, r: 27 }]; // env: courtyard around the S5-street camera
 export const STREET_W = { avenue: 22, street: 14, lane: 10 };
 
 // Public shelters ("miklat ziburi"). Positions are block interiors; doors face the nearest street.
@@ -129,9 +130,17 @@ export function buildLayout(seed = 1) {
     }
     return true;
   }
+  // env: open courtyards where canonical street-level cameras stand (S5-street at -60,-40), so
+  // the camera is not inside a building. The rng draw still happens, so the rest of the town
+  // (and everything seeded after it) is unchanged.
   function addBuilding(b, block) {
     if (!free(b.x, b.z, b.w, b.d)) return;
-    b.id = buildings.length; b.block = block.id; b.y = heightAt(b.x, b.z); b.seed = rng.next();
+    const seed = rng.next();
+    for (const k of KEEP_OUT) {
+      const dx = Math.max(Math.abs(k.x - b.x) - b.w / 2, 0), dz = Math.max(Math.abs(k.z - b.z) - b.d / 2, 0);
+      if (dx * dx + dz * dz < k.r * k.r) return;
+    }
+    b.id = buildings.length; b.block = block.id; b.y = heightAt(b.x, b.z); b.seed = seed;
     b.h = b.floors * (b.type === 'tower' ? 3.2 : b.type === 'house' ? 3.1 : 3.0) + (b.type === 'house' ? 1.2 : 1.6);
     buildings.push(b);
   }

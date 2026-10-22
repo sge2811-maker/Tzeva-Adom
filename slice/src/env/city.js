@@ -3,6 +3,8 @@
 import * as THREE from 'three';
 import { heightAt, GEO } from '../world/geo.js';
 import { makeRng } from '../core/rng.js';
+import { ATM_GLSL } from './atmosphere.js';
+import { buildStreets, buildCars, buildBuildings } from './town.js';
 
 const TYPE_ID = { slab: 0, tower: 1, house: 2, commercial: 3 };
 
@@ -11,119 +13,12 @@ export function createCity(ctx) {
   const rng = makeRng(ctx.params.seed, 'city');
   const group = new THREE.Group(); group.name = 'city'; scene.add(group);
 
-  // ---------------------------------------------------------------- streets
-  {
-    const roadPos = [], walkPos = [];
-    const quad = (arr, ax, az, bx, bz, w, lift) => {
-      const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz) || 1, nx = -dz / L * w / 2, nz = dx / L * w / 2;
-      const n = Math.max(1, Math.ceil(L / 25));
-      for (let s = 0; s < n; s++) {
-        const t0 = s / n, t1 = (s + 1) / n;
-        const x0 = ax + dx * t0, z0 = az + dz * t0, x1 = ax + dx * t1, z1 = az + dz * t1;
-        const p = [[x0 + nx, z0 + nz], [x0 - nx, z0 - nz], [x1 + nx, z1 + nz], [x1 - nx, z1 - nz]].map(([x, z]) => [x, heightAt(x, z) + lift, z]);
-        arr.push(...p[0], ...p[2], ...p[1], ...p[1], ...p[2], ...p[3]);
-      }
-    };
-    for (const e of layout.edges) {
-      if (!e.on) continue;
-      const A = layout.nodes[e.a], B = layout.nodes[e.b];
-      quad(roadPos, A.x, A.z, B.x, B.z, e.w, 0.35);
-      quad(walkPos, A.x, A.z, B.x, B.z, e.w + 7, 0.22);
-    }
-    for (const n of layout.nodes) {
-      const w = Math.max(...n.adj.map((id) => (layout.edges[id].on ? layout.edges[id].w : 0)), 0);
-      if (!w) continue;
-      quad(roadPos, n.x - w / 2, n.z, n.x + w / 2, n.z, w, 0.36);
-    }
-    for (const r of layout.roads) {
-      for (let i = 1; i < r.pts.length; i++) quad(roadPos, r.pts[i - 1][0], r.pts[i - 1][1], r.pts[i][0], r.pts[i][1], r.w, 0.6);
-    }
-    const mk = (arr, color, rough, order) => {
-      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3)); g.computeVertexNormals();
-      const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2 * order, polygonOffsetUnits: -2 * order }));
-      m.renderOrder = order; group.add(m); return m;
-    };
-    mk(walkPos, 0x3b3833, 0.95, 1);
-    mk(roadPos, 0x17181a, 0.8, 2);
-  }
-
-  // ---------------------------------------------------------------- buildings
+  // ---------------------------------------------------------------- streets, cars, buildings (town.js)
+  const cars = buildStreets(ctx, group, rng);
+  buildCars(ctx, group, cars);
   const B = layout.buildings;
-  {
-    const P = [], N = [], F = [], C = [];
-    const wallCols = [[0.78, 0.74, 0.66], [0.82, 0.80, 0.74], [0.70, 0.64, 0.55], [0.86, 0.84, 0.80], [0.66, 0.62, 0.58], [0.74, 0.70, 0.62]];
-    for (const b of B) {
-      const base = b.y - 3, top = b.y + b.h, hw = b.w / 2, hd = b.d / 2;
-      const c = Math.cos(b.rot), s = Math.sin(b.rot);
-      const tr = (lx, lz) => [b.x + lx * c - lz * s, b.z + lx * s + lz * c];
-      const wc = wallCols[Math.floor(b.seed * wallCols.length)];
-      const tint = 0.9 + 0.2 * ((b.seed * 7.13) % 1);
-      const col = wc.map((v) => v * tint);
-      const floors = b.floors, type = TYPE_ID[b.type] ?? 0;
-      const face = (p0, p1, nx, nz, uLen) => {
-        const [x0, z0] = tr(...p0), [x1, z1] = tr(...p1);
-        const v = [[x0, base, z0, 0, -3], [x1, base, z1, uLen, -3], [x0, top, z0, 0, b.h], [x1, top, z1, uLen, b.h]];
-        const order = [0, 1, 2, 2, 1, 3];
-        const wn = [nx * c - nz * s, 0, nx * s + nz * c];
-        for (const o of order) { const q = v[o]; P.push(q[0], q[1], q[2]); N.push(...wn); F.push(q[3], q[4], b.seed * 97.0 + b.id, floors + type * 100); C.push(...col); }
-      };
-      face([-hw, hd], [hw, hd], 0, 1, b.w);
-      face([hw, -hd], [-hw, -hd], 0, -1, b.w);
-      face([hw, hd], [hw, -hd], 1, 0, b.d);
-      face([-hw, -hd], [-hw, hd], -1, 0, b.d);
-      // roof
-      const r = [tr(-hw, -hd), tr(hw, -hd), tr(-hw, hd), tr(hw, hd)];
-      for (const o of [0, 2, 1, 1, 2, 3]) { P.push(r[o][0], top, r[o][1]); N.push(0, 1, 0); F.push(0, b.h, b.seed * 97.0 + b.id, -1); C.push(col[0] * 0.55, col[1] * 0.55, col[2] * 0.55); }
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
-    g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
-    g.setAttribute('aFac', new THREE.Float32BufferAttribute(F, 4));
-    g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3));
-    const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.88, metalness: 0.0 });
-    const uniforms = { uTime: { value: 0 }, uWake: { value: 0 }, uWinGain: { value: 1.0 } };
-    mat.onBeforeCompile = (sh) => {
-      Object.assign(sh.uniforms, uniforms);
-      sh.vertexShader = sh.vertexShader
-        .replace('#include <common>', '#include <common>\nattribute vec4 aFac; varying vec4 vFac;')
-        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvFac = aFac;');
-      sh.fragmentShader = sh.fragmentShader
-        .replace('#include <common>', `#include <common>
-          varying vec4 vFac; uniform float uTime; uniform float uWake; uniform float uWinGain;
-          float bh(vec2 p) { return fract(sin(dot(p, vec2(41.31, 289.17))) * 15731.7431); }`)
-        .replace('#include <color_fragment>', `#include <color_fragment>
-          float wWin = 0.0; vec3 wEmit = vec3(0.0);
-          if (vFac.w >= 0.0) {
-            float type = floor(vFac.w / 100.0), floors = mod(vFac.w, 100.0);
-            float fh = type == 1.0 ? 3.2 : (type == 2.0 ? 3.1 : 3.0);
-            float sp = type == 3.0 ? 5.0 : (type == 2.0 ? 4.2 : 3.4);
-            vec2 g = vec2(vFac.x / sp, (vFac.y - 0.4) / fh);
-            vec2 id = floor(g); vec2 f = fract(g);
-            float inF = step(0.0, id.y) * step(id.y, floors - 1.0);
-            float ww = type == 3.0 && id.y < 0.5 ? 0.06 : 0.2;
-            wWin = step(ww, f.x) * step(f.x, 1.0 - ww) * step(0.26, f.y) * step(f.y, 0.86) * inF;
-            float r1 = bh(id + vFac.z), r2 = bh(id * 1.7 + vFac.z * 3.1), r3 = bh(id + vFac.z * 7.7 + 11.0);
-            float litFrac = 0.30 + 0.38 * uWake * step(r3, 0.85) + (type == 3.0 && id.y < 0.5 ? 0.6 : 0.0);
-            float lit = step(1.0 - litFrac, r1);
-            vec3 warm = vec3(1.0, 0.62, 0.30), neutral = vec3(1.0, 0.85, 0.62), cool = vec3(0.62, 0.78, 1.0);
-            vec3 wc = r2 < 0.55 ? warm : (r2 < 0.88 ? neutral : cool);
-            float tv = r2 > 0.94 ? 0.65 + 0.35 * sin(uTime * (7.0 + r3 * 9.0) + r1 * 40.0) : 1.0;
-            float curtain = 0.55 + 0.45 * smoothstep(0.25, 0.9, f.y) * (0.6 + 0.4 * r3);
-            wEmit = wc * lit * wWin * tv * curtain * (0.7 + 1.6 * r3) * uWinGain;
-            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.035, 0.04, 0.05), wWin * 0.9);
-            // grime streaks and floor lines
-            diffuseColor.rgb *= 0.86 + 0.14 * smoothstep(0.0, 0.08, abs(f.y - 0.06));
-          }`)
-        .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-          totalEmissiveRadiance += wEmit * 2.4;
-          // street lights wash the lower walls
-          if (vFac.w >= 0.0) totalEmissiveRadiance += diffuseColor.rgb * vec3(1.0, 0.6, 0.3) * 0.11 * exp(-max(vFac.y, 0.0) / 6.0);`);
-    };
-    const mesh = new THREE.Mesh(g, mat);
-    mesh.name = 'buildings';
-    group.add(mesh);
-    ctx.envCity = { buildingUniforms: uniforms };
-  }
+  const bld = buildBuildings(ctx, group);
+  ctx.envCity = { buildingUniforms: bld.uniforms };
 
   // ---------------------------------------------------------------- rooftop solar water heaters
   {
@@ -160,34 +55,33 @@ export function createCity(ctx) {
     lights.forEach((l, i) => {
       P[i * 3] = l.x + l.armX * 1.4; P[i * 3 + 1] = l.y + l.h; P[i * 3 + 2] = l.z + l.armZ * 1.4;
       const c = l.kind === 'led' ? [0.75, 0.85, 1.0] : [1.0, 0.58, 0.22];
-      Cc[i * 3] = c[0] * 5; Cc[i * 3 + 1] = c[1] * 5; Cc[i * 3 + 2] = c[2] * 5; Sz[i] = 1.6;
+      Cc[i * 3] = c[0] * 3.2; Cc[i * 3 + 1] = c[1] * 3.2; Cc[i * 3 + 2] = c[2] * 3.2; Sz[i] = 1.3;
     });
-    group.add(makeGlowPoints(P, Cc, Sz, 1.5));
+    group.add(makeGlowPoints(P, Cc, Sz, 1.2));
+    // red obstruction lights on the towers
+    const bc = bld.extras.beacons;
+    if (bc.length) group.add(makeGlowPoints(new Float32Array(bc.flat()), new Float32Array(bc.flatMap(() => [3.0, 0.25, 0.12])), new Float32Array(bc.map(() => 1.2)), 1.4));
     // light pools on the ground
     const poolG = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
     const poolM = new THREE.ShaderMaterial({
-      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: true,
-      uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uGain: { value: 1 } }]),
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
+      uniforms: { uGain: { value: 1 } },
       vertexShader: /* glsl */`
-        #include <fog_pars_vertex>
         attribute vec3 aCol; varying vec3 vCol; varying vec2 vUv;
-        void main() { vUv = uv; vCol = aCol; vec4 mvPosition = viewMatrix * modelMatrix * instanceMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mvPosition;
-          #include <fog_vertex>
-        }`,
+        ${ATM_GLSL}
+        void main() { vUv = uv; vec4 w = modelMatrix * instanceMatrix * vec4(position, 1.0); vec4 mvPosition = viewMatrix * w; gl_Position = projectionMatrix * mvPosition;
+          vec3 rel = w.xyz - cameraPosition; float d = length(rel); vCol = aCol * exp(-atmOD(cameraPosition, rel / max(d, 1.0), d)); }`,
       fragmentShader: /* glsl */`
-        #include <fog_pars_fragment>
         varying vec3 vCol; varying vec2 vUv; uniform float uGain;
-        void main() { float r = length(vUv - 0.5) * 2.0; float f = pow(max(0.0, 1.0 - r), 2.2); gl_FragColor = vec4(vCol * f * uGain, 1.0);
-          #include <fog_fragment>
-        }`,
+        void main() { float r = length(vUv - 0.5) * 2.0; float f = pow(max(0.0, 1.0 - r), 2.2); gl_FragColor = vec4(vCol * f * uGain, 1.0); }`,
     });
     const pools = new THREE.InstancedMesh(poolG, poolM, lights.length);
     const aCol = new Float32Array(lights.length * 3);
     lights.forEach((l, i) => {
-      const r = l.h * 2.4;
+      const r = l.h * 2.9;
       m4.makeScale(r, 1, r).setPosition(l.x + l.armX * 2, heightAt(l.x, l.z) + 0.45, l.z + l.armZ * 2);
       pools.setMatrixAt(i, m4);
-      const c = l.kind === 'led' ? [0.16, 0.18, 0.22] : [0.30, 0.16, 0.05];
+      const c = l.kind === 'led' ? [0.17, 0.19, 0.23] : [0.34, 0.18, 0.06];
       aCol.set(c, i * 3);
     });
     pools.geometry.setAttribute('aCol', new THREE.InstancedBufferAttribute(aCol, 3));
@@ -198,10 +92,11 @@ export function createCity(ctx) {
   // ---------------------------------------------------------------- trees
   {
     const palms = layout.trees.filter((t) => t.kind === 'palm'), broad = layout.trees.filter((t) => t.kind !== 'palm');
-    const trunkG = new THREE.CylinderGeometry(0.22, 0.32, 1, 6); trunkG.translate(0, 0.5, 0);
-    const crownG = new THREE.ConeGeometry(2.6, 1.6, 7, 1, true); crownG.rotateX(Math.PI); crownG.translate(0, 0.2, 0);
-    const blobG = new THREE.IcosahedronGeometry(2.6, 0);
-    const darkGreen = new THREE.MeshStandardMaterial({ color: 0x18241a, roughness: 0.9, side: THREE.DoubleSide });
+    const trunkG = new THREE.CylinderGeometry(0.2, 0.3, 1, 6); trunkG.translate(0, 0.5, 0);
+    const crownG = palmCrown();
+    const blobG = new THREE.IcosahedronGeometry(2.6, 1);
+    { const pa = blobG.attributes.position; for (let i = 0; i < pa.count; i++) { const x = pa.getX(i), y = pa.getY(i), z = pa.getZ(i); const k = 0.82 + 0.3 * Math.abs(Math.sin(x * 3.1 + z * 2.3) * Math.cos(y * 2.7)); pa.setXYZ(i, x * k, y * k * 0.8, z * k); } blobG.computeVertexNormals(); }
+    const darkGreen = new THREE.MeshStandardMaterial({ color: 0x223322, roughness: 0.85, side: THREE.DoubleSide });
     const trunks = new THREE.InstancedMesh(trunkG, new THREE.MeshStandardMaterial({ color: 0x3a3127, roughness: 0.95 }), palms.length);
     const crowns = new THREE.InstancedMesh(crownG, darkGreen, palms.length);
     const blobs = new THREE.InstancedMesh(blobG, darkGreen, broad.length);
@@ -222,20 +117,34 @@ export function createCity(ctx) {
   // ---------------------------------------------------------------- public shelters
   const shelterMeshes = new Map();
   {
-    const conc = new THREE.MeshStandardMaterial({ color: 0x8b877d, roughness: 0.9 });
+    // Israeli public shelter: a half-sunken concrete block with a stair entrance kiosk, a
+    // ventilation stack, a green sign light over the door and a green pool on the pavement.
+    const conc = new THREE.MeshStandardMaterial({ color: 0x8e8a80, roughness: 0.92 });
+    const concDark = new THREE.MeshStandardMaterial({ color: 0x5e5b55, roughness: 0.95 });
+    const signM = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.15, 2.2, 0.75), fog: true });
+    const stripeM = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.6, 1.8, 1.6), fog: true });
+    const P2 = [], C2 = [], S2 = [];
     for (const s of layout.shelters) {
       const g = new THREE.Group();
-      const body = new THREE.Mesh(new THREE.BoxGeometry(7, 2.6, 5), conc); body.position.y = 1.3; g.add(body);
-      const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 0.7), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.2, 2.4, 0.9) }));
-      sign.position.set(0, 2.25, 2.52); g.add(sign);
-      const door = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 2.0), new THREE.MeshBasicMaterial({ color: s.locked ? new THREE.Color(0.05, 0.05, 0.05) : new THREE.Color(2.2, 1.6, 0.9) }));
-      door.position.set(0, 1.0, 2.51); g.add(door);
+      const body = new THREE.Mesh(new THREE.BoxGeometry(9, 1.6, 7), conc); body.position.set(0, 0.8, -1.5); g.add(body);
+      const lip = new THREE.Mesh(new THREE.BoxGeometry(9.4, 0.25, 7.4), concDark); lip.position.set(0, 1.72, -1.5); g.add(lip);
+      const kiosk = new THREE.Mesh(new THREE.BoxGeometry(3.2, 2.8, 3.0), conc); kiosk.position.set(0, 1.4, 2.4); g.add(kiosk);
+      const kroof = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.22, 3.6), concDark); kroof.position.set(0, 2.9, 2.5); g.add(kroof);
+      const vent = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 1.4, 8), concDark); vent.position.set(3.4, 2.3, -3.5); g.add(vent);
+      const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.5), signM); sign.position.set(0, 2.45, 3.92); g.add(sign);
+      const stripe = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.08), stripeM); stripe.position.set(0, 2.45, 3.925); g.add(stripe);
+      const door = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.0), new THREE.MeshBasicMaterial({ color: s.locked ? new THREE.Color(0.03, 0.03, 0.035) : new THREE.Color(1.6, 1.15, 0.65), fog: true }));
+      door.position.set(0, 1.0, 3.91); g.add(door);
       g.position.set(s.x, s.y, s.z);
       g.rotation.y = s.rot;
       group.add(g);
       shelterMeshes.set(s.id, { g, door, sign });
+      // green glow at the sign and a soft green pool on the ground in front of the door
+      const fx = Math.sin(s.rot), fz = Math.cos(s.rot);
+      P2.push(s.x + fx * 4.0, s.y + 2.5, s.z + fz * 4.0); C2.push(0.25, 2.6, 0.9); S2.push(1.4);
     }
-    ctx.bus.on('shelter:open', ({ id }) => { const m = shelterMeshes.get(id); if (m) m.door.material.color.setRGB(2.2, 1.6, 0.9); });
+    if (P2.length) group.add(makeGlowPoints(new Float32Array(P2), new Float32Array(C2), new Float32Array(S2), 1.6));
+    ctx.bus.on('shelter:open', ({ id }) => { const m = shelterMeshes.get(id); if (m) m.door.material.color.setRGB(1.6, 1.15, 0.65); });
   }
 
   return {
@@ -261,8 +170,12 @@ export function makeGlowPoints(P, C, S, minPx = 1.5) {
     uniforms: { uScale: { value: 800 }, uMinPx: { value: minPx } },
     vertexShader: /* glsl */`
       attribute vec3 aCol; attribute float aSize; varying vec3 vCol; varying float vA; uniform float uScale; uniform float uMinPx;
+      ${ATM_GLSL}
       void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv;
-        float px = aSize * uScale / max(1.0, -mv.z); gl_PointSize = max(uMinPx, px); vA = min(1.0, px / uMinPx + 0.15); vCol = aCol; }`,
+        float px = aSize * uScale / max(1.0, -mv.z); gl_PointSize = max(uMinPx, px); vA = min(1.0, px / uMinPx + 0.15);
+        vec3 rel = (modelMatrix * vec4(position, 1.0)).xyz - cameraPosition; float d = length(rel);
+        float tr = exp(-atmOD(cameraPosition, rel / max(d, 1.0), d));
+        vCol = aCol * tr * mix(vec3(1.0, 0.82, 0.68), vec3(1.0), tr); }`,
     fragmentShader: /* glsl */`
       varying vec3 vCol; varying float vA;
       void main() { vec2 d = gl_PointCoord - 0.5; float r = length(d) * 2.0; if (r > 1.0) discard; float f = pow(1.0 - r, 2.0); gl_FragColor = vec4(vCol * f * vA, 1.0); }`,
@@ -272,4 +185,24 @@ export function makeGlowPoints(P, C, S, minPx = 1.5) {
   pts.frustumCulled = false;
   pts.renderOrder = 5;
   return pts;
+}
+
+// palm crown: 9 arched fronds (double-sided strips), drooping toward the tips
+function palmCrown() {
+  const P = [], I = [];
+  const n = 9, seg = 4;
+  for (let f = 0; f < n; f++) {
+    const a = (f / n) * Math.PI * 2 + (f % 2) * 0.2, ca = Math.cos(a), sa = Math.sin(a);
+    const len = 3.4 + (f % 3) * 0.35, lift = f % 2 ? 0.5 : 0.9;
+    const base = P.length / 3;
+    for (let k = 0; k <= seg; k++) {
+      const t = k / seg, r = len * t, y = lift * Math.sin(t * Math.PI * 0.9) - 1.6 * t * t, w = Math.max(0.06, 0.55 * Math.sin(Math.PI * Math.min(0.97, t * 1.15 + 0.08)));
+      for (const sd of [-1, 1]) P.push(ca * r - sa * w * sd, y - w * 0.25, sa * r + ca * w * sd);
+    }
+    for (let k = 0; k < seg; k++) { const i = base + k * 2; I.push(i, i + 2, i + 1, i + 1, i + 2, i + 3); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
+  g.setIndex(I); g.computeVertexNormals();
+  return g;
 }

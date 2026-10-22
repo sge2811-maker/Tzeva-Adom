@@ -12,31 +12,44 @@ import { createDistant } from './distant.js';
 import { createBatteries } from './batteries.js';
 import { createCrowd } from './crowd.js';
 import { GradeEffect, LookEffect } from './grade.js';
+import { installAtmosphere, ATM } from './atmosphere.js';
 
 export function create(ctx) {
   const { scene, renderer, camera, quality } = ctx;
   scene.background = null;
-  scene.fog = new THREE.FogExp2(0x0b1119, 0.000032);
+  const fog = installAtmosphere(scene);
 
   // ---------------------------------------------------------------- lighting
-  const moon = new THREE.DirectionalLight(0xa9bbff, 1.1);
+  // Moonlight: a low waxing crescent in the west. Silver, not saturated blue, so the desert
+  // keeps its sand/rock hue; a weak cool sky fill from the zenith-east models the escarpment.
+  const moon = new THREE.DirectionalLight(new THREE.Color().setRGB(0.72, 0.80, 1.0), 0.95);
   moon.position.copy(MOON_DIR).multiplyScalar(8000);
   scene.add(moon, moon.target);
-  const hemi = new THREE.HemisphereLight(0x2a3d63, 0x1a130c, 1.6);
+  const fill = new THREE.DirectionalLight(new THREE.Color().setRGB(0.55, 0.65, 0.9), 0.30);
+  fill.position.set(3000, 8000, -1500);
+  scene.add(fill, fill.target);
+  const hemi = new THREE.HemisphereLight(new THREE.Color().setRGB(0.20, 0.25, 0.36), new THREE.Color().setRGB(0.10, 0.075, 0.05), 0.75);
   scene.add(hemi);
-  // flash lights: a small pool of point lights reused for explosions/intercepts near the camera
+  // flash lights: a fixed pool of point lights reused for launches/intercepts/impacts. They stay
+  // in the scene at intensity 0 (toggling visibility changes the light count and recompiles every
+  // material, which is a hitch on real GPUs).
   const pool = [];
-  for (let i = 0; i < 6; i++) { const l = new THREE.PointLight(0xffa860, 0, 1, 2); l.visible = false; l.userData = { t: 0, dur: 1, power: 0 }; scene.add(l); pool.push(l); }
+  const nPool = Math.max(2, Math.min(6, quality.s.lightsMax | 0));
+  for (let i = 0; i < nPool; i++) { const l = new THREE.PointLight(0xffa860, 0, 1, 2); l.userData = { t: 1, dur: 1, power: 0, on: false }; scene.add(l); pool.push(l); }
   ctx.lights = {
     // world position, colour [r,g,b], peak intensity (candela-ish), radius (m), duration (s)
     flash(pos, color = [1, 0.7, 0.4], intensity = 2e6, radius = 4000, dur = 0.6) {
-      const max = quality.s.lightsMax;
-      let l = pool.slice(0, max).find((q) => !q.visible) || pool.slice(0, max).reduce((a, b) => (a.userData.t / a.userData.dur > b.userData.t / b.userData.dur ? a : b));
+      const max = Math.min(pool.length, quality.s.lightsMax | 0 || pool.length);
+      const live = pool.slice(0, max);
+      // reuse an idle light, else the one whose remaining energy is lowest
+      let l = live.find((q) => !q.userData.on) || live.reduce((a, b) => (a.userData.power * (1 - a.userData.t / a.userData.dur) < b.userData.power * (1 - b.userData.t / b.userData.dur) ? a : b));
       l.position.set(pos.x, pos.y, pos.z); l.color.setRGB(color[0], color[1], color[2]);
-      l.distance = radius; l.userData = { t: 0, dur, power: intensity }; l.intensity = intensity; l.visible = true;
+      l.distance = radius; l.userData = { t: 0, dur, power: intensity, on: true }; l.intensity = intensity;
       sky.flash(pos, Math.min(3, intensity / 1.5e6), color);
     },
   };
+  // night light levels for other streams (VFX smoke should be lit by these, not emissive)
+  ctx.envLight = { ambient: new THREE.Color().setRGB(0.050, 0.056, 0.072), moon: moon.color.clone().multiplyScalar(0.09), fog: fog.color, flash: 0 };
 
   const sky = createSky(ctx);
   const terrain = createTerrain(ctx);
@@ -58,7 +71,7 @@ export function create(ctx) {
   };
   ao = buildAO();
   if (ao) composer.addPass(ao);
-  const bloom = new BloomEffect({ mipmapBlur: true, luminanceThreshold: 0.55, luminanceSmoothing: 0.3, intensity: 1.25, radius: 0.78, levels: 7 });
+  const bloom = new BloomEffect({ mipmapBlur: true, luminanceThreshold: 0.85, luminanceSmoothing: 0.35, intensity: 0.85, radius: 0.72, levels: 6 });
   const grade = new GradeEffect();
   const tone = new ToneMappingEffect({ mode: ToneMappingMode.AGX });
   const look = new LookEffect();
@@ -100,13 +113,16 @@ export function create(ctx) {
       batteries.update(dt);
       crowd.update(dt);
       updateGlowScale();
+      let flashSum = 0;
       for (const l of pool) {
-        if (!l.visible) continue;
+        if (!l.userData.on) continue;
         l.userData.t += dt;
         const k = 1 - l.userData.t / l.userData.dur;
-        if (k <= 0) { l.visible = false; l.intensity = 0; continue; }
+        if (k <= 0) { l.userData.on = false; l.intensity = 0; continue; }
         l.intensity = l.userData.power * k * k;
+        flashSum += l.intensity / Math.max(1, l.position.distanceToSquared(camera.position));
       }
+      ctx.envLight.flash = flashSum;
       const wantRed = ctx.sim.phase === 'alert' ? 0.55 : 0;
       red += (Math.max(wantRed, ctx.fx.red) - red) * Math.min(1, dt * 2);
       grade.uniforms.get('uRed').value = red;

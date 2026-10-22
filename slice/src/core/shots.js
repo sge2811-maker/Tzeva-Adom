@@ -13,6 +13,7 @@ export const SHOTS = {
   'S6-salvo': { t: 222.4, cam: { mode: 'pose', pos: [-1600, 90, 500], look: [9000, 3600, 200], fov: 64 }, desc: 'Skyline: Arrow 3 exo-atmospheric intercepts high over the Dead Sea' },
   'S7-aftermath': { t: 312, cam: { mode: 'tactical', target: [-2600, 1300], dist: 4200, yaw: -0.25, pitch: 0.4 }, desc: 'All-clear: smoke over Nevatim, people leaving shelters' },
   'S8-debrief': { t: 330, cam: { mode: 'tactical', target: [0, 0], dist: 2400, yaw: 0.2, pitch: 0.5 }, desc: 'Debrief screen over the town' },
+  'S9-nevatim': { t: 257, cam: { mode: 'pose', pos: [-4300, 60, 900], look: [-6500, -40, 3200], fov: 50 }, desc: '[vfx] Ballistic impacts at Nevatim: fireballs, dust rings, smoke columns, scorch' },
 };
 // Short captures (frame sequences) for motion-dependent streams: start t, seconds, fps, camera from a shot
 export const CLIPS = {
@@ -20,4 +21,5 @@ export const CLIPS = {
   'C2-alert-beat': { t: 157, len: 12, fps: 12, cam: 'S4-alert', desc: 'Early warning -> siren -> people start running' },
   'C3-drone-kill': { t: 72, len: 10, fps: 12, cam: 'S3-drones', desc: 'Iron Dome vs drones over the escarpment' },
   'C4-overhead': { t: 247, len: 10, fps: 12, cam: 'S5-street', desc: 'Sling intercepts overhead, debris falling on the town' },
+  'C5-nevatim': { t: 253, len: 8, fps: 12, cam: 'S9-nevatim', desc: '[vfx] Salvo 2 ballistic impacts at Nevatim' },
 };

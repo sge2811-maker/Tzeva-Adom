@@ -7,18 +7,24 @@ import { Uniform } from 'three';
 export class GradeEffect extends Effect {
   constructor() {
     super('GradeEffect', /* glsl */`
-      uniform float uExposure; uniform float uFlash; uniform float uRed; uniform float uDesat; uniform float uTime;
+      uniform float uExposure; uniform float uBase; uniform float uFlash; uniform float uRed; uniform float uDesat; uniform float uTime;
       void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
-        vec3 c = inputColor.rgb * exp2(uExposure);
-        c += vec3(1.0, 0.93, 0.85) * uFlash * 0.08 * (0.6 + 0.4 * dot(c, vec3(0.33)));
+        vec3 c = inputColor.rgb * exp2(uExposure + uBase);
+        c += vec3(1.0, 0.93, 0.85) * uFlash * 0.05 * (0.5 + 0.5 * min(dot(c, vec3(0.33)), 1.0));
         vec2 q = uv - 0.5; float r2 = dot(q, q);
-        float pulse = 0.75 + 0.25 * sin(uTime * 6.2831 * 0.5);
-        c = mix(c, c * vec3(1.45, 0.52, 0.46) + vec3(0.025, 0.0, 0.0), uRed * pulse * smoothstep(0.04, 0.42, r2));
+        // red alert: not a filter. Slightly drained colour, a crimson cast creeping in from the
+        // frame edges and a slow pulse with the siren; lit windows and fires keep their hue.
+        float pulse = 0.7 + 0.3 * sin(uTime * 6.2831 * 0.5);
+        float edge = smoothstep(0.05, 0.48, r2);
+        float l0 = dot(c, vec3(0.2126, 0.7152, 0.0722));
+        c = mix(c, vec3(l0), 0.22 * uRed);
+        float ra = uRed * pulse * edge;
+        c = c * mix(vec3(1.0), vec3(1.18, 0.86, 0.84), ra) + vec3(0.016, 0.0015, 0.002) * ra;
         float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
         c = mix(c, vec3(l), uDesat);
         outputColor = vec4(c, inputColor.a);
       }`, {
-      uniforms: new Map([['uExposure', new Uniform(0)], ['uFlash', new Uniform(0)], ['uRed', new Uniform(0)], ['uDesat', new Uniform(0)], ['uTime', new Uniform(0)]]),
+      uniforms: new Map([['uExposure', new Uniform(0)], ['uBase', new Uniform(0.0)], ['uFlash', new Uniform(0)], ['uRed', new Uniform(0)], ['uDesat', new Uniform(0)], ['uTime', new Uniform(0)]]),
     });
   }
 }
@@ -30,7 +36,7 @@ export class LookEffect extends Effect {
       void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
         vec3 c = inputColor.rgb;
         float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
-        vec3 shadows = vec3(0.86, 0.98, 1.10), highs = vec3(1.06, 0.99, 0.90);
+        vec3 shadows = vec3(0.93, 0.99, 1.07), highs = vec3(1.05, 0.99, 0.91);
         vec3 graded = c * mix(shadows, highs, smoothstep(0.08, 0.7, l));
         graded = (graded - 0.5) * 1.06 + 0.5;            // gentle contrast
         graded += vec3(0.004, 0.007, 0.011) * (1.0 - l);  // lifted, cool blacks
