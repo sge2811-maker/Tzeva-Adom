@@ -11,3 +11,8 @@ node_modules/
 /slice/tools/node_modules/
 /slice/tools/.cache/
 /slice/.capture/
+# gauntlet render outputs (status.html embeds thumbnails; curated media goes to slice/media/)
+/slice/status/shots/
+/slice/status/clips/
+/slice/status/audio/
+/slice/status/perf*/

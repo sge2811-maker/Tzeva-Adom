@@ -10,92 +10,102 @@
       "id": "env",
       "name": "Environment & lighting",
       "scope": "Skyline, atmosphere, fog, tone mapping, bloom, SSAO, colour grade",
-      "state": "queued",
-      "round": 0,
+      "state": "building",
+      "round": 1,
       "scores": [],
       "best": null,
       "noImprove": 0,
       "shot": null,
       "issues": [],
       "note": "",
-      "commit": null
+      "commit": null,
+      "updated": "2026-10-22T06:59:28.765Z"
     },
     "vfx": {
       "id": "vfx",
       "name": "VFX",
       "scope": "Launches, interceptor trails, intercepts, debris, smoke, screen shake",
-      "state": "queued",
-      "round": 0,
+      "state": "building",
+      "round": 1,
       "scores": [],
       "best": null,
       "noImprove": 0,
       "shot": null,
       "issues": [],
       "note": "",
-      "commit": null
+      "commit": null,
+      "updated": "2026-10-22T06:59:28.849Z"
     },
     "audio": {
       "id": "audio",
       "name": "Audio",
       "scope": "Siren timing, spatial audio, impacts, ambience (original/synthesized only)",
-      "state": "queued",
-      "round": 0,
+      "state": "building",
+      "round": 1,
       "scores": [],
       "best": null,
       "noImprove": 0,
       "shot": null,
       "issues": [],
       "note": "",
-      "commit": null
+      "commit": null,
+      "updated": "2026-10-22T06:59:28.950Z"
     },
     "hud": {
       "id": "hud",
       "name": "HUD & UX",
       "scope": "Alert countdown, objectives, shelter routing — cinematic and minimal",
-      "state": "queued",
-      "round": 0,
+      "state": "building",
+      "round": 1,
       "scores": [],
       "best": null,
       "noImprove": 0,
       "shot": null,
       "issues": [],
       "note": "",
-      "commit": null
+      "commit": null,
+      "updated": "2026-10-22T06:59:29.034Z"
     },
     "camera": {
       "id": "camera",
       "name": "Camera & game feel",
       "scope": "Intro flyover, input response, hit-stop, alert → shelter → aftermath pacing",
-      "state": "queued",
-      "round": 0,
+      "state": "building",
+      "round": 1,
       "scores": [],
       "best": null,
       "noImprove": 0,
       "shot": null,
       "issues": [],
       "note": "",
-      "commit": null
+      "commit": null,
+      "updated": "2026-10-22T06:59:29.110Z"
     },
     "perf": {
       "id": "perf",
       "name": "Performance",
       "scope": "60 fps on a mid-range laptop in Chrome",
-      "state": "queued",
-      "round": 0,
+      "state": "building",
+      "round": 1,
       "scores": [],
       "best": null,
       "noImprove": 0,
       "shot": null,
       "issues": [],
       "note": "",
-      "commit": null
+      "commit": null,
+      "updated": "2026-10-22T06:59:29.203Z"
     }
   },
   "log": [
+    {
+      "when": "2026-10-22T06:59:29.347Z",
+      "text": "Round 1: all six builders started in parallel (perf in phase A: instrumentation and budgets)."
+    },
     {
       "when": "2026-10-22T06:56:41.058Z",
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-22T06:56:41.058Z"
+  "updated": "2026-10-22T06:59:29.347Z"
 }
