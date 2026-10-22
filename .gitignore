@@ -8,3 +8,6 @@ node_modules/
 /playwright-report/
 /profiles/
 /downloads/
+/slice/tools/node_modules/
+/slice/tools/.cache/
+/slice/.capture/

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Iron Wall · Tzeva Adom</title>
+<meta name="description" content="Iron Wall (13–14 April 2024): a Three.js vertical slice of Tzeva Adom: Seven Fronts.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305080c'/%3E%3Cpath d='M16 5 L27 26 H5 Z' fill='none' stroke='%23ff4f3d' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="./src/hud/hud.css">
+<style>
+  html, body { margin: 0; height: 100%; background: #05080c; overflow: hidden; }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none; touch-action: none; }
+  #boot { position: fixed; inset: 0; display: grid; place-items: center; color: #8ea1aa; font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace; letter-spacing: 0.2em; text-transform: uppercase; background: #05080c; z-index: 50; transition: opacity 0.6s; }
+  #boot.done { opacity: 0; pointer-events: none; }
+  #fatal { position: fixed; inset: 0; display: none; place-items: center; padding: 24px; text-align: center; color: #c9d4d9; font: 15px/1.5 system-ui, sans-serif; background: #05080c; z-index: 60; }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three/build/three.module.js",
+    "three/addons/": "./vendor/three/examples/jsm/",
+    "three/examples/jsm/": "./vendor/three/examples/jsm/",
+    "postprocessing": "./vendor/postprocessing/postprocessing.js",
+    "n8ao": "./vendor/n8ao/N8AO.js"
+  }
+}
+</script>
+</head>
+<body>
+<canvas id="gl" tabindex="0" aria-label="Iron Wall: the Negev at night"></canvas>
+<div id="hud" aria-live="polite"></div>
+<div id="boot">Loading the Negev…</div>
+<div id="fatal" role="alert"></div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>

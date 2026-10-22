@@ -1,0 +1,12 @@
+{
+  "name": "iron-wall-slice-tools",
+  "private": true,
+  "type": "module",
+  "description": "Dev-only tooling for the Iron Wall vertical slice (vendoring, screenshots, captures, perf). Not shipped.",
+  "devDependencies": {
+    "n8ao": "2.0.1",
+    "playwright": "^1.56.0",
+    "postprocessing": "6.39.5",
+    "three": "0.186.1"
+  }
+}

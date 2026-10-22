@@ -1,0 +1,101 @@
+{
+  "title": "Iron Wall — vertical slice gauntlet",
+  "started": "2026-10-22T06:56:41.057Z",
+  "mission": {
+    "playable": true,
+    "note": ""
+  },
+  "streams": {
+    "env": {
+      "id": "env",
+      "name": "Environment & lighting",
+      "scope": "Skyline, atmosphere, fog, tone mapping, bloom, SSAO, colour grade",
+      "state": "queued",
+      "round": 0,
+      "scores": [],
+      "best": null,
+      "noImprove": 0,
+      "shot": null,
+      "issues": [],
+      "note": "",
+      "commit": null
+    },
+    "vfx": {
+      "id": "vfx",
+      "name": "VFX",
+      "scope": "Launches, interceptor trails, intercepts, debris, smoke, screen shake",
+      "state": "queued",
+      "round": 0,
+      "scores": [],
+      "best": null,
+      "noImprove": 0,
+      "shot": null,
+      "issues": [],
+      "note": "",
+      "commit": null
+    },
+    "audio": {
+      "id": "audio",
+      "name": "Audio",
+      "scope": "Siren timing, spatial audio, impacts, ambience (original/synthesized only)",
+      "state": "queued",
+      "round": 0,
+      "scores": [],
+      "best": null,
+      "noImprove": 0,
+      "shot": null,
+      "issues": [],
+      "note": "",
+      "commit": null
+    },
+    "hud": {
+      "id": "hud",
+      "name": "HUD & UX",
+      "scope": "Alert countdown, objectives, shelter routing — cinematic and minimal",
+      "state": "queued",
+      "round": 0,
+      "scores": [],
+      "best": null,
+      "noImprove": 0,
+      "shot": null,
+      "issues": [],
+      "note": "",
+      "commit": null
+    },
+    "camera": {
+      "id": "camera",
+      "name": "Camera & game feel",
+      "scope": "Intro flyover, input response, hit-stop, alert → shelter → aftermath pacing",
+      "state": "queued",
+      "round": 0,
+      "scores": [],
+      "best": null,
+      "noImprove": 0,
+      "shot": null,
+      "issues": [],
+      "note": "",
+      "commit": null
+    },
+    "perf": {
+      "id": "perf",
+      "name": "Performance",
+      "scope": "60 fps on a mid-range laptop in Chrome",
+      "state": "queued",
+      "round": 0,
+      "scores": [],
+      "best": null,
+      "noImprove": 0,
+      "shot": null,
+      "issues": [],
+      "note": "",
+      "commit": null
+    }
+  },
+  "log": [
+    {
+      "when": "2026-10-22T06:56:41.058Z",
+      "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
+    }
+  ],
+  "updated": "2026-10-22T06:56:41.058Z"
+}

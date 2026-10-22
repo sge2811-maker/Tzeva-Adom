@@ -1,0 +1,24 @@
+<!doctype html><meta charset="utf-8"><title>probe</title>
+<style>html,body{margin:0;background:#000}</style>
+<canvas id="c" width="960" height="540"></canvas>
+<script type="importmap">{"imports":{"three":"../vendor/three/build/three.module.js","three/addons/":"../vendor/three/examples/jsm/","three/examples/jsm/":"../vendor/three/examples/jsm/","postprocessing":"../vendor/postprocessing/postprocessing.js","n8ao":"../vendor/n8ao/N8AO.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer, RenderPass, EffectPass, BloomEffect, ToneMappingEffect, ToneMappingMode } from 'postprocessing';
+import { N8AOPostPass } from 'n8ao';
+const r = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: false, powerPreference: 'high-performance' });
+const gl = r.getContext();
+const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+const info = { webgl2: r.capabilities.isWebGL2, renderer: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER), floatRT: !!gl.getExtension('EXT_color_buffer_float'), maxTex: gl.getParameter(gl.MAX_TEXTURE_SIZE) };
+const s = new THREE.Scene(); const cam = new THREE.PerspectiveCamera(50, 16/9, 0.1, 100); cam.position.set(2,2,3); cam.lookAt(0,0,0);
+s.add(new THREE.Mesh(new THREE.TorusKnotGeometry(0.6,0.2,128,16), new THREE.MeshStandardMaterial({color:0x8899aa, emissive:0x331100})));
+s.add(new THREE.Mesh(new THREE.PlaneGeometry(10,10).rotateX(-Math.PI/2).translate(0,-1,0), new THREE.MeshStandardMaterial({color:0x444444})));
+const L = new THREE.DirectionalLight(0xffffff, 3); L.position.set(3,4,2); s.add(L); s.add(new THREE.AmbientLight(0x404050, 1));
+const comp = new EffectComposer(r, { frameBufferType: THREE.HalfFloatType });
+comp.addPass(new RenderPass(s, cam));
+const ao = new N8AOPostPass(s, cam, 960, 540); comp.addPass(ao);
+comp.addPass(new EffectPass(cam, new BloomEffect({ intensity: 1.5, luminanceThreshold: 0.6, mipmapBlur: true }), new ToneMappingEffect({ mode: ToneMappingMode.AGX })));
+const t0 = performance.now(); let n = 0;
+function loop(){ comp.render(); n++; if (n < 20) requestAnimationFrame(loop); else { info.msPerFrame = (performance.now()-t0)/n; window.__probe = info; document.title = 'done'; } }
+loop();
+</script>
