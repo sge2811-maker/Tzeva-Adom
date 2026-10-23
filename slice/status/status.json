@@ -10,16 +10,16 @@
       "id": "env",
       "name": "Environment & lighting",
       "scope": "Skyline, atmosphere, fog, tone mapping, bloom, SSAO, colour grade",
-      "state": "building",
+      "state": "critique",
       "round": 1,
       "scores": [],
       "best": null,
       "noImprove": 0,
-      "shot": null,
+      "shot": "status/shots/env-dev4/noui/S4-alert.png",
       "issues": [],
-      "note": "",
+      "note": "Round 1 built (builder self-rates ~7): atmosphere, terrain materials, streets, balconies, cars, shelters, crowd. Critic reviewing.",
       "commit": null,
-      "updated": "2026-10-22T06:59:28.765Z"
+      "updated": "2026-10-23T00:14:16.027Z"
     },
     "vfx": {
       "id": "vfx",
@@ -99,6 +99,10 @@
   },
   "log": [
     {
+      "when": "2026-10-23T00:14:16.027Z",
+      "text": "Env round 1 finished; fresh critic launched. VFX resumed after the overnight limit."
+    },
+    {
       "when": "2026-10-22T11:25:54.909Z",
       "text": "14:25 IDT: usage limit reset; all six round-1 builders resumed from where they stopped (container had restarted, no code lost)."
     },
@@ -111,5 +115,5 @@
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-22T11:25:54.909Z"
+  "updated": "2026-10-23T00:14:16.027Z"
 }
