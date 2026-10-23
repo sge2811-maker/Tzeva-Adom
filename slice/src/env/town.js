@@ -8,7 +8,7 @@
 import * as THREE from 'three';
 import { heightAt } from '../world/geo.js';
 
-const TYPE_ID = { slab: 0, tower: 1, house: 2, commercial: 3 };
+const TYPE_ID = { slab: 0, tower: 1, house: 2, commercial: 3, shed: 4 };
 const hash = (x) => { const s = Math.sin(x * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
 
 // ------------------------------------------------------------------ streets
@@ -25,7 +25,7 @@ export function buildStreets(ctx, group, rng) {
       const p = [[x0 + nx, z0 + nz, t0, 0], [x0 - nx, z0 - nz, t0, 1], [x1 + nx, z1 + nz, t1, 0], [x1 - nx, z1 - nz, t1, 1]];
       for (const o of [0, 2, 1, 1, 2, 3]) {
         const [x, z, t, v] = p[o];
-        dst.P.push(x, heightAt(x, z) + lift, z);
+        dst.P.push(x, (ctx.envGround ? ctx.envGround(x, z) : heightAt(x, z)) + lift, z);
         dst.A.push(L0 + t * L, v, L0 + L, code);
       }
     }
@@ -61,11 +61,14 @@ export function buildStreets(ctx, group, rng) {
     strip(road, n.x - w / 2, n.z, n.x + w / 2, n.z, w, 0.36, 3 + w * 16); // junction box: plain asphalt
   }
   for (const r of layout.roads) {
+    const curve = new THREE.CatmullRomCurve3(r.pts.map(([x, z]) => new THREE.Vector3(x, 0, z)), false, 'centripetal');
+    const len = curve.getLength(), pts = curve.getSpacedPoints(Math.max(2, Math.ceil(len / 25)));
     let acc = 0;
-    for (let i = 1; i < r.pts.length; i++) {
-      const [x0, z0] = r.pts[i - 1], [x1, z1] = r.pts[i];
-      strip(road, x0, z0, x1, z1, r.w, 0.6, 2 + r.w * 16, acc); // regional road: lane paint, no median
-      acc += Math.hypot(x1 - x0, z1 - z0);
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1], b = pts[i];
+      strip(walk, a.x, a.z, b.x, b.z, r.w + 6, 0.12, r.w * 16 + 8);            // gravel shoulders
+      strip(road, a.x, a.z, b.x, b.z, r.w, 0.25, 2 + r.w * 16, acc);          // asphalt: lane paint, no median
+      acc += a.distanceTo(b);
     }
   }
   const mk = (src, color, order, frag) => {
@@ -92,6 +95,11 @@ export function buildStreets(ctx, group, rng) {
   };
   // sidewalks: pale concrete pavers, a bright curb on the road edge, dusty outer edge
   mk(walk, 0x7a756c, 1, /* glsl */`
+    if (mod(vRd.w, 16.0) > 7.5) {
+      // gravel shoulder blending into the desert
+      float Ws = floor(vRd.w / 16.0) + 6.0; float vs = abs(vRd.y - 0.5) * Ws;
+      diffuseColor.rgb = vec3(0.30, 0.26, 0.21) * (0.8 + 0.4 * rN(vRW.xz * 0.9)) * mix(1.0, 1.15, smoothstep(Ws * 0.5 - 0.5, Ws * 0.5 - 2.5, vs));
+    } else {
     float W = floor(vRd.w / 16.0) + 7.0, rw = W - 7.0;
     float vm = abs(vRd.y - 0.5) * W;
     vec2 tile = vec2(vRd.x / 0.6, vm / 0.6);
@@ -100,7 +108,8 @@ export function buildStreets(ctx, group, rng) {
     float curb = smoothstep(rw * 0.5 + 0.45, rw * 0.5 + 0.2, vm);
     diffuseColor.rgb *= (0.86 + 0.22 * rN(tile * 0.37)) * (1.0 - 0.18 * joint);
     diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.62, 0.60, 0.56), curb);
-    diffuseColor.rgb *= mix(1.0, 0.8, smoothstep(W * 0.5 - 0.6, W * 0.5, vm));`);
+    diffuseColor.rgb *= mix(1.0, 0.8, smoothstep(W * 0.5 - 0.6, W * 0.5, vm));
+    }`);
   // asphalt: worn grey with patches, paint, median and crossings
   mk(road, 0x45464b, 2, /* glsl */`
     float code = vRd.w; float w = floor(code / 16.0); float c = mod(code, 16.0);
@@ -138,6 +147,8 @@ export function buildStreets(ctx, group, rng) {
     float zebra = step(0.5, fract(vm / 1.1)) * step(av, hw - 0.6);
     paint = max(paint, (inA + inB) * zebra);
     col = mix(col, vec3(0.62, 0.62, 0.6) * (0.75 + 0.25 * rN(vRW.xz * 2.0)), clamp(paint, 0.0, 1.0) * 0.85);
+    // far away asphalt reads as a pale grey line, not a black ribbon
+    col = mix(col, vec3(0.11, 0.105, 0.10), smoothstep(700.0, 4000.0, length(vRW - cameraPosition)) * 0.8);
     diffuseColor.rgb = col;`);
   return cars;
 }
@@ -177,10 +188,10 @@ export function buildCars(ctx, group, cars) {
 }
 
 // ------------------------------------------------------------------ buildings
-export function buildBuildings(ctx, group) {
-  const B = ctx.layout.buildings;
+export function buildBuildings(ctx, group, extra = []) {
+  const B = ctx.layout.buildings.concat(extra);
   const P = [], N = [], F = [], F2 = [], C = [];
-  const wallCols = [[0.70, 0.66, 0.58], [0.74, 0.72, 0.66], [0.64, 0.58, 0.50], [0.78, 0.76, 0.72], [0.60, 0.56, 0.52], [0.68, 0.64, 0.56], [0.58, 0.54, 0.47]];
+  const wallCols = [[0.74, 0.65, 0.52], [0.78, 0.71, 0.60], [0.68, 0.59, 0.47], [0.82, 0.75, 0.64], [0.64, 0.57, 0.48], [0.72, 0.63, 0.50], [0.62, 0.55, 0.44]];
   const extras = { roofUnits: [], beacons: [] };
   for (const b of B) {
     const type = TYPE_ID[b.type] ?? 0, floors = b.floors;
@@ -191,10 +202,10 @@ export function buildBuildings(ctx, group) {
     const hs = (k) => hash(b.seed * 91.7 + b.id * 0.131 + k * 17.3);
     const wc = wallCols[Math.floor(hs(1) * wallCols.length)];
     const tint = 0.9 + 0.2 * hs(2);
-    const col = wc.map((v) => v * tint * 0.78);
+    const col = type === 4 ? [0.42, 0.42, 0.40].map((v) => v * tint) : wc.map((v) => v * tint * 0.8);
     const litFrac = 0.10 + 0.40 * hs(3) * hs(3) + (type === 1 ? 0.08 : 0);
     const style = Math.floor(hs(4) * 8);
-    const sid = b.seed * 97.0 + b.id;
+    const sid = b.id * 3 + Math.floor(b.seed * 3); // integer: the shader hashes it exactly
     const fh = type === 1 ? 3.2 : type === 2 ? 3.1 : 3.0, sp = type === 3 ? 5.0 : type === 2 ? 4.2 : 3.4;
     const longX = b.w >= b.d;
     // facade face with window attributes
@@ -202,7 +213,7 @@ export function buildBuildings(ctx, group) {
       const [x0, z0] = tr(...p0), [x1, z1] = tr(...p1);
       const v = [[x0, base, z0, 0, -3], [x1, base, z1, uLen, -3], [x0, top, z0, 0, b.h], [x1, top, z1, uLen, b.h]];
       const wn = rot(nx, nz);
-      for (const o of [0, 1, 2, 2, 1, 3]) { const q = v[o]; P.push(q[0], q[1], q[2]); N.push(wn[0], 0, wn[1]); F.push(q[3], q[4], sid, floors + type * 100); F2.push(uLen, isLong ? 1 : 0, litFrac, style); C.push(...col); }
+      for (const o of [0, 1, 2, 2, 1, 3]) { const q = v[o]; P.push(q[0], q[1], q[2]); N.push(wn[0], 0, wn[1]); F.push(q[3], q[4], sid, (type === 4 ? 0 : floors) + type * 100); F2.push(uLen, isLong ? 1 : 0, litFrac, style); C.push(...col); }
     };
     face([-hw, hd], [hw, hd], 0, 1, b.w, longX);
     face([hw, -hd], [-hw, -hd], 0, -1, b.w, longX);
@@ -226,7 +237,7 @@ export function buildBuildings(ctx, group) {
       }
     };
     // roof: slab, with a parapet; some houses get a hipped tile roof instead
-    const roofCol = [0.30, 0.29, 0.28].map((v) => v * (0.85 + 0.3 * hs(5)));
+    const roofCol = (type === 4 ? [0.36, 0.36, 0.35] : [0.27, 0.25, 0.22]).map((v) => v * (0.85 + 0.3 * hs(5)));
     const tile = type === 2 && hs(6) < 0.38;
     if (tile) {
       const rh = Math.min(hw, hd) * 0.55, tc = [0.42, 0.17, 0.10].map((v) => v * (0.85 + 0.3 * hs(7)));
@@ -247,7 +258,7 @@ export function buildBuildings(ctx, group) {
     } else {
       const r = [tr(-hw, -hd), tr(hw, -hd), tr(-hw, hd), tr(hw, hd)];
       for (const o of [0, 2, 1, 1, 2, 3]) { P.push(r[o][0], top, r[o][1]); N.push(0, 1, 0); F.push(0, b.h, sid, -1); F2.push(0, 0, 0, 0); C.push(...roofCol); }
-      const ph = type === 2 ? 0.7 : 1.0, pt = 0.25, pc = col.map((v) => v * 0.92);
+      const ph = type === 2 ? 0.7 : type === 4 ? 0.3 : 1.0, pt = 0.25, pc = col.map((v) => v * 0.92);
       box(-hw, hw, top, top + ph, hd - pt, hd, pc); box(-hw, hw, top, top + ph, -hd, -hd + pt, pc);
       box(hw - pt, hw, top, top + ph, -hd + pt, hd - pt, pc); box(-hw, -hw + pt, top, top + ph, -hd + pt, hd - pt, pc);
     }
@@ -333,7 +344,7 @@ export function buildBuildings(ctx, group) {
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
         varying vec4 vFac; varying vec4 vFac2; varying vec3 vBW; uniform float uTime; uniform float uWake; uniform float uWinGain;
-        float bh(vec2 p) { return fract(sin(dot(p, vec2(41.31, 289.17))) * 15731.7431); }
+        float bh(vec2 p) { p = mod(p, 289.0); return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
         float bn(vec2 p) { vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f); return mix(mix(bh(i), bh(i + vec2(1, 0)), u.x), mix(bh(i + vec2(0, 1)), bh(i + vec2(1, 1)), u.x), u.y); }`)
       .replace('#include <color_fragment>', `#include <color_fragment>
         float wWin = 0.0; vec3 wEmit = vec3(0.0);
@@ -351,8 +362,10 @@ export function buildBuildings(ctx, group) {
           float isStair = (type == 0.0 && vFac2.y > 0.5) ? step(abs(su), 1.5) : 0.0;
           float shop = (type == 3.0 && id.y < 0.5) ? 1.0 : 0.0;
           float ww = shop > 0.5 ? 0.05 : (type == 2.0 ? 0.26 : 0.2);
-          wWin = step(ww, f.x) * step(f.x, 1.0 - ww) * step(shop > 0.5 ? 0.05 : 0.26, f.y) * step(f.y, 0.86) * inF * (1.0 - isStair);
-          float sd = vFac.z;
+          vec2 aa = max(fwidth(g), vec2(1e-4));
+          float y0w = shop > 0.5 ? 0.05 : 0.26;
+          wWin = smoothstep(ww - aa.x, ww + aa.x, f.x) * smoothstep(1.0 - ww + aa.x, 1.0 - ww - aa.x, f.x) * smoothstep(y0w - aa.y, y0w + aa.y, f.y) * smoothstep(0.86 + aa.y, 0.86 - aa.y, f.y) * inF * (1.0 - isStair);
+          float sd = floor(vFac.z + 0.5);
           float r1 = bh(id + sd), r2 = bh(id * 1.7 + sd * 3.1), r3 = bh(id + sd * 7.7 + 11.0);
           float rf = bh(vec2(id.y * 3.7 + floor(id.x / 4.0) * 0.61, sd * 1.3));
           float darkFlat = step(rf, 0.22);
@@ -364,8 +377,9 @@ export function buildBuildings(ctx, group) {
           vec3 wc = ct < 0.46 ? vec3(1.0, 0.56, 0.24) : (ct < 0.80 ? vec3(1.0, 0.72, 0.44) : (ct < 0.94 ? vec3(0.78, 0.85, 1.0) : vec3(0.42, 0.58, 1.0)));
           if (shop > 0.5) wc = vec3(1.0, 0.86, 0.66);
           float flick = ct >= 0.94 ? 0.55 + 0.45 * sin(uTime * (7.0 + r3 * 9.0) + r1 * 40.0) * sin(uTime * 2.3 + r2 * 9.0) : 1.0;
-          float slats = mix(1.0, 0.35 + 0.65 * step(0.42, fract(f.y * 10.0)), step(0.62, r3));
-          float curtain = 0.55 + 0.45 * smoothstep(0.2, 0.95, f.y) * (0.7 + 0.3 * bn(vec2(f.x * 3.0, r1 * 9.0)));
+          float sfw = fwidth(f.y * 10.0); float slatK = smoothstep(0.42 - sfw, 0.42 + sfw, fract(f.y * 10.0));
+          float slats = mix(1.0, mix(0.35 + 0.65 * slatK, 0.7, smoothstep(0.3, 0.8, sfw)), step(0.62, r3));
+          float curtain = 0.55 + 0.45 * smoothstep(0.2, 0.95, f.y) * (0.75 + 0.25 * sin(f.x * 6.2832 + r1 * 6.0));
           float room = 0.45 + 1.0 * r3 * r3;
           wEmit = wc * lit * wWin * flick * slats * curtain * room;
           if (isStair > 0.5) {
@@ -378,6 +392,12 @@ export function buildBuildings(ctx, group) {
             float door = step(abs(su), 0.9) * step(vFac.y, 2.6) * step(0.0, vFac.y);
             wEmit += vec3(1.0, 0.8, 0.55) * door * 0.6;
             wWin = max(wWin, max(sw, door));
+          }
+          if (type == 4.0) { // sheds: corrugated cladding and a roller door
+            float cf = fwidth(vFac.x * 2.5);
+            diffuseColor.rgb *= 0.86 + 0.14 * mix(0.5 + 0.5 * sin(vFac.x * 15.7), 0.5, smoothstep(0.2, 0.6, cf));
+            float door = step(abs(fract(vFac.x / 14.0) - 0.5) * 14.0, 2.2) * step(vFac.y, 4.2);
+            diffuseColor.rgb *= 1.0 - 0.35 * door;
           }
           diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.028, 0.032, 0.04), wWin * 0.92);
           diffuseColor.rgb *= 0.9 + 0.1 * smoothstep(0.0, 0.05, abs(f.y - 0.03));

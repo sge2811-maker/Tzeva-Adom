@@ -47,6 +47,7 @@ export function create(ctx) {
       l.position.set(pos.x, pos.y, pos.z); l.color.setRGB(color[0], color[1], color[2]);
       l.distance = radius; l.decay = pos.y > 1000 ? 1.0 : 2.0; l.userData = { t: 0, dur, power: pos.y > 1000 ? intensity / Math.max(1, Math.min(4000, pos.y)) : intensity, on: true, sky: Math.min(2.5, intensity / 4e6), col: color }; l.intensity = l.userData.power;
       flashCol.r += color[0] * l.userData.sky; flashCol.g += color[1] * l.userData.sky; flashCol.b += color[2] * l.userData.sky;
+      flashCol.r = Math.min(flashCol.r, 2); flashCol.g = Math.min(flashCol.g, 2); flashCol.b = Math.min(flashCol.b, 2);
       sky.flash(pos, Math.min(3, intensity / 1.5e6), color);
     },
   };

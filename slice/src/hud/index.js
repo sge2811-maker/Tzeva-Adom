@@ -209,8 +209,10 @@ export function create(ctx) {
   nevM.lbl.insertAdjacentHTML('beforeend', '<span class="hp"><i></i></span>'); nevM.hp = nevM.lbl.querySelector('.hp i');
   const aradM = mk('asset', 'arad', new THREE.Vector3(0, groundAt(0, 0) + 20, 0), 'town');
   for (const m of shM) {
-    m.lbl.addEventListener('mouseenter', () => { hoverShelter = m.s.id; refreshSlow(); });
-    m.lbl.addEventListener('mouseleave', () => { if (hoverShelter === m.s.id) { hoverShelter = null; refreshSlow(); } });
+    for (const el of [m.lbl, m.el.querySelector('.foot')]) {
+      el.addEventListener('mouseenter', () => { hoverShelter = m.s.id; refreshSlow(); });
+      el.addEventListener('mouseleave', (e) => { if (hoverShelter === m.s.id && !m.el.contains(e.relatedTarget)) { hoverShelter = null; refreshSlow(); } });
+    }
     m.lbl.insertAdjacentHTML('beforeend', '<i class="fl"></i>'); m.fl = m.lbl.querySelector('.fl');
   }
   for (const m of grM) { m.lbl.insertAdjacentHTML('beforeend', '<i class="fl"></i>'); m.fl = m.lbl.querySelector('.fl'); }
@@ -412,7 +414,7 @@ export function create(ctx) {
       const x = sim.phase === 'prep' ? `${g.name} · ${why}` : `${why} · ${g.name}`;
       setText(m, String(left), e, x, 'people');
       setCls(m, `st-${status}${selGroup === g.id ? ' sel' : ''}`);
-      m.prio = (selGroup === g.id ? 300 : 0) + (status === 'late' || status === 'blocked' ? 95 : status === 'tight' ? 70 : 55);
+      m.prio = selGroup === g.id ? 300 : (selGroup ? 5 : 0) + (status === 'late' || status === 'blocked' ? 95 : status === 'tight' ? 70 : 55) - (selGroup ? 60 : 0);
       m.forceFull = selGroup === g.id || ((status === 'late' || status === 'blocked') && sim.phase === 'alert');
     }
     for (const m of padM) {

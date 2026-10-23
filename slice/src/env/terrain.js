@@ -86,6 +86,15 @@ export function createTerrain(ctx) {
   geo.setIndex(new THREE.BufferAttribute(idx, 1));
   geo.computeVertexNormals();
   geo.computeBoundingSphere();
+  // height of the rendered (triangulated) terrain surface, so roads drape on what is drawn
+  const E = Math.exp(S) - 1;
+  const inv = (x) => { const u = Math.sign(x) * Math.log(1 + Math.abs(x) * E / L) / S; return Math.max(0, Math.min(N - 1e-6, (u + 1) / 2 * N)); };
+  ctx.envGround = (x, z) => {
+    const fi = inv(x), fj = inv(z), i = Math.floor(fi), j = Math.floor(fj);
+    const fx = (x - xs[i]) / (xs[i + 1] - xs[i]), fz = (z - xs[j]) / (xs[j + 1] - xs[j]);
+    const a = j * (N + 1) + i, ha = H[a], hb = H[a + 1], hc = H[a + N + 1], hd = H[a + N + 2];
+    return fx + fz <= 1 ? ha + (hb - ha) * fx + (hc - ha) * fz : hd + (hc - hd) * (1 - fx) + (hb - hd) * (1 - fz);
+  };
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.97, metalness: 0 });
   const flashU = { uFlashSky: { value: new THREE.Color(0, 0, 0) } };
   mat.onBeforeCompile = (sh) => {

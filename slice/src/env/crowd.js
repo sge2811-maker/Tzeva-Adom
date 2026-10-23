@@ -92,6 +92,7 @@ export function createCrowd(ctx) {
   return {
     mesh,
     update(dt) {
+      const cam = ctx.camera.position;
       for (let i = 0; i < N; i++) {
         const st = A.state[i];
         const target = st === CIV.SHELTERED ? 0 : 1;
@@ -101,7 +102,10 @@ export function createCrowd(ctx) {
         phase[i] += dt * (sp * 2.6 + 0.4);
         const kind = A.kind[i];
         anim[i * 4] = phase[i]; anim[i * 4 + 1] = Math.min(1, Math.max(0, (sp - 1.0) / 2.4)); anim[i * 4 + 2] = kind; anim[i * 4 + 3] = seed[i];
-        const k = (kind === 3 ? 0.66 : kind === 1 ? 0.95 : kind === 2 ? 0.96 : 1) * (0.95 + 0.1 * seed[i]);
+        let k = (kind === 3 ? 0.66 : kind === 1 ? 0.95 : kind === 2 ? 0.96 : 1) * (0.95 + 0.1 * seed[i]);
+        // RTS readability: figures grow gently with camera distance (like unit up-scaling)
+        const cd = Math.hypot(A.x[i] - cam.x, A.y[i] - cam.y, A.z[i] - cam.z);
+        k *= Math.min(2.6, Math.max(1, cd / 120));
         const v = vis[i] * vis[i] * (3 - 2 * vis[i]);
         q.setFromAxisAngle(Y, -A.heading[i] + Math.PI / 2);
         m4.compose(p.set(A.x[i], A.y[i] + 0.36, A.z[i]), q, s.set(k * v, k * v, k * v));

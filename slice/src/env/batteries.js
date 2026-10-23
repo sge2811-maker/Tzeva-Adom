@@ -28,10 +28,15 @@ export function createBatteries(ctx) {
   for (const p of layout.pads) {
     const g = new THREE.Group();
     g.position.set(p.x, heightAt(p.x, p.z), p.z);
-    const apron = box(90, 0.6, 70, M.pad, 0, 0.1, 0); g.add(apron);
-    for (const [w, d, x, z] of [[96, 3, 0, 36.5], [96, 3, 0, -36.5], [3, 70, 46.5, 0], [3, 70, -46.5, 0]]) g.add(box(w, 1.6, d, M.berm, x, 0.4, z));
+    // apron draped on the rendered ground (no floating slab), with a low gravel skirt and masts
+    const gnd = ctx.envGround || heightAt;
+    const ap = new THREE.PlaneGeometry(90, 70, 18, 14).rotateX(-Math.PI / 2);
+    const sk = new THREE.PlaneGeometry(104, 84, 26, 21).rotateX(-Math.PI / 2);
+    for (const [geo, lift] of [[ap, 0.3], [sk, 0.12]]) { const pa = geo.attributes.position; for (let i = 0; i < pa.count; i++) pa.setY(i, gnd(p.x + pa.getX(i), p.z + pa.getZ(i)) - g.position.y + lift); geo.computeVertexNormals(); }
+    g.add(new THREE.Mesh(ap, M.pad)); g.add(new THREE.Mesh(sk, M.berm));
+    for (const [dx, dz] of [[-44, -34], [44, -34], [-44, 34], [44, 34]]) { const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 9, 6), M.dark); mast.position.set(dx, gnd(p.x + dx, p.z + dz) - g.position.y + 4.5, dz); g.add(mast); }
     padRoot.add(g);
-    for (const [dx, dz] of [[-44, -34], [44, -34], [-44, 34], [44, 34]]) { LP.push(p.x + dx, g.position.y + 9, p.z + dz); LC.push(4, 2.4, 1.0); LS.push(3); }
+    for (const [dx, dz] of [[-44, -34], [44, -34], [-44, 34], [44, 34]]) { LP.push(p.x + dx, (ctx.envGround || heightAt)(p.x + dx, p.z + dz) + 9, p.z + dz); LC.push(4, 2.4, 1.0); LS.push(3); }
   }
   group.add(makeGlowPoints(new Float32Array(LP), new Float32Array(LC), new Float32Array(LS), 1.4));
 
@@ -104,7 +109,7 @@ export function createBatteries(ctx) {
   function build(b) {
     if (b.offstage || models.has(b.id)) return;
     const g = new THREE.Group();
-    g.position.set(b.x, heightAt(b.x, b.z) + 0.4, b.z);
+    g.position.set(b.x, (ctx.envGround || heightAt)(b.x, b.z) + 0.3, b.z);
     const statics = new THREE.Group();
     const n = b.type === 'dome' ? 3 : 2;
     const launchers = [];
