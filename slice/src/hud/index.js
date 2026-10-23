@@ -467,7 +467,7 @@ export function create(ctx) {
       const want = m.forceFull || m.d < FULL_DIST ? 'full' : 'compact';
       // try: previous placement first (stability), then full/compact at increasing lifts, then a dot
       let mode = null, dy = 0;
-      if (m.mode !== 'hidden' && m.mode !== 'dot' && (m.mode === want || m.mode === 'compact') && fits(m, m.mode, m.dy, sx, sy)) { mode = m.mode; dy = m.dy; }
+      if (m.mode === want && fits(m, m.mode, m.dy, sx, sy)) { mode = m.mode; dy = m.dy; }
       else {
         const tries = want === 'full' ? TRY_FULL : TRY_CMP;
         for (let k = 0; k < tries.length; k += 2) if (fits(m, tries[k], tries[k + 1], sx, sy)) { mode = tries[k]; dy = tries[k + 1]; break; }
@@ -660,7 +660,7 @@ export function create(ctx) {
     for (let z = -5000; z <= 5000; z += 5000) { c.moveTo(0, rzp(z)); c.lineTo(RW, rzp(z)); }
     c.stroke();
     c.font = '500 7.5px "IW Mono"'; c.fillStyle = 'rgba(160,190,205,0.55)';
-    c.fillText('DEAD SEA', rxp(10200), RH - 5); c.textAlign = 'right'; c.fillText('JORDAN', RW - 3, RH - 5); c.textAlign = 'left';
+    c.fillText('DEAD SEA', rxp(10000), RH - 5); c.textAlign = 'right'; c.fillText('JORDAN', RW - 3, 10); c.textAlign = 'left';
     // defended sites
     c.strokeStyle = 'rgba(203,214,220,0.6)'; c.beginPath(); c.arc(rxp(GEO.nevatim.x), rzp(GEO.nevatim.z), GEO.nevatim.r * sc, 0, Math.PI * 2); c.stroke();
     c.fillStyle = sim.townHits ? '#ff5a47' : '#e8eef1'; c.fillRect(rxp(0) - 2.5, rzp(0) - 2.5, 5, 5);
@@ -702,7 +702,7 @@ export function create(ctx) {
     const s = r.stats, k = s.killed, L = s.launched;
     const tot = L.drone + L.cruise + L.ballistic, kills = k.drone + k.cruise + k.ballistic;
     const by = s.by || {};
-    const layers = [['arrow', 'Arrow 3', by.arrow || 0], ['sling', "David's Sling", by.sling || 0], ['dome', 'Iron Dome', by.dome || 0], ['jet', 'Air patrol', by.aam || 0], ['radar', 'Allies, before the sector', s.coalition + s.sm3]];
+    const layers = [['arrow', 'Arrow 3', by.arrow || 0], ['sling', "David's Sling", by.sling || 0], ['dome', 'Iron Dome', by.dome || 0], ['jet', 'Air patrol', by.aam || 0], ['radar', 'Allies, off-map', s.coalition + s.sm3]];
     const mx = Math.max(1, ...layers.map((l) => l[2]));
     const win = r.win;
     $('debriefSheet').innerHTML = `

@@ -24,7 +24,7 @@ export class GradeEffect extends Effect {
         c = mix(c, vec3(l), uDesat);
         outputColor = vec4(c, inputColor.a);
       }`, {
-      uniforms: new Map([['uExposure', new Uniform(0)], ['uBase', new Uniform(0.0)], ['uFlash', new Uniform(0)], ['uRed', new Uniform(0)], ['uDesat', new Uniform(0)], ['uTime', new Uniform(0)]]),
+      uniforms: new Map([['uExposure', new Uniform(0)], ['uBase', new Uniform(-0.15)], ['uFlash', new Uniform(0)], ['uRed', new Uniform(0)], ['uDesat', new Uniform(0)], ['uTime', new Uniform(0)]]),
     });
   }
 }

@@ -44,15 +44,15 @@
 .iw-menu .date { margin-top: 22px; font-family: var(--f-data); font-size: 12px; letter-spacing: 0.24em; color: var(--amber); }
 .iw-menu p { color: #c4d0d6; font-size: 16.5px; line-height: 1.55; max-width: 50ch; margin: 14px 0 26px; font-weight: 400; }
 .iw-menu .acts { display: flex; flex-direction: column; gap: 8px; width: 300px; }
-.iw-btn { display: flex; align-items: center; justify-content: space-between; height: 48px; padding: 0 18px; border: 1px solid var(--line-strong) !important; background: rgba(8,13,18,0.6) !important; font-family: var(--f-ui) !important; font-weight: 600; font-size: 15px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink) !important; transition: background 0.15s, border-color 0.15s; }
-.iw-btn .ic { width: 18px; height: 18px; }
-.iw-btn.primary { border-color: var(--threat) !important; background: linear-gradient(90deg, rgba(255,90,71,0.24), rgba(255,90,71,0.06)) !important; }
-.iw-btn:hover { border-color: var(--ink-dim) !important; background: rgba(30,40,48,0.7) !important; }
-.iw-btn.primary:hover { background: linear-gradient(90deg, rgba(255,90,71,0.38), rgba(255,90,71,0.1)) !important; }
+#hud .iw-btn { display: flex; align-items: center; justify-content: space-between; height: 48px; padding: 0 18px; border: 1px solid var(--line-strong) !important; background: rgba(8,13,18,0.6) !important; font-family: var(--f-ui) !important; font-weight: 600; font-size: 15px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink) !important; transition: background 0.15s, border-color 0.15s; }
+#hud .iw-btn .ic { width: 18px; height: 18px; }
+#hud .iw-btn.primary { border-color: var(--threat) !important; background: linear-gradient(90deg, rgba(255,90,71,0.24), rgba(255,90,71,0.06)) !important; }
+#hud .iw-btn:hover { border-color: var(--ink-dim) !important; background: rgba(30,40,48,0.7) !important; }
+#hud .iw-btn.primary:hover { background: linear-gradient(90deg, rgba(255,90,71,0.38), rgba(255,90,71,0.1)) !important; }
 .iw-menu .keys { margin-top: 26px; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--ink-faint); letter-spacing: 0.04em; }
 .iw-menu .keys span { display: inline-flex; align-items: center; gap: 6px; }
 .iw-menu kbd, .iw-hint kbd { font-family: var(--f-data); font-size: 10px; padding: 1px 5px; border: 1px solid var(--line-strong); border-radius: 2px; color: var(--ink-dim); }
-.iw-menu .fine { position: absolute; left: clamp(28px, 6vw, 96px); bottom: 26px; font-size: 11.5px; color: var(--ink-faint); letter-spacing: 0.03em; max-width: 70ch; }
+.iw-menu .fine { position: absolute; right: var(--edge); bottom: 18px; text-align: right; max-width: 52ch !important; font-size: 11.5px; color: var(--ink-faint); letter-spacing: 0.03em; max-width: 70ch; }
 
 /* ---------- intro cards ---------- */
 .iw-letter::before, .iw-letter::after { content: ""; position: fixed; left: 0; right: 0; height: 9vh; background: #000; transition: transform 0.9s ease; }
@@ -256,20 +256,20 @@
 
 /* ---------- debrief ---------- */
 .iw-debrief { position: absolute; inset: 0; pointer-events: auto; overflow: auto; background: linear-gradient(90deg, rgba(2,4,7,0.95) 0%, rgba(2,4,7,0.86) 48%, rgba(2,4,7,0.35) 100%); }
-.iw-debrief .sheet { position: relative; margin: 0 0 0 clamp(28px, 6vw, 96px); padding: clamp(28px, 7vh, 72px) 0 32px; width: min(760px, 88vw); }
+.iw-debrief .sheet { position: relative; margin: 0 0 0 clamp(28px, 6vw, 96px); padding: clamp(22px, 5vh, 64px) 0 24px; width: min(780px, 88vw); }
 .iw-debrief .k1 { display: flex; align-items: center; gap: 12px; font-family: var(--f-data); font-size: 11px; letter-spacing: 0.3em; color: var(--ink-dim); text-transform: uppercase; }
 .iw-debrief .k1 i { width: 28px; height: 1px; background: currentColor; }
-.iw-debrief .verdict { font-size: clamp(54px, 6.4vw, 92px); line-height: 0.9; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin: 14px 0 6px; }
+.iw-debrief .verdict { font-size: clamp(48px, min(6.4vw, 10.5vh), 92px); line-height: 0.9; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin: 14px 0 6px; }
 .iw-debrief .verdict.win { color: #f2fff6; text-shadow: 0 0 40px rgba(127,224,160,0.25); }
 .iw-debrief .verdict.loss { color: #ffe2dd; text-shadow: 0 0 40px rgba(255,90,71,0.25); }
 .iw-debrief .res { font-family: var(--f-data); font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; }
 .iw-debrief .res.win { color: var(--good); } .iw-debrief .res.loss { color: var(--threat); }
-.iw-debrief .objs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin: 26px 0 0; border-top: 1px solid var(--line-strong); border-bottom: 1px solid var(--line); }
-.iw-debrief .objs div { padding: 12px 14px 12px 0; font-size: 13.5px; line-height: 1.3; color: #d3dde1; }
+.iw-debrief .objs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin: clamp(14px, 3vh, 26px) 0 0; border-top: 1px solid var(--line-strong); border-bottom: 1px solid var(--line); }
+.iw-debrief .objs div { padding: 10px 14px 10px 0; font-size: 13.5px; line-height: 1.3; color: #d3dde1; }
 .iw-debrief .objs .ic { width: 18px; height: 18px; display: block; margin-bottom: 7px; }
 .iw-debrief .objs .done .ic { color: var(--good); } .iw-debrief .objs .failed .ic { color: var(--threat); }
 .iw-debrief .objs small { display: block; margin-top: 4px; font-family: var(--f-data); font-size: 10.5px; color: var(--ink-faint); }
-.iw-debrief .grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 34px; margin-top: 24px; }
+.iw-debrief .grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 34px; margin-top: clamp(14px, 2.6vh, 24px); }
 .iw-debrief .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 22px; }
 .iw-debrief .stats b { display: block; font-family: var(--f-data); font-size: 30px; font-weight: 500; line-height: 1.05; }
 .iw-debrief .stats span { display: block; margin-top: 3px; font-size: 12.5px; color: var(--ink-dim); }
@@ -279,7 +279,7 @@
 .iw-debrief .layer u { height: 4px; background: rgba(255,255,255,0.08); text-decoration: none; }
 .iw-debrief .layer u i { display: block; height: 100%; background: var(--friend); }
 .iw-debrief .layer em { font-style: normal; font-family: var(--f-data); font-size: 12px; text-align: right; }
-.iw-debrief .history { margin: 26px 0 0; padding: 12px 0 0 16px; border-left: 2px solid var(--amber); font-size: 14.5px; line-height: 1.55; color: #c3cfd5; max-width: 66ch; }
+.iw-debrief .history { margin: clamp(14px, 3vh, 26px) 0 0; padding: 2px 0 2px 16px; border-left: 2px solid var(--amber); font-size: 14px; line-height: 1.5; color: #c3cfd5; }
 .iw-debrief .history b { display: block; font-family: var(--f-data); font-size: 10.5px; letter-spacing: 0.24em; color: var(--amber); font-weight: 500; margin-bottom: 4px; }
-.iw-debrief .acts { display: flex; gap: 10px; margin-top: 26px; }
+.iw-debrief .acts { display: flex; gap: 10px; margin-top: clamp(14px, 3vh, 26px); }
 .iw-debrief .acts .iw-btn { width: 230px; }

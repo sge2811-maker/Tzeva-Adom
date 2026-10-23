@@ -52,25 +52,28 @@ export function createTerrain(ctx) {
   order.sort((a, b) => H[b] - H[a]);
   for (let o = 0; o < NV; o++) {
     const v = order[o], i = v % (N + 1), j = (v / (N + 1)) | 0;
-    let best = -1, bs = 0;
+    // multiple-flow-direction: share the catchment among all lower neighbours by slope^1.6, so
+    // channels converge along valleys instead of running along grid lines (as D8 does)
+    let tot = 0; const ws = [];
     for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
       if (!di && !dj) continue;
       const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii > N || jj > N) continue;
       const u = jj * (N + 1) + ii, d = Math.hypot(xs[ii] - xs[i], xs[jj] - xs[j]);
-      const s = (H[v] - H[u]) / d; if (s > bs) { bs = s; best = u; }
+      const sl = (H[v] - H[u]) / d; if (sl > 0) { const w = Math.pow(sl, 1.6) * (di && dj ? 0.7071 : 1); ws.push(u, w); tot += w; }
     }
-    if (best >= 0) acc[best] += acc[v];
+    for (let m = 0; m < ws.length; m += 2) acc[ws[m]] += acc[v] * ws[m + 1] / tot;
   }
-  const lnA = Math.log(1.6e5), lnB = Math.log(4e6);
+  const lnA = Math.log(2.5e4), lnB = Math.log(6e5);
   for (let j = 1; j < N; j++) for (let i = 1; i < N; i++) {
     const v = j * (N + 1) + i;
     const la = Math.log(acc[v]);
-    wadi[v] = smoothstep(lnA, lnB, la) * smoothstep(6, 40, acc[v] / area[v]);
+    wadi[v] = smoothstep(lnA, lnB, la) * smoothstep(4, 25, acc[v] / area[v]);
     const dE = xs[i + 1] - xs[i], dW = xs[i] - xs[i - 1], dS = xs[j + 1] - xs[j], dN = xs[j] - xs[j - 1];
     const lx = ((H[v + 1] - H[v]) / dE - (H[v] - H[v - 1]) / dW) * 2 / (dE + dW);
     const lz = ((H[v + N + 1] - H[v]) / dS - (H[v] - H[v - N - 1]) / dN) * 2 / (dS + dN);
     curv[v] = Math.max(-1, Math.min(1, (lx + lz) * 250));
   }
+  { const tmp = wadi.slice(); for (let j = 1; j < N; j++) for (let i = 1; i < N; i++) { const v = j * (N + 1) + i; wadi[v] = (tmp[v] * 4 + tmp[v - 1] + tmp[v + 1] + tmp[v - N - 1] + tmp[v + N + 1]) / 8; } }
   const idx = new Uint32Array(N * N * 6);
   let q = 0;
   for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
@@ -114,8 +117,8 @@ export function createTerrain(ctx) {
         vec3 col = diffuseColor.rgb;
         // landform-driven albedo: pale gravel fans in hollows, darker flint reg on crests
         float concave = smoothstep(0.05, 0.6, vLand.y), convex = smoothstep(0.05, 0.6, -vLand.y);
-        col = mix(col, vec3(0.40, 0.35, 0.27), concave * 0.35);
-        col *= 1.0 - 0.16 * convex;
+        col = mix(col, vec3(0.41, 0.36, 0.28), concave * 0.5);
+        col *= 1.0 - 0.24 * convex;
         // banded limestone/chalk on steep ground with darker ledges
         float rockK = smoothstep(0.16, 0.42, slope + (m2 - 0.5) * 0.1);
         float strata = 0.78 + 0.22 * smoothstep(-0.3, 0.6, sin(vWP.y * 0.36 + m2 * 5.0));
