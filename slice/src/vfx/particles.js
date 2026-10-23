@@ -15,7 +15,7 @@ export const T_SMOKE = 0, T_DUST = 1;
 const VERT = (lit) => /* glsl */`
   attribute float aSize; attribute float aAlpha; attribute vec3 aCol; attribute float aSeed; attribute vec3 aAux;
   uniform float uScale; uniform float uMinPx; uniform float uMaxPx;
-  varying float vA; varying vec3 vC; varying float vSeed; varying vec3 vAux; varying float vPx; varying float vFog;
+  varying float vA; varying vec3 vC; varying float vSeed; varying vec3 vAux; varying float vPx; varying vec4 vAtm;
   ${lit ? 'varying vec3 vLC; varying vec3 vLDir;' : ''}
   ${LIGHTS}
   void main() {
@@ -32,12 +32,12 @@ const VERT = (lit) => /* glsl */`
     cp.z = cp2.z / cp2.w * cp.w;
     gl_Position = cp;
     vC = aCol; vSeed = aSeed; vAux = aAux;
-    vFog = vfxFog(dz, position.y);
+    vAtm = vfxAtm(position);
     ${lit ? 'vec3 ld; vLC = vfxLight(position, ld); vLDir = normalize((viewMatrix * vec4(ld, 0.0)).xyz + vec3(0.0, 0.0, 1e-4));' : ''}
   }`;
 
 const FRAG_FIRE = /* glsl */`
-  varying float vA; varying vec3 vC; varying float vSeed; varying vec3 vAux; varying float vPx; varying float vFog;
+  varying float vA; varying vec3 vC; varying float vSeed; varying vec3 vAux; varying float vPx; varying vec4 vAtm;
   ${NOISE}
   vec3 ramp(float T) {
     T = clamp(T, 0.0, 1.5);
@@ -72,11 +72,11 @@ const FRAG_FIRE = /* glsl */`
     } else {
       col = vC * (exp(-r * r * 7.0) * 0.8 + pow(1.0 - r, 2.5) * 0.3);
     }
-    gl_FragColor = vec4(col * vA * (1.0 - vFog * 0.85), 1.0);
+    gl_FragColor = vec4(col * vA * (1.0 - vAtm.a), 1.0);
   }`;
 
 const FRAG_SMOKE = /* glsl */`
-  varying float vA; varying vec3 vC; varying float vSeed; varying vec3 vAux; varying float vPx; varying float vFog;
+  varying float vA; varying vec3 vC; varying float vSeed; varying vec3 vAux; varying float vPx; varying vec4 vAtm;
   varying vec3 vLC; varying vec3 vLDir;
   uniform vec3 uAmb; uniform vec3 uMoonC; uniform vec3 uMoonV; uniform vec3 uFogC;
   ${NOISE}
@@ -85,14 +85,15 @@ const FRAG_SMOKE = /* glsl */`
     float ang = vSeed * 6.2831 + vAux.z * (vSeed - 0.5) * 0.18;
     float cs = cos(ang), sn = sin(ang); vec2 q = vec2(cs * uv.x - sn * uv.y, sn * uv.x + cs * uv.y);
     float n = fbm3(q * 1.5 + vSeed * 23.0 + vec2(vAux.z * 0.04, -vAux.z * 0.06));
-    float edge = r + (n - 0.5) * 0.85;
-    float dens = smoothstep(1.0, 0.18, edge) * (0.6 + 0.6 * n);
+    float n2 = vn(q * 4.2 - vSeed * 11.0 + vec2(0.0, vAux.z * 0.1));
+    float edge = r + (n - 0.5) * 1.05 + (n2 - 0.5) * 0.25;
+    float dens = smoothstep(1.0, 0.15, edge) * (0.45 + 0.75 * n) * (0.7 + 0.5 * n2);
     vec3 N = normalize(vec3(uv.x, -uv.y, sqrt(max(0.0, 1.0 - r * r)) + 0.25) + vec3(n - 0.5) * 0.9);
     float moon = 0.3 + 0.7 * max(dot(N, uMoonV), 0.0);
     float lw = 0.25 + 0.75 * max(dot(N, vLDir), 0.0);
     vec3 lit = vC * (uAmb + uMoonC * moon + vLC * lw);
     lit += vec3(1.0, 0.40, 0.11) * vAux.y * max(0.0, 1.0 - edge) * (0.5 + n);
-    lit = mix(lit, uFogC, vFog);
+    lit = mix(lit, vAtm.rgb, vAtm.a);
     gl_FragColor = vec4(lit, dens * vA);
   }`;
 
@@ -171,7 +172,7 @@ export class Pool {
       this.a[i] = this.a0[i] * Math.min(1, k * 14) * (1 - k) * (1 - k * 0.3);
       const ty = this.aux[i3], cool = this.cool[i];
       this.aux[i3 + 2] = L;
-      if (cool > 0) {
+      if (cool > 0 && (this.h0[i] > 0 || this.additive) && L * cool < 7) {
         const cc = Math.exp(-L * cool);
         if (this.additive && ty === T_GLOW) { this.c[i3] = this.c0[i3] * cc; this.c[i3 + 1] = this.c0[i3 + 1] * cc * cc; this.c[i3 + 2] = this.c0[i3 + 2] * cc * cc * cc; }
         else this.aux[i3 + 1] = this.h0[i] * cc;

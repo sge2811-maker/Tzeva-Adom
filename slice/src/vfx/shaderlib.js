@@ -2,6 +2,11 @@
 // lights picked each frame from explosions, fires and the town glow), moonlight and fog terms.
 // The uniform objects in `createShared()` are shared by every VFX material (one update per frame).
 import * as THREE from 'three';
+import * as ATMOS from '../env/atmosphere.js';
+
+// env's shared night atmosphere (height fog + in-scatter); fall back to plain exp2 fog
+const ATM = ATMOS && typeof ATMOS.ATM_GLSL === 'string' ? ATMOS.ATM_GLSL : null;
+export const HAS_ATM = !!ATM;
 
 export const NL = 8;
 
@@ -26,8 +31,11 @@ vec3 vfxLight(vec3 wp, out vec3 ldir) {
   ldir = ds / (length(ds) + 1e-5);
   return acc;
 }
-// exponential-squared fog like the scene's, thinning with altitude (high intercepts stay crisp)
-float vfxFog(float dist, float wy) { float f = dist * uFogD; return (1.0 - exp(-f * f)) * (1.0 - smoothstep(1500.0, 14000.0, wy)); }
+${ATM ? ATM + `
+// same atmosphere as the world (env/atmosphere.js), evaluated per vertex: rgb in-scatter, a = fog factor
+vec4 vfxAtm(vec3 wp) { vec3 rel = wp - cameraPosition; float d = length(rel); vec3 rd = rel / max(d, 1e-3);
+  return vec4(atmInscatter(cameraPosition, rd, d, uFogC), 1.0 - exp(-atmOD(cameraPosition, rd, d) * uFogD)); }` : `
+vec4 vfxAtm(vec3 wp) { float d = length(wp - cameraPosition) * 0.000032; return vec4(uFogC, (1.0 - exp(-d * d)) * (1.0 - smoothstep(1500.0, 14000.0, wp.y))); }`}
 `;
 
 export function createShared() {
@@ -35,7 +43,7 @@ export function createShared() {
   for (let i = 0; i < NL; i++) { LP.push(new THREE.Vector4(0, -1e6, 0, 1)); LC.push(new THREE.Vector3()); }
   return {
     uLP: { value: LP }, uLC: { value: LC },
-    uAmb: { value: new THREE.Color(0.060, 0.066, 0.085) },
+    uAmb: { value: new THREE.Color(0.16, 0.167, 0.19) },
     uMoonC: { value: new THREE.Color(0.060, 0.066, 0.082) },
     uMoonV: { value: new THREE.Vector3(0, 1, 0) },
     uFogC: { value: new THREE.Color(0.006, 0.010, 0.016) },

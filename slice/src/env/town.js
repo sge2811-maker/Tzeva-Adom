@@ -81,7 +81,11 @@ export function buildStreets(ctx, group, rng) {
           varying vec4 vRd; varying vec3 vRW;
           float rH(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
           float rN(vec2 p) { vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f); return mix(mix(rH(i), rH(i + vec2(1, 0)), u.x), mix(rH(i + vec2(0, 1)), rH(i + vec2(1, 1)), u.x), u.y); }`)
-        .replace('#include <color_fragment>', `#include <color_fragment>\n${frag}`);
+        .replace('#include <color_fragment>', `#include <color_fragment>\n${frag}`)
+        .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+          // street lighting: sodium fill over the town's streets (pools add the hot spots)
+          float townK = exp(-dot(vRW.xz / vec2(820.0, 700.0), vRW.xz / vec2(820.0, 700.0)) * 1.4);
+          totalEmissiveRadiance += diffuseColor.rgb * vec3(1.0, 0.62, 0.32) * 0.85 * townK;`);
     };
     m.customProgramCacheKey = () => 'env-street-' + order; // same onBeforeCompile source, different GLSL
     const mesh = new THREE.Mesh(g, m); mesh.renderOrder = order; group.add(mesh); return mesh;
@@ -98,7 +102,7 @@ export function buildStreets(ctx, group, rng) {
     diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.62, 0.60, 0.56), curb);
     diffuseColor.rgb *= mix(1.0, 0.8, smoothstep(W * 0.5 - 0.6, W * 0.5, vm));`);
   // asphalt: worn grey with patches, paint, median and crossings
-  mk(road, 0x34353a, 2, /* glsl */`
+  mk(road, 0x45464b, 2, /* glsl */`
     float code = vRd.w; float w = floor(code / 16.0); float c = mod(code, 16.0);
     float regional = step(64.0, mod(code, 128.0)) * 0.0;
     float kind = mod(c, 4.0); float cwA = step(4.0, mod(c, 8.0)); float cwB = step(8.0, c);
@@ -222,7 +226,7 @@ export function buildBuildings(ctx, group) {
       }
     };
     // roof: slab, with a parapet; some houses get a hipped tile roof instead
-    const roofCol = [0.40, 0.39, 0.37].map((v) => v * (0.85 + 0.3 * hs(5)));
+    const roofCol = [0.30, 0.29, 0.28].map((v) => v * (0.85 + 0.3 * hs(5)));
     const tile = type === 2 && hs(6) < 0.38;
     if (tile) {
       const rh = Math.min(hw, hd) * 0.55, tc = [0.42, 0.17, 0.10].map((v) => v * (0.85 + 0.3 * hs(7)));
@@ -281,6 +285,20 @@ export function buildBuildings(ctx, group) {
       }
     }
     if (type === 1) {
+      const balCol = col.map((v) => v * 0.97);
+      const sides = [[[-hw, hd], [1, 0], [0, 1], b.w], [[hw, -hd], [-1, 0], [0, -1], b.w], [[hw, hd], [0, -1], [1, 0], b.d], [[-hw, -hd], [0, 1], [-1, 0], b.d]];
+      for (const [st, t, n, L] of sides) {
+        const nb = Math.floor(L / sp);
+        for (let fl = 1; fl < floors; fl++) {
+          for (let k = (fl + Math.floor(hs(10) * 2)) % 2; k + 1 < nb; k += 3) {
+            const u0 = k * sp + 0.15, u1 = (k + 2) * sp - 0.15, y0 = b.y + 0.4 + fl * fh, dep = 1.3;
+            const toL = (u, d) => [st[0] + t[0] * u + n[0] * d, st[1] + t[1] * u + n[1] * d];
+            const a = toL(u0, 0), bb = toL(u1, dep), f0 = toL(u0, dep - 0.12);
+            box(Math.min(a[0], bb[0]), Math.max(a[0], bb[0]), y0 - 0.22, y0, Math.min(a[1], bb[1]), Math.max(a[1], bb[1]), balCol, -2, true);
+            box(Math.min(f0[0], bb[0]), Math.max(f0[0], bb[0]), y0, y0 + 1.05, Math.min(f0[1], bb[1]), Math.max(f0[1], bb[1]), [0.12, 0.13, 0.14], -2);
+          }
+        }
+      }
       // tower roof plant and a red aviation light
       box(-hw * 0.45, hw * 0.45, top, top + 3.4, -hd * 0.4, hd * 0.4, col.map((v) => v * 0.9));
       extras.beacons.push([b.x, top + 4.2, b.z]);
@@ -375,7 +393,8 @@ export function buildBuildings(ctx, group) {
           diffuseColor.rgb *= 0.9 + 0.12 * bn(vBW.xz * 0.6 + vBW.y);
         }`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-        totalEmissiveRadiance += wEmit * 1.5 * uWinGain;
+        // windows stay legible as a skyline when they shrink below a pixel
+        totalEmissiveRadiance += wEmit * 1.5 * uWinGain * (1.0 + 1.2 * smoothstep(350.0, 2500.0, length(vBW - cameraPosition)));
         // street lights wash the lower walls (sodium, falling off with height)
         if (code >= 0.0 || (code < -1.5 && code > -3.5)) totalEmissiveRadiance += diffuseColor.rgb * vec3(1.0, 0.58, 0.28) * 0.07 * exp(-max(vFac.y, 0.0) / 5.0);`);
   };

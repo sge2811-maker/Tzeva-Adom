@@ -5,6 +5,7 @@ import { heightAt, GEO } from '../world/geo.js';
 import { makeRng } from '../core/rng.js';
 import { ATM_GLSL } from './atmosphere.js';
 import { buildStreets, buildCars, buildBuildings } from './town.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const TYPE_ID = { slab: 0, tower: 1, house: 2, commercial: 3 };
 
@@ -91,15 +92,36 @@ export function createCity(ctx) {
 
   // ---------------------------------------------------------------- trees
   {
-    const palms = layout.trees.filter((t) => t.kind === 'palm'), broad = layout.trees.filter((t) => t.kind !== 'palm');
+    // courtyard trees between the housing blocks (env-only decoration; layout trees stay as they are)
+    const yard = [];
+    const trng = makeRng(ctx.params.seed, 'yard-trees');
+    const clear = (x, z) => {
+      for (const b of B) if (Math.abs(x - b.x) < b.w / 2 + 3.5 && Math.abs(z - b.z) < b.d / 2 + 3.5) return false;
+      for (const sh of layout.shelters) if (Math.hypot(x - sh.x, z - sh.z) < 16) return false;
+      for (const gr of layout.groups) if (Math.hypot(x - gr.x, z - gr.z) < gr.spread + 6) return false;
+      return true;
+    };
+    for (const bl of layout.blocks) {
+      if (bl.zone === 'park') continue;
+      const n = Math.round((bl.x1 - bl.x0) * (bl.z1 - bl.z0) / (bl.zone === 'outer' ? 900 : 600));
+      for (let k = 0; k < n; k++) {
+        const x = trng.range(bl.x0 + 3, bl.x1 - 3), z = trng.range(bl.z0 + 3, bl.z1 - 3);
+        if (!clear(x, z)) continue;
+        yard.push({ x, z, kind: trng.chance(0.25) ? 'palm' : 'broad', s: trng.range(0.75, 1.25) });
+      }
+    }
+    const allTrees = layout.trees.concat(yard);
+    const palms = allTrees.filter((t) => t.kind === 'palm'), broad = allTrees.filter((t) => t.kind !== 'palm');
     const trunkG = new THREE.CylinderGeometry(0.2, 0.3, 1, 6); trunkG.translate(0, 0.5, 0);
     const crownG = palmCrown();
     const blobG = new THREE.IcosahedronGeometry(2.6, 1);
     { const pa = blobG.attributes.position; for (let i = 0; i < pa.count; i++) { const x = pa.getX(i), y = pa.getY(i), z = pa.getZ(i); const k = 0.82 + 0.3 * Math.abs(Math.sin(x * 3.1 + z * 2.3) * Math.cos(y * 2.7)); pa.setXYZ(i, x * k, y * k * 0.8, z * k); } blobG.computeVertexNormals(); }
-    const darkGreen = new THREE.MeshStandardMaterial({ color: 0x223322, roughness: 0.85, side: THREE.DoubleSide });
-    const trunks = new THREE.InstancedMesh(trunkG, new THREE.MeshStandardMaterial({ color: 0x3a3127, roughness: 0.95 }), palms.length);
+    const darkGreen = new THREE.MeshStandardMaterial({ color: 0x4c5e3c, roughness: 0.8, side: THREE.DoubleSide });
+    const blobMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 });
+    const trunks = new THREE.InstancedMesh(trunkG, new THREE.MeshStandardMaterial({ color: 0x6e5e4c, roughness: 0.95 }), palms.length);
     const crowns = new THREE.InstancedMesh(crownG, darkGreen, palms.length);
-    const blobs = new THREE.InstancedMesh(blobG, darkGreen, broad.length);
+    const blobs = new THREE.InstancedMesh(blobG, blobMat, broad.length);
+    { const tc = new THREE.Color(); broad.forEach((t, i) => { const h = (Math.sin(t.x * 12.9 + t.z * 78.2) * 43758.5) % 1; const k = Math.abs(h); tc.setRGB(0.10 + 0.08 * k, 0.15 + 0.07 * k, 0.08 + 0.03 * k); blobs.setColorAt(i, tc); }); }
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3();
     palms.forEach((t, i) => {
       const y = heightAt(t.x, t.z), h = 8 * t.s;
@@ -120,10 +142,10 @@ export function createCity(ctx) {
     // Israeli public shelter: a half-sunken concrete block with a stair entrance kiosk, a
     // ventilation stack, a green sign light over the door and a green pool on the pavement.
     const conc = new THREE.MeshStandardMaterial({ color: 0x8e8a80, roughness: 0.92 });
-    const concDark = new THREE.MeshStandardMaterial({ color: 0x5e5b55, roughness: 0.95 });
+    const concDark = new THREE.MeshStandardMaterial({ color: 0x8a857a, roughness: 0.95 });
     const signM = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.15, 2.2, 0.75), fog: true });
     const stripeM = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.6, 1.8, 1.6), fog: true });
-    const P2 = [], C2 = [], S2 = [];
+    const P2 = [], C2 = [], S2 = [], shelterParts = [];
     for (const s of layout.shelters) {
       const g = new THREE.Group();
       const body = new THREE.Mesh(new THREE.BoxGeometry(9, 1.6, 7), conc); body.position.set(0, 0.8, -1.5); g.add(body);
@@ -133,18 +155,28 @@ export function createCity(ctx) {
       const vent = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 1.4, 8), concDark); vent.position.set(3.4, 2.3, -3.5); g.add(vent);
       const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.5), signM); sign.position.set(0, 2.45, 3.92); g.add(sign);
       const stripe = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.08), stripeM); stripe.position.set(0, 2.45, 3.925); g.add(stripe);
-      const door = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.0), new THREE.MeshBasicMaterial({ color: s.locked ? new THREE.Color(0.03, 0.03, 0.035) : new THREE.Color(1.6, 1.15, 0.65), fog: true }));
-      door.position.set(0, 1.0, 3.91); g.add(door);
+      const door = new THREE.Object3D(); door.position.set(0, 1.0, 3.91); g.add(door);
       g.position.set(s.x, s.y, s.z);
       g.rotation.y = s.rot;
-      group.add(g);
-      shelterMeshes.set(s.id, { g, door, sign });
+      g.updateMatrixWorld(true);
+      shelterParts.push(g);
+      shelterMeshes.set(s.id, { i: shelterMeshes.size, door, locked: s.locked });
       // green glow at the sign and a soft green pool on the ground in front of the door
       const fx = Math.sin(s.rot), fz = Math.cos(s.rot);
       P2.push(s.x + fx * 4.0, s.y + 2.5, s.z + fz * 4.0); C2.push(0.25, 2.6, 0.9); S2.push(1.4);
     }
     if (P2.length) group.add(makeGlowPoints(new Float32Array(P2), new Float32Array(C2), new Float32Array(S2), 1.6));
-    ctx.bus.on('shelter:open', ({ id }) => { const m = shelterMeshes.get(id); if (m) m.door.material.color.setRGB(1.6, 1.15, 0.65); });
+    // merge all shelters into one mesh per material (draw calls), doors as one instanced mesh
+    const byMat = new Map();
+    for (const g of shelterParts) g.traverse((o) => { if (o.isMesh) { const k = byMat.get(o.material) || []; k.push(o.geometry.clone().applyMatrix4(o.matrixWorld)); byMat.set(o.material, k); } });
+    for (const [m, geos] of byMat) { const mm = new THREE.Mesh(mergeGeometries(geos), m); mm.name = 'shelters'; group.add(mm); }
+    var doors = new THREE.InstancedMesh(new THREE.PlaneGeometry(1.3, 2.0), new THREE.MeshBasicMaterial({ fog: true }), shelterMeshes.size);
+    for (const m of shelterMeshes.values()) {
+      doors.setMatrixAt(m.i, m.door.matrixWorld);
+      doors.setColorAt(m.i, m.locked ? new THREE.Color(0.03, 0.03, 0.035) : new THREE.Color(1.6, 1.15, 0.65));
+    }
+    group.add(doors);
+    ctx.bus.on('shelter:open', ({ id }) => { const m = shelterMeshes.get(id); if (m) { doors.setColorAt(m.i, new THREE.Color(1.6, 1.15, 0.65)); doors.instanceColor.needsUpdate = true; } });
   }
 
   return {

@@ -38,6 +38,8 @@ export class LookEffect extends Effect {
         float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
         vec3 shadows = vec3(0.93, 0.99, 1.07), highs = vec3(1.05, 0.99, 0.91);
         vec3 graded = c * mix(shadows, highs, smoothstep(0.08, 0.7, l));
+        float lg = dot(graded, vec3(0.2126, 0.7152, 0.0722));
+        graded = mix(vec3(lg), graded, 1.22);              // AgX drains colour: put some back
         graded = (graded - 0.5) * 1.06 + 0.5;            // gentle contrast
         graded += vec3(0.004, 0.007, 0.011) * (1.0 - l);  // lifted, cool blacks
         outputColor = vec4(mix(c, max(graded, 0.0), uStrength), inputColor.a);

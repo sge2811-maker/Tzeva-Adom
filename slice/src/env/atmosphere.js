@@ -38,10 +38,10 @@ float atmGlowAt(vec3 p) {
 }
 vec3 atmInscatter(vec3 ro, vec3 rd, float dist, vec3 fogC) {
   float mu = max(dot(rd, ATM_MOON), 0.0);
-  vec3 c = fogC * (1.0 + 0.35 * mu * mu + 1.2 * pow(mu, 16.0));
+  vec3 c = fogC * (1.0 + 0.25 * mu * mu + 0.6 * pow(mu, 24.0));
   float L = min(dist, 26000.0), g = 0.0;
   for (int i = 0; i < 6; i++) { float t = (float(i) + 0.5) / 6.0; g += atmGlowAt(ro + rd * (L * t * t)); }
-  c += vec3(1.0, 0.52, 0.24) * (g / 6.0) * 0.060;
+  c += vec3(1.0, 0.52, 0.24) * (g / 6.0) * 0.13;
   return c;
 }
 #endif

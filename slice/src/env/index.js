@@ -22,13 +22,13 @@ export function create(ctx) {
   // ---------------------------------------------------------------- lighting
   // Moonlight: a low waxing crescent in the west. Silver, not saturated blue, so the desert
   // keeps its sand/rock hue; a weak cool sky fill from the zenith-east models the escarpment.
-  const moon = new THREE.DirectionalLight(new THREE.Color().setRGB(0.72, 0.80, 1.0), 0.95);
+  const moon = new THREE.DirectionalLight(new THREE.Color().setRGB(0.72, 0.80, 1.0), 1.3);
   moon.position.copy(MOON_DIR).multiplyScalar(8000);
   scene.add(moon, moon.target);
-  const fill = new THREE.DirectionalLight(new THREE.Color().setRGB(0.55, 0.65, 0.9), 0.30);
+  const fill = new THREE.DirectionalLight(new THREE.Color().setRGB(0.55, 0.65, 0.9), 0.22);
   fill.position.set(3000, 8000, -1500);
   scene.add(fill, fill.target);
-  const hemi = new THREE.HemisphereLight(new THREE.Color().setRGB(0.20, 0.25, 0.36), new THREE.Color().setRGB(0.10, 0.075, 0.05), 0.75);
+  const hemi = new THREE.HemisphereLight(new THREE.Color().setRGB(0.20, 0.25, 0.36), new THREE.Color().setRGB(0.10, 0.075, 0.05), 0.5);
   scene.add(hemi);
   // flash lights: a fixed pool of point lights reused for launches/intercepts/impacts. They stay
   // in the scene at intensity 0 (toggling visibility changes the light count and recompiles every

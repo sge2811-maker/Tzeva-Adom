@@ -37,6 +37,15 @@ export function createSky(ctx) {
       vec3 dome(vec3 d, vec3 to, float w, float h) { float a = max(dot(normalize(vec3(d.x, 0.0, d.z)), to), 0.0); return vec3(1.0, 0.62, 0.34) * pow(a, w) * exp(-max(d.y, 0.0) * h); }
       uniform vec3 uFogC;
       ${ATM_GLSL}
+      vec3 litDome(vec3 d, vec3 c, float r, float H, float k) {
+        vec3 v = c - cameraPosition; float D = max(length(v.xz), 1.0);
+        float a = acos(clamp(dot(normalize(d.xz + 1e-5), v.xz / D), -1.0, 1.0));
+        float w = atan(r, D) + 0.02;
+        float e = atan(d.y, length(d.xz)) - atan(v.y, D);
+        float ve = atan(H, D) + 0.01;
+        float near = 0.25 + 0.75 * smoothstep(600.0, 3500.0, D);
+        return vec3(1.0, 0.55, 0.26) * 0.075 * k * near * exp(-(a / w) * (a / w)) * exp(-max(e, 0.0) / ve) * smoothstep(-0.05, 0.0, e);
+      }
       void main() {
         vec3 d = normalize(vDir);
         float y = d.y;
@@ -47,6 +56,12 @@ export function createSky(ctx) {
         vec3 lp = dome(d, normalize(vec3(-1.0, 0.0, 0.08)), 7.0, 7.0) * 0.050
                 + dome(d, normalize(vec3(-0.25, 0.0, 1.0)), 10.0, 11.0) * 0.016
                 + dome(d, normalize(vec3(1.0, 0.0, 0.08)), 16.0, 14.0) * 0.008;
+        // airglow and scattered light just above the horizon: lets ridgelines read as silhouettes
+        lp += vec3(0.030, 0.034, 0.044) * exp(-max(y, 0.0) * 12.0) * smoothstep(-0.03, 0.004, y);
+        // light-pollution domes over Arad, Nevatim and Dimona, seen from wherever the camera is
+        lp += litDome(d, vec3(0.0, 0.0, 0.0), 1000.0, 650.0, 1.0)
+            + litDome(d, vec3(-6800.0, -150.0, 2900.0), 2200.0, 700.0, 0.55)
+            + litDome(d, vec3(-3600.0, -50.0, 13800.0), 1700.0, 600.0, 0.35);
         lp *= 1.0 - 0.6 * smoothstep(0.35, 0.95, uGlobalFlash);
         // stars, fading toward the hazy, light-polluted horizon
         vec3 p = d * 420.0; vec3 ip = floor(p); float h = h3(ip);
