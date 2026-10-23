@@ -166,7 +166,7 @@ export function create(ctx) {
         smokeAlb, smokeAlb * 0.97, smokeAlb * 0.94, Rf * R(0.5, 0.8), Rf * R(1.9, 3.0), R(0.5, 0.7), R(16, 30), -1, 0.5, 1.1, T_SMOKE, R(1.4, 2.4), R(0.12, 0.45), 1);
     }
     addLight(x, y, z, 1 * lightI, 0.72 * lightI, 0.45 * lightI, Rf * 8, 1.8, 0);
-    if (opts.smudge) for (let i = 0; i < 5; i++) { const d = randDir(), off = R(0, 0.5) * Rf; smoke.add(x + d.x * off, y + d.y * off, z + d.z * off, vx * 0.02 + d.x * 6, vy * 0.02, vz * 0.02 + d.z * 6, 0.3, 0.29, 0.28, Rf * 0.8, Rf * R(2.2, 3.2), 0.6, R(30, 45), 0.2, 0.3, 1.5, T_SMOKE, 0.6, R(0.4, 1.0), 1); }
+    if (opts.smudge) for (let i = 0; i < 5; i++) { const d = randDir(), off = R(0, 0.5) * Rf; smoke.add(x + d.x * off, y + d.y * off, z + d.z * off, vx * 0.02 + d.x * 6, vy * 0.02, vz * 0.02 + d.z * 6, 0.3, 0.29, 0.28, Rf * 0.6, Rf * R(1.6, 2.4), 0.38, R(30, 45), 0.2, 0.3, 1.5, T_SMOKE, 0.4, R(0.4, 1.0), 1); }
   }
 
   // ---------------------------------------------------------------- debris
@@ -250,7 +250,7 @@ export function create(ctx) {
     }
     if (exo) { // Arrow 3: exo-atmospheric hit-to-kill, a star-flash with glints and a fading debris cloud
       const k = e.kill ? 1 : 0.45;
-      fire.add(e.x, e.y, e.z, 0, 0, 0, 16 * k, 15 * k, 14 * k, 1400, 1900, 1, 0.55, 0, 0, 0, T_STAR, 1.1);
+      fire.add(e.x, e.y, e.z, 0, 0, 0, 16 * k, 15 * k, 14 * k, 1400, 1900, 1, 0.5, 0, 0, 0, T_STAR, 2.2);
       fire.add(e.x, e.y, e.z, 0, 0, 0, 1.6 * k, 1.5 * k, 1.45 * k, 360, 700, 0.4, 0.25, 0, 0, 0, T_GLOW, 0, 0, 1);
       const nd = Math.round((e.kill ? 40 : 12) * mul);
       for (let i = 0; i < nd; i++) {
@@ -259,7 +259,7 @@ export function create(ctx) {
       }
       if (e.kill) for (let i = 0; i < 6 * mul + 2; i++) { const q = randDir(), off = R(0, 250); smoke.add(e.x + q.x * off, e.y + q.y * off, e.z + q.z * off, e.vx * 0.2 + q.x * 30, e.vy * 0.2 + q.y * 30, e.vz * 0.2 + q.z * 30, 0.75, 0.75, 0.8, 300, R(1400, 2400), 0.3, R(18, 28), 0, 0.05, 0.9, T_SMOKE, 0.6); }
       addLight(e.x, e.y, e.z, 9 * k, 8 * k, 7.5 * k, 1800, 1.0, 0);
-      envFlash(e.x, e.y, e.z, [0.95, 0.9, 1], e.kill ? 6e5 : 2.5e5, 1, 0.55);
+      envFlash(e.x, e.y, e.z, [0.95, 0.9, 1], e.kill ? 2.5e5 : 1e5, 1, 0.4);
       ctx.fx.flash = Math.min(2.5, ctx.fx.flash + (e.kill ? 0.12 : 0.04));
       return;
     }

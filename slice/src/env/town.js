@@ -87,7 +87,7 @@ export function buildStreets(ctx, group, rng) {
         .replace('#include <color_fragment>', `#include <color_fragment>\n${frag}`)
         .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
           // street lighting: sodium fill over the town's streets (pools add the hot spots)
-          float townK = exp(-dot(vRW.xz / vec2(820.0, 700.0), vRW.xz / vec2(820.0, 700.0)) * 1.4);
+          float townK = exp(-dot(vRW.xz / vec2(820.0, 700.0), vRW.xz / vec2(820.0, 700.0)) * 0.7);
           totalEmissiveRadiance += diffuseColor.rgb * vec3(1.0, 0.62, 0.32) * 0.85 * townK;`);
     };
     m.customProgramCacheKey = () => 'env-street-' + order; // same onBeforeCompile source, different GLSL

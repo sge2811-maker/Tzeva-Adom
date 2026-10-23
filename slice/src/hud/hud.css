@@ -283,3 +283,11 @@
 .iw-debrief .history b { display: block; font-family: var(--f-data); font-size: 10.5px; letter-spacing: 0.24em; color: var(--amber); font-weight: 500; margin-bottom: 4px; }
 .iw-debrief .acts { display: flex; gap: 10px; margin-top: clamp(14px, 3vh, 26px); }
 .iw-debrief .acts .iw-btn { width: 230px; }
+
+/* small viewports (960x540 captures, laptops at 125% scaling): scale the panels, drop the extras */
+@media (max-height: 640px), (max-width: 1100px) {
+  .iw-status, .iw-alert, .iw-obj, .iw-roster, .iw-ad, .iw-bar, .iw-feed, .iw-hint, .iw-toast { zoom: 0.78; }
+  .iw-roster .legend { display: none; }
+  .iw-ad .bats { display: none; }
+  .iw-feed .ev.old { display: none; }
+}

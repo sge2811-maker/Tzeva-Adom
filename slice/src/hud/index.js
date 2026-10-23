@@ -745,7 +745,7 @@ export function create(ctx) {
     for (const s of sim.shelters) loads.set(s.id, s.occ);
     for (const g of info) loads.set(g.shelter, loads.get(g.shelter) + g.n - g.inside);
   }
-  let slowAcc = 1, obsAcc = 1, forceSlow = false;
+  let slowAcc = 1, obsAcc = 1.25, forceSlow = false, radarDue = 0, radarN = 0;
   function refreshSlow() { forceSlow = true; }
   function slowTick() {
     info = sim.groupInfo(); infoById = new Map(info.map((g) => [g.id, g]));
@@ -754,7 +754,7 @@ export function create(ctx) {
     updateMarkerContent();
     order = markers.slice().sort((a, b) => b.prio - a.prio);
     updatePanels();
-    drawRadar();
+    if (++radarN % 2 === 0) radarDue = 2;   // radar at 5 Hz, drawn on the frame after a panel tick
   }
   const townPos = new THREE.Vector3(0, 0, 0);
   return {
@@ -765,9 +765,11 @@ export function create(ctx) {
       if (ctx.flow === 'intro') { introCards(); return; }
       if (ctx.flow !== 'play') return;
       obsAcc += dt;
-      if (obsAcc > 0.5) { obsAcc = 0; readObstacles(); }    // layout reads first, before any write
+      if (obsAcc > 0.5 && slowAcc + dt < 0.1) { obsAcc = 0; readObstacles(); }    // layout reads first, before any write, never on a panel-tick frame
       slowAcc += dt;
-      if (slowAcc >= 0.1 || forceSlow) { slowAcc = 0; forceSlow = false; slowTick(); }
+      let did = false;
+      if (slowAcc >= 0.1 || forceSlow) { slowAcc = 0; forceSlow = false; slowTick(); did = true; }
+      else if (radarDue === 2) { radarDue = 0; drawRadar(); }
       const townDist = camera.position.distanceTo(townPos);
       placeMarkers(townDist);
       drawRoutes(townDist);

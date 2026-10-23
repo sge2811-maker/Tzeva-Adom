@@ -65,7 +65,7 @@ const FRAG_FIRE = /* glsl */`
     } else if (ty == 2) {
       float sh = clamp(vPx * 0.5, 14.0, 90.0);
       float cs = max(60.0, vPx * vPx * 0.004);
-      float core = exp(-r * r * cs) * 3.0 + exp(-r * r * cs * 0.12) * 0.4;
+      float core = exp(-r * r * cs) * 3.2 + exp(-r * r * cs * 0.25) * 0.22;
       float sp = exp(-abs(uv.y) * sh) * pow(1.0 - abs(uv.x), 3.0) + exp(-abs(uv.x) * sh) * pow(1.0 - abs(uv.y), 3.0);
       vec2 dg = vec2(uv.x + uv.y, uv.x - uv.y) * 0.7071;
       sp += 0.3 * (exp(-abs(dg.y) * sh * 1.3) * pow(max(0.0, 1.0 - abs(dg.x) * 1.4), 3.0) + exp(-abs(dg.x) * sh * 1.3) * pow(max(0.0, 1.0 - abs(dg.y) * 1.4), 3.0));
