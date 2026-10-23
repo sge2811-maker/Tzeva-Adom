@@ -54,6 +54,8 @@ export function create(ctx) {
   // night light levels for other streams (VFX smoke should be lit by these, not emissive)
   ctx.envLight = { ambient: new THREE.Color().setRGB(0.050, 0.056, 0.072), moon: moon.color.clone().multiplyScalar(0.09), fog: fog.color, flash: 0 };
 
+  // shared broad flash light (colour x strength), read by terrain, town, streets and decals
+  ctx.envFlash = { value: new THREE.Color(0, 0, 0) };
   const sky = createSky(ctx);
   const terrain = createTerrain(ctx);
   const city = createCity(ctx);
@@ -127,9 +129,9 @@ export function create(ctx) {
       }
       ctx.envLight.flash = flashSum;
       // big flashes light the whole scene from above for a beat (roofs, upper walls, terrain)
-      flashCol.multiplyScalar(Math.exp(-dt * 5));
+      flashCol.multiplyScalar(Math.exp(-dt * 2.2));
       hemi.color.setRGB(hemiBase.r + flashCol.r * 0.6, hemiBase.g + flashCol.g * 0.6, hemiBase.b + flashCol.b * 0.6);
-      terrain.flashU.uFlashSky.value.copy(flashCol).multiplyScalar(0.05);
+      ctx.envFlash.value.copy(flashCol).multiplyScalar(0.12);
       const wantRed = ctx.sim.phase === 'alert' ? 0.55 : 0;
       red += (Math.max(wantRed, ctx.fx.red) - red) * Math.min(1, dt * 2);
       grade.uniforms.get('uRed').value = red;

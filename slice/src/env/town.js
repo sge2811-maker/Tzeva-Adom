@@ -79,7 +79,7 @@ export function buildStreets(ctx, group, rng, segs = []) {
     let acc = 0;
     for (let i = 1; i < pts.length; i++) {
       const a = pts[i - 1], b = pts[i];
-      strip(walk, a.x, a.z, b.x, b.z, r.w + 6, 0.12, r.w * 16 + 8);            // gravel shoulders
+      strip(walk, a.x, a.z, b.x, b.z, r.w + 2.5, 0.12, r.w * 16 + 8);            // gravel shoulders
       strip(road, a.x, a.z, b.x, b.z, r.w, 0.25, 2 + r.w * 16, acc);          // asphalt: lane paint, no median
       acc += a.distanceTo(b);
     }
@@ -91,17 +91,18 @@ export function buildStreets(ctx, group, rng, segs = []) {
     g.computeVertexNormals();
     const m = new THREE.MeshStandardMaterial({ color, roughness: 0.9, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2 * order, polygonOffsetUnits: -2 * order });
     m.onBeforeCompile = (sh) => {
+      sh.uniforms.uFlashSky = ctx.envFlash || { value: new THREE.Color() };
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec4 aRd; varying vec4 vRd; varying vec3 vRW;')
         .replace('#include <begin_vertex>', '#include <begin_vertex>\nvRd = aRd; vRW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
-          varying vec4 vRd; varying vec3 vRW;
+          varying vec4 vRd; varying vec3 vRW; uniform vec3 uFlashSky;
           float rH(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
           float rN(vec2 p) { vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f); return mix(mix(rH(i), rH(i + vec2(1, 0)), u.x), mix(rH(i + vec2(0, 1)), rH(i + vec2(1, 1)), u.x), u.y); }`)
         .replace('#include <color_fragment>', `#include <color_fragment>\n${frag}`)
         .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
           // street lighting: sodium fill over the town's streets (pools add the hot spots)
           float townK = exp(-dot(vRW.xz / vec2(820.0, 700.0), vRW.xz / vec2(820.0, 700.0)) * 0.7);
-          totalEmissiveRadiance += diffuseColor.rgb * vec3(1.0, 0.62, 0.32) * 0.85 * townK;`);
+          totalEmissiveRadiance += diffuseColor.rgb * vec3(1.0, 0.62, 0.32) * 0.85 * townK + uFlashSky * diffuseColor.rgb;`);
     };
     m.customProgramCacheKey = () => 'env-street-' + order; // same onBeforeCompile source, different GLSL
     const mesh = new THREE.Mesh(g, m); mesh.renderOrder = order; group.add(mesh); return mesh;
@@ -110,8 +111,8 @@ export function buildStreets(ctx, group, rng, segs = []) {
   mk(walk, 0x7a756c, 1, /* glsl */`
     if (mod(vRd.w, 16.0) > 7.5) {
       // gravel shoulder blending into the desert
-      float Ws = floor(vRd.w / 16.0) + 6.0; float vs = abs(vRd.y - 0.5) * Ws;
-      diffuseColor.rgb = vec3(0.27, 0.23, 0.18) * (0.8 + 0.4 * rN(vRW.xz * 0.9)) * mix(1.0, 1.15, smoothstep(Ws * 0.5 - 0.5, Ws * 0.5 - 2.5, vs));
+      float Ws = floor(vRd.w / 16.0) + 2.5; float vs = abs(vRd.y - 0.5) * Ws;
+      diffuseColor.rgb = vec3(0.25, 0.225, 0.19) * (0.85 + 0.3 * rN(vRW.xz * 0.9));
     } else {
     float W = floor(vRd.w / 16.0) + 7.0, rw = W - 7.0;
     float vm = abs(vRd.y - 0.5) * W;
@@ -365,13 +366,13 @@ export function buildBuildings(ctx, group, extra = []) {
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.88, metalness: 0.0, side: THREE.FrontSide });
   const uniforms = { uTime: { value: 0 }, uWake: { value: 0 }, uWinGain: { value: 1.0 } };
   mat.onBeforeCompile = (sh) => {
-    Object.assign(sh.uniforms, uniforms);
+    Object.assign(sh.uniforms, uniforms, { uFlashSky: ctx.envFlash || { value: new THREE.Color() } });
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute vec4 aFac; attribute vec4 aFac2; varying vec4 vFac; varying vec4 vFac2; varying vec3 vBW;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvFac = aFac; vFac2 = aFac2; vBW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+      .replace('#include <common>', '#include <common>\nattribute vec4 aFac; attribute vec4 aFac2; varying vec4 vFac; varying vec4 vFac2; varying vec3 vBW; varying vec3 vBN;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvFac = aFac; vFac2 = aFac2; vBN = normal; vBW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
-        varying vec4 vFac; varying vec4 vFac2; varying vec3 vBW; uniform float uTime; uniform float uWake; uniform float uWinGain;
+        varying vec4 vFac; varying vec4 vFac2; varying vec3 vBW; varying vec3 vBN; uniform float uTime; uniform float uWake; uniform float uWinGain; uniform vec3 uFlashSky;
         float bh(vec2 p) { p = mod(p, 289.0); return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
         float bn(vec2 p) { vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f); return mix(mix(bh(i), bh(i + vec2(1, 0)), u.x), mix(bh(i + vec2(0, 1)), bh(i + vec2(1, 1)), u.x), u.y); }`)
       .replace('#include <color_fragment>', `#include <color_fragment>
@@ -439,9 +440,13 @@ export function buildBuildings(ctx, group, extra = []) {
           diffuseColor.rgb *= 0.78 + 0.22 * step(0.3, fract(vFac.y * 3.2)) + 0.1 * bn(vBW.xz * 2.0);
         } else {
           diffuseColor.rgb *= 0.9 + 0.12 * bn(vBW.xz * 0.6 + vBW.y);
-        }`)
+        }
+        // far town: warm windows on dark massing, not silver boxes
+        diffuseColor.rgb *= mix(1.0, 0.5, smoothstep(1400.0, 5000.0, length(vBW - cameraPosition)));`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
         // windows stay legible as a skyline when they shrink below a pixel
+        // overhead bursts paint roofs and the walls facing them
+        totalEmissiveRadiance += uFlashSky * diffuseColor.rgb * (0.35 + 0.65 * max(vBN.y, 0.0) + 0.4 * (1.0 - abs(vBN.y)));
         totalEmissiveRadiance += wEmit * 1.5 * uWinGain * (1.0 + 1.2 * smoothstep(350.0, 2500.0, length(vBW - cameraPosition)));
         // street lights wash the lower walls (sodium, falling off with height)
         if (code >= 0.0 || (code < -1.5 && code > -3.5)) totalEmissiveRadiance += diffuseColor.rgb * vec3(1.0, 0.58, 0.28) * 0.07 * exp(-max(vFac.y, 0.0) / 5.0);`);

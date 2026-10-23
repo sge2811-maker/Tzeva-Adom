@@ -99,7 +99,7 @@ export function createTerrain(ctx) {
     return fx + fz <= 1 ? ha + (hb - ha) * fx + (hc - ha) * fz : hd + (hc - hd) * (1 - fx) + (hb - hd) * (1 - fz);
   };
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.97, metalness: 0 });
-  const flashU = { uFlashSky: { value: new THREE.Color(0, 0, 0) } };
+  const flashU = { uFlashSky: ctx.envFlash || { value: new THREE.Color(0, 0, 0) } };
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, flashU);
     sh.vertexShader = sh.vertexShader

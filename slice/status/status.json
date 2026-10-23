@@ -138,16 +138,16 @@
       "id": "hud",
       "name": "HUD & UX",
       "scope": "Alert countdown, objectives, shelter routing — cinematic and minimal",
-      "state": "building",
+      "state": "critique",
       "round": 1,
       "scores": [],
       "best": null,
       "noImprove": 0,
-      "shot": null,
+      "shot": "status/shots/hud-r1/S4-alert.jpg",
       "issues": [],
-      "note": "",
+      "note": "Round 1 built (builder self-rates 8): 5-state red-alert module, routing UX with previews, decluttered markers, radar, debrief, IBM Plex incl. Hebrew; ux-test passes 10/10 with real clicks. Critic reviewing.",
       "commit": null,
-      "updated": "2026-10-23T00:15:19.753Z"
+      "updated": "2026-10-23T05:47:03.293Z"
     },
     "camera": {
       "id": "camera",
@@ -162,7 +162,7 @@
       "issues": [],
       "note": "",
       "commit": null,
-      "updated": "2026-10-22T06:59:29.110Z"
+      "updated": "2026-10-23T05:47:03.773Z"
     },
     "perf": {
       "id": "perf",
@@ -181,6 +181,10 @@
     }
   },
   "log": [
+    {
+      "when": "2026-10-23T05:47:03.773Z",
+      "text": "HUD round 1 finished (ux-test 10/10); critic launched. Camera builder resumed."
+    },
     {
       "when": "2026-10-23T05:43:58.949Z",
       "text": "Env critic R2 scored 5/10 again (1 round without improvement). Round 3 started."
@@ -222,5 +226,5 @@
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-23T05:43:58.949Z"
+  "updated": "2026-10-23T05:47:03.773Z"
 }
