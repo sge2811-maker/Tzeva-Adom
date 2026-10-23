@@ -130,7 +130,7 @@ export function createCity(ctx) {
       const parts = [];
       const lobes = [[0, 3.6, 0, 1.7], [1.3, 3.1, 0.4, 1.3], [-1.1, 3.2, 0.7, 1.25], [0.2, 3.0, -1.3, 1.3], [-0.4, 4.6, -0.2, 1.15]];
       for (const [x, y, z, r] of lobes) {
-        const g = new THREE.IcosahedronGeometry(r, 0).toNonIndexed();
+        const g = new THREE.IcosahedronGeometry(r, 0);
         const pa = g.attributes.position;
         for (let i = 0; i < pa.count; i++) { const k = 0.85 + 0.25 * Math.abs(Math.sin(pa.getX(i) * 5.1 + pa.getZ(i) * 3.7 + x)); pa.setXYZ(i, pa.getX(i) * k + x, pa.getY(i) * k * 0.85 + y, pa.getZ(i) * k + z); }
         g.deleteAttribute('uv'); parts.push(g);

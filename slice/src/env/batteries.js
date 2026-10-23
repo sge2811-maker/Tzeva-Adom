@@ -49,7 +49,7 @@ export function createBatteries(ctx) {
     g.traverse((o) => {
       if (!o.isMesh) return;
       const m4 = new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld);
-      const geo = o.geometry.clone().toNonIndexed().applyMatrix4(m4);
+      const geo0 = o.geometry.clone(); const geo = (geo0.index ? geo0.toNonIndexed() : geo0).applyMatrix4(m4);
       for (const k of Object.keys(geo.attributes)) if (k !== 'position' && k !== 'normal') geo.deleteAttribute(k);
       const c = o.material.color, n = geo.attributes.position.count, arr = new Float32Array(n * 3);
       for (let i = 0; i < n; i++) { arr[i * 3] = c.r; arr[i * 3 + 1] = c.g; arr[i * 3 + 2] = c.b; }

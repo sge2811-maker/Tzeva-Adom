@@ -297,7 +297,7 @@ export function create(ctx) {
   function banner(a, b, kind) { const el = $('banner'); el.querySelector('b').textContent = a; el.querySelector('span').textContent = b; el.className = 'iw-banner ' + kind; el.hidden = false; bannerT = sim.t + 4.2; }
   const feedItems = [];
   bus.on('msg', (m) => {
-    if (/^Municipal crew opening|is open\.$/.test(m.text)) return; // markers + toasts already say this
+    if (/^Municipal crew opening|is open\.$|^צבע אדום|Home Front Command early warning|^Plan the shelters now|^Last salvo is down|All clear\. People/.test(m.text)) return; // the alert module, markers and toasts already say this
     const d = document.createElement('div');
     d.className = 'ev ' + m.kind;
     d.innerHTML = `<time>${fmtClock(sim.clockMinutes())}</time><span></span>`; d.querySelector('span').textContent = m.text.replace(/^\d\d:\d\d · /, '');
@@ -322,8 +322,9 @@ export function create(ctx) {
   sizeRoute();
   const P = { x: 0, y: 0, ok: false };
   const proj = (x, y, z) => { v.set(x, y, z).project(camera); P.x = (v.x + 1) / 2 * innerWidth; P.y = (1 - v.y) / 2 * innerHeight; P.ok = v.z < 1 && v.z > -1; return P; };
-  function polyline(pts, from = 0) {
+  function polyline(pts, from = 0, sx = null, sz = 0) {
     rx.beginPath(); let started = false;
+    if (sx != null) { const q = proj(sx, groundAt(sx, sz) + 1.5, sz); if (q.ok) { rx.moveTo(q.x, q.y); started = true; } }
     for (let i = from; i < pts.length; i++) {
       const p = pts[i], q = proj(p.x, groundAt(p.x, p.z) + 1.5, p.z);
       if (!q.ok) { started = false; continue; }
@@ -351,13 +352,13 @@ export function create(ctx) {
       // ground ring on the crowd: they are only a few pixels tall from the RTS camera
       if (sim.phase === 'prep' || g.inside < g.n * 0.5) ring(g.x, g.z, grp.spread + 6, col, sel ? 0.95 : 0.55, sel ? 2.4 : 1.4);
       // route: the planned path before the siren (selected group only), the live path after
-      let pts = null, from = 0;
-      if (sim.phase === 'alert') for (const i of grp.members) if (A.state[i] !== CIV.SHELTERED && A.path[i]) { pts = A.path[i]; from = Math.max(0, A.pi[i] - 1); break; }
+      let pts = null, from = 0, sx = null, sz = 0;
+      if (sim.phase === 'alert') for (const i of grp.members) if (A.state[i] !== CIV.SHELTERED && A.path[i]) { pts = A.path[i]; from = A.pi[i]; sx = A.x[i]; sz = A.z[i]; break; }
       if (!pts && (sel || sim.phase === 'alert')) pts = plan(g.id, g.shelter).pts;
       if (!pts || (sim.phase === 'prep' && !sel)) continue;
       const a = sel ? 0.95 : 0.55 + (routeFlashT > 0 ? 0.4 * routeFlashT : 0);
-      rx.setLineDash([]); rx.strokeStyle = `rgba(0,0,0,${a * 0.5})`; rx.lineWidth = sel ? 6 : 4; polyline(pts, from);
-      rx.setLineDash([7, 6]); rx.lineDashOffset = -T * 26; rx.strokeStyle = `rgba(${col},${a})`; rx.lineWidth = sel ? 2.6 : 1.8; polyline(pts, from);
+      rx.setLineDash([]); rx.strokeStyle = `rgba(0,0,0,${a * 0.5})`; rx.lineWidth = sel ? 6 : 4.5; polyline(pts, from, sx, sz);
+      rx.setLineDash([7, 6]); rx.lineDashOffset = -T * 26; rx.strokeStyle = `rgba(${col},${Math.min(1, a + 0.15)})`; rx.lineWidth = sel ? 2.6 : 2.2; polyline(pts, from, sx, sz);
     }
     // hover preview: the alternative route for the selected group
     if (selGroup && hoverShelter && infoById.get(selGroup).shelter !== hoverShelter) {
@@ -659,7 +660,7 @@ export function create(ctx) {
     for (let z = -5000; z <= 5000; z += 5000) { c.moveTo(0, rzp(z)); c.lineTo(RW, rzp(z)); }
     c.stroke();
     c.font = '500 7.5px "IW Mono"'; c.fillStyle = 'rgba(160,190,205,0.55)';
-    c.fillText('DEAD SEA', rxp(10400), RH - 5); c.fillText('JORDAN', rxp(16900), RH - 5);
+    c.fillText('DEAD SEA', rxp(10200), RH - 5); c.textAlign = 'right'; c.fillText('JORDAN', RW - 3, RH - 5); c.textAlign = 'left';
     // defended sites
     c.strokeStyle = 'rgba(203,214,220,0.6)'; c.beginPath(); c.arc(rxp(GEO.nevatim.x), rzp(GEO.nevatim.z), GEO.nevatim.r * sc, 0, Math.PI * 2); c.stroke();
     c.fillStyle = sim.townHits ? '#ff5a47' : '#e8eef1'; c.fillRect(rxp(0) - 2.5, rzp(0) - 2.5, 5, 5);
@@ -779,7 +780,7 @@ export function create(ctx) {
       if (routeFlashT > 0) routeFlashT = Math.max(0, routeFlashT - dt);
       if (toastT > 0 && (toastT -= dt) <= 0) $('toast').hidden = true;
       if (bannerT > 0 && sim.t > bannerT) { $('banner').hidden = true; bannerT = -1; }
-      for (const f of feedItems) { const old = sim.t - f.t > 9; if (old !== !!f.old) { f.old = old; f.d.classList.toggle('old', old); } }
+      for (const f of feedItems) { const age = sim.t - f.t, st = age > 14 ? 2 : age > 8 ? 1 : 0; if (st !== (f.st || 0)) { f.st = st; f.d.classList.toggle('old', st === 1); f.d.hidden = st === 2; } }
     },
   };
 }

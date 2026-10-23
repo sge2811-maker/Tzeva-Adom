@@ -72,16 +72,59 @@
       "id": "vfx",
       "name": "VFX",
       "scope": "Launches, interceptor trails, intercepts, debris, smoke, screen shake",
-      "state": "critique",
+      "state": "building",
       "round": 1,
-      "scores": [],
-      "best": null,
+      "scores": [
+        {
+          "round": 1,
+          "score": 6,
+          "when": "2026-10-23T00:30:59.787Z"
+        }
+      ],
+      "best": 6,
       "noImprove": 0,
-      "shot": "status/shots/vfx-dev4/S9-nevatim.png",
-      "issues": [],
-      "note": "Round 1 built (builder self-rates ~7.5): lit smoke, noise fireballs, billowing trails, debris, re-entry, impacts with scorch decals. Critic reviewing.",
+      "shot": "status/shots/vfx-r1/best-C3.jpg",
+      "issues": [
+        {
+          "severity": "major",
+          "text": "Ribbon trails twist into flat bow-tie fins with bright seam lines when a trail points toward the camera (S3: the descending trail at the centre corkscrews into visible triangles). The big launch plume shows straight polygon edges on its left flank. Both are the 'primitives' tell that TARGET.md calls out."
+        },
+        {
+          "severity": "major",
+          "text": "Near the camera, a smoke ribbon renders as a flat, hard-edged grey slab with a square end cap (C5 and S9, lower left). An interceptor's motor streak and a star flash with a hard circular halo edge pass right by the lens at t~253.6."
+        },
+        {
+          "severity": "major",
+          "text": "Arrow 3 exo intercepts (C1, S6) are a sparse cluster of orange re-entry streaks plus a white core inside a large, smooth, round glow disc. They read as fireworks or a lens blob, not a brilliant star-flash over the Dead Sea. The glint cross is almost invisible at 960px. The Arrow climb trails show only as faint blue vertical bands in the upper right, more like searchlight beams than smoke."
+        },
+        {
+          "severity": "major",
+          "text": "Overhead (C4, S5), the David's Sling trails are thin, pale, scribbled lines. This is the 'trails as thin lines' failure sign, at the signature moment over the town. The Sling intercepts themselves show as round bloom glows with almost no visible fireball or lingering smoke puff."
+        },
+        {
+          "severity": "major",
+          "text": "S7 aftermath has almost no VFX presence. One faint wispy column with a flat pale dust disc, plus small fires along the escarpment. No tall smoke columns rise over the Negev to sell what happened, whereas CoH3 and WARNO post-battle frames are full of drifting smoke. The S9 ballistic impact cloud is a uniformly orange-lit cotton lump, with no dark smoke above the lit base."
+        },
+        {
+          "severity": "minor",
+          "text": "The ballistic smoke trail (S9, C5) is a perfectly straight, uniform-width, uniformly lit tan band that reads like a searchlight beam rather than turbulent smoke. In C4 the hot ribbons are constant-width laser lines."
+        },
+        {
+          "severity": "minor",
+          "text": "Drone kills over the escarpment at 3 to 5 km (C3, S3) are ~10 px orange pops. The flash does not light the nearby trails or terrain enough to register as an event at RTS tactical zoom."
+        },
+        {
+          "severity": "minor",
+          "text": "Per-frame follow glows call fire.add(), which draws rng.next() for the sprite seed. RNG consumption therefore depends on frame count: the same sim time renders different explosion shapes at 12 fps (clips) versus the shot seek. Each command is reproducible on its own, but clips and shots of the same moment disagree."
+        },
+        {
+          "severity": "blocker",
+          "text": "Every shot logs '[slice] env.update failed TypeError: hemi.color.copy(...).addScaledVector is not a function' (src/env/index.js:131, edited mid-run at 00:25 UTC). The clips rendered before that edit were clean. Per protocol, this caps the score at 6. Env lighting (flash response) was not running for the shots."
+        }
+      ],
+      "note": "Critic R1: 6/10 (also capped by an env console error). Iron Dome launches at WARNO level; ribbons fold edge-on, flat slab ends, Arrow flashes read as fireworks, faint overhead Sling trails, thin aftermath smoke. Round 2 building.",
       "commit": null,
-      "updated": "2026-10-23T00:15:19.138Z"
+      "updated": "2026-10-23T00:30:59.787Z"
     },
     "audio": {
       "id": "audio",
@@ -146,6 +189,10 @@
   },
   "log": [
     {
+      "when": "2026-10-23T00:30:59.787Z",
+      "text": "VFX critic R1 scored 6/10. Round 2 started; env asked to fix a console error that capped the score."
+    },
+    {
       "when": "2026-10-23T00:21:48.852Z",
       "text": "Env critic R1 scored 5/10 (builder self-rated 7). Round 2 started on the critic's issues."
     },
@@ -170,5 +217,5 @@
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-23T00:21:48.852Z"
+  "updated": "2026-10-23T00:30:59.787Z"
 }
