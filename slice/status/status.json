@@ -25,16 +25,16 @@
       "id": "vfx",
       "name": "VFX",
       "scope": "Launches, interceptor trails, intercepts, debris, smoke, screen shake",
-      "state": "building",
+      "state": "critique",
       "round": 1,
       "scores": [],
       "best": null,
       "noImprove": 0,
-      "shot": null,
+      "shot": "status/shots/vfx-dev4/S9-nevatim.png",
       "issues": [],
-      "note": "",
+      "note": "Round 1 built (builder self-rates ~7.5): lit smoke, noise fireballs, billowing trails, debris, re-entry, impacts with scorch decals. Critic reviewing.",
       "commit": null,
-      "updated": "2026-10-22T06:59:28.849Z"
+      "updated": "2026-10-23T00:15:19.138Z"
     },
     "audio": {
       "id": "audio",
@@ -64,7 +64,7 @@
       "issues": [],
       "note": "",
       "commit": null,
-      "updated": "2026-10-22T06:59:29.034Z"
+      "updated": "2026-10-23T00:15:19.753Z"
     },
     "camera": {
       "id": "camera",
@@ -99,6 +99,10 @@
   },
   "log": [
     {
+      "when": "2026-10-23T00:15:19.753Z",
+      "text": "VFX round 1 finished; critic launched. HUD builder resumed."
+    },
+    {
       "when": "2026-10-23T00:14:16.027Z",
       "text": "Env round 1 finished; fresh critic launched. VFX resumed after the overnight limit."
     },
@@ -115,5 +119,5 @@
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-23T00:14:16.027Z"
+  "updated": "2026-10-23T00:15:19.753Z"
 }
