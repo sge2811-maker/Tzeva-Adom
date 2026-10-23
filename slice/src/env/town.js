@@ -12,7 +12,7 @@ const TYPE_ID = { slab: 0, tower: 1, house: 2, commercial: 3, shed: 4 };
 const hash = (x) => { const s = Math.sin(x * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
 
 // ------------------------------------------------------------------ streets
-export function buildStreets(ctx, group, rng) {
+export function buildStreets(ctx, group, rng, segs = []) {
   const { layout } = ctx;
   const road = { P: [], A: [] }, walk = { P: [], A: [] };
   // quad strip along A->B; attribute aRd = (u metres along, v 0..1 across, length, code)
@@ -53,6 +53,19 @@ export function buildStreets(ctx, group, rng) {
           u += rng.range(5.6, 7.5);
         }
       }
+    }
+  }
+  // env-only neighbourhood streets (outskirts lobes): same look, no crossings
+  for (const g of segs) {
+    const code = W[g.kind] + g.w * 16;
+    strip(road, g.ax, g.az, g.bx, g.bz, g.w, 0.35, code);
+    strip(walk, g.ax, g.az, g.bx, g.bz, g.w + 6, 0.22, g.w * 16);
+    for (const [x, z] of [[g.ax, g.az], [g.bx, g.bz]]) strip(road, x - g.w / 2, z, x + g.w / 2, z, g.w, 0.36, 3 + g.w * 16);
+    const L = Math.hypot(g.bx - g.ax, g.bz - g.az), ux = (g.bx - g.ax) / L, uz = (g.bz - g.az) / L, nx = -uz, nz = ux;
+    for (const sd of [-1, 1]) for (let u = 10 + rng.range(0, 8); u < L - 10; u += rng.range(6, 14)) {
+      if (!rng.chance(0.4)) continue;
+      const off = g.w / 2 - 1.15, x = g.ax + ux * u + nx * off * sd, z = g.az + uz * u + nz * off * sd;
+      cars.push({ x, z, y: heightAt(x, z) + 0.35, yaw: Math.atan2(ux, uz) + (rng.chance(0.5) ? Math.PI : 0), c: rng.int(0, 99) });
     }
   }
   for (const n of layout.nodes) {
@@ -194,6 +207,21 @@ export function buildBuildings(ctx, group, extra = []) {
   const wallCols = [[0.74, 0.65, 0.52], [0.78, 0.71, 0.60], [0.68, 0.59, 0.47], [0.82, 0.75, 0.64], [0.64, 0.57, 0.48], [0.72, 0.63, 0.50], [0.62, 0.55, 0.44]];
   const extras = { roofUnits: [], beacons: [] };
   for (const b of B) {
+    if (b.type === 'wall') {
+      // compound / garden wall: a plain rendered block wall
+      const c = Math.cos(b.rot), s = Math.sin(b.rot), hw = b.w / 2, hd = b.d / 2, y0 = b.y - 0.4, y1 = b.y + b.h;
+      const wc = [0.56, 0.51, 0.44];
+      const tr = (lx, lz) => [b.x + lx * c - lz * s, b.z + lx * s + lz * c];
+      const quads = [[[hw, -hd], [hw, hd], [1, 0]], [[-hw, hd], [-hw, -hd], [-1, 0]], [[hw, hd], [-hw, hd], [0, 1]], [[-hw, -hd], [hw, -hd], [0, -1]]];
+      for (const [p0, p1, n] of quads) {
+        const [x0, z0] = tr(...p0), [x1, z1] = tr(...p1), wn = [n[0] * c - n[1] * s, n[0] * s + n[1] * c];
+        const v = [[x0, y0, z0], [x1, y0, z1], [x0, y1, z0], [x1, y1, z1]];
+        for (const o of [0, 2, 1, 1, 2, 3]) { P.push(...v[o]); N.push(wn[0], 0, wn[1]); F.push(0, v[o][1] - b.y, 0, -2); F2.push(0, 0, 0, 0); C.push(...wc); }
+      }
+      const r = [tr(-hw, -hd), tr(hw, -hd), tr(-hw, hd), tr(hw, hd)];
+      for (const o of [0, 2, 1, 1, 2, 3]) { P.push(r[o][0], y1, r[o][1]); N.push(0, 1, 0); F.push(0, b.h, 0, -2); F2.push(0, 0, 0, 0); C.push(...wc); }
+      continue;
+    }
     const type = TYPE_ID[b.type] ?? 0, floors = b.floors;
     const base = b.y - 3, top = b.y + b.h, hw = b.w / 2, hd = b.d / 2;
     const c = Math.cos(b.rot), s = Math.sin(b.rot);

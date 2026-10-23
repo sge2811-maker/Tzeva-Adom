@@ -16,8 +16,8 @@ export function createCity(ctx) {
   const group = new THREE.Group(); group.name = 'city'; scene.add(group);
 
   // ---------------------------------------------------------------- streets, cars, buildings (town.js)
-  const cars = buildStreets(ctx, group, rng);
   const out = planOutskirts(ctx);
+  const cars = buildStreets(ctx, group, rng, out.segs);
   buildCars(ctx, group, cars.concat(out.cars));
   buildDecals(ctx, group, out.decals);
   const B = layout.buildings.concat(out.extra);
@@ -28,7 +28,7 @@ export function createCity(ctx) {
   {
     const panels = [], tanks = [];
     for (const b of B) {
-      if (b.type === 'commercial' || b.type === 'shed') continue;
+      if (b.type === 'commercial' || b.type === 'shed' || b.type === 'wall') continue;
       const n = b.type === 'house' ? 1 : b.type === 'tower' ? 2 : Math.max(2, Math.floor(b.w * b.d / 90));
       for (let i = 0; i < n; i++) {
         const lx = (rng.next() - 0.5) * (b.w - 4), lz = (rng.next() - 0.5) * (b.d - 4);
@@ -47,7 +47,7 @@ export function createCity(ctx) {
   }
 
   // ---------------------------------------------------------------- street lights
-  const lights = layout.lights;
+  const lights = layout.lights.concat(out.lights);
   {
     const poleG = new THREE.CylinderGeometry(0.09, 0.13, 1, 6); poleG.translate(0, 0.5, 0);
     const poles = new THREE.InstancedMesh(poleG, new THREE.MeshStandardMaterial({ color: 0x2c2f33, roughness: 0.6, metalness: 0.5 }), lights.length);

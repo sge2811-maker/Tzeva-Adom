@@ -25,53 +25,106 @@ export function planOutskirts(ctx) {
   for (const s of layout.shelters) keep.push({ x: s.x, z: s.z, r: 20 });
   for (const g of layout.groups) keep.push({ x: g.x, z: g.z, r: g.spread + 10 });
   keep.push({ x: GEO.lookout.x, z: GEO.lookout.z, r: 140 });
+  const ell = (x, z) => Math.hypot(x / GEO.town.rx, z / GEO.town.rz);
+  const segs = [], lights = [];
   const nearRoad = (x, z, m) => {
-    for (const r of layout.roads) for (let i = 1; i < r.pts.length; i++) if (segDist(x, z, r.pts[i - 1][0], r.pts[i - 1][1], r.pts[i][0], r.pts[i][1]) < m) return true;
+    for (const r of layout.roads) for (let i = 1; i < r.pts.length; i++) if (segDist(x, z, r.pts[i - 1][0], r.pts[i - 1][1], r.pts[i][0], r.pts[i][1]) < m + r.w / 2) return true;
     for (const e of layout.edges) { if (!e.on) continue; const A = layout.nodes[e.a], C = layout.nodes[e.b]; if (segDist(x, z, A.x, A.z, C.x, C.z) < m + e.w / 2) return true; }
+    for (const g of segs) if (segDist(x, z, g.ax, g.az, g.bx, g.bz) < m + g.w / 2) return true;
     return false;
   };
   const clearOf = (x, z, w, d, margin) => {
     for (const k of keep) if (Math.hypot(x - k.x, z - k.z) < k.r + Math.max(w, d) / 2) return false;
-    for (const b of B.concat(extra)) if (Math.abs(x - b.x) < (b.w + w) / 2 + margin && Math.abs(z - b.z) < (b.d + d) / 2 + margin) return false;
+    for (const b of B.concat(extra)) if (b.type !== 'wall' && Math.abs(x - b.x) < (b.w + w) / 2 + margin && Math.abs(z - b.z) < (b.d + d) / 2 + margin) return false;
     return true;
   };
-  const addB = (b) => { b.id = B.length + extra.length; b.y = heightAt(b.x, b.z); b.seed = rng.next(); b.h = b.floors * 3.1 + (b.type === 'shed' ? 2.5 : 1.2); extra.push(b); };
-  const ell = (x, z) => Math.hypot(x / GEO.town.rx, z / GEO.town.rz);
+  const addB = (b) => { b.id = B.length + extra.length; b.y = heightAt(b.x, b.z); b.seed = rng.next(); b.h = b.type === 'wall' ? b.h : b.floors * (b.type === 'slab' ? 3.0 : 3.1) + (b.type === 'shed' ? 2.5 : b.type === 'house' ? 1.2 : 1.6); b.rot = b.rot || 0; extra.push(b); return b; };
+  const wall = (ax, az, bx, bz, h = 1.8) => { const L = Math.hypot(bx - ax, bz - az); addB({ type: 'wall', x: (ax + bx) / 2, z: (az + bz) / 2, w: L, d: 0.25, h, floors: 0, rot: Math.atan2(bz - az, bx - ax) }); };
+  const light = (x, z, ux, uz, h = 7.5, kind = 'sodium') => lights.push({ x, z, y: heightAt(x, z), h, kind, armX: ux, armZ: uz });
+  // a street segment of a new neighbourhood: drawn and lit like the town's own streets
+  const street = (ax, az, bx, bz, w = 10, lit = true) => {
+    const g = { ax, az, bx, bz, w, kind: w >= 12 ? 'street' : 'lane' }; segs.push(g);
+    if (!lit) return g;
+    const L = Math.hypot(bx - ax, bz - az), ux = (bx - ax) / L, uz = (bz - az) / L, nx = -uz, nz = ux;
+    for (let k = 0, u = 16; u < L - 8; u += 34, k++) { const sd = k % 2 ? 1 : -1; light(ax + ux * u + nx * (w / 2 + 1.2) * sd, az + uz * u + nz * (w / 2 + 1.2) * sd, -nx * sd, -nz * sd); }
+    return g;
+  };
+  const polyStreet = (pts, w, lit = true) => { for (let i = 1; i < pts.length; i++) street(pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1], w, lit); };
+  // buildings fronting a street on both sides
+  const frontage = (g, spacing, make, setback) => {
+    const L = Math.hypot(g.bx - g.ax, g.bz - g.az), ux = (g.bx - g.ax) / L, uz = (g.bz - g.az) / L, nx = -uz, nz = ux;
+    for (let u = spacing * 0.6; u < L - spacing * 0.4; u += spacing * rng.range(0.85, 1.15)) for (const sd of [-1, 1]) {
+      if (rng.chance(0.15)) continue;
+      const b = make(); const off = g.w / 2 + setback + b.d / 2;
+      const x = g.ax + ux * u + nx * off * sd, z = g.az + uz * u + nz * off * sd;
+      if (nearRoad(x, z, Math.max(b.w, b.d) / 2 + 2) || !clearOf(x, z, b.w + 3, b.d + 3, 2)) continue;
+      b.x = x; b.z = z; b.rot = Math.atan2(uz, ux) + rng.range(-0.03, 0.03);
+      addB(b);
+      if (b.type === 'house' && rng.chance(0.5)) decals.push({ type: 1, x: x + nx * sd * (b.d / 2 + 4), z: z + nz * sd * (b.d / 2 + 4), w: b.w + 4, d: 7, rot: b.rot + Math.PI / 2 });
+    }
+  };
+  const node = (x, z) => { let best = null, bd = 1e9; for (const n of layout.nodes) { if (!n.adj.some((id) => layout.edges[id].on)) continue; const d = Math.hypot(n.x - x, n.z - z); if (d < bd) { bd = d; best = n; } } return best; };
 
-  // light industry by the west gate and along Route 31: sheds in fenced dirt compounds
-  for (let n = 0, tries = 0; n < 16 && tries < 400; tries++) {
-    const x = rng.range(-1500, -820), z = rng.range(-380, 420);
-    const w = rng.range(18, 42), d = rng.range(14, 28);
-    if (ell(x, z) < 1.08 || nearRoad(x, z, 22 + Math.max(w, d) / 2) || !clearOf(x, z, w + 16, d + 16, 4)) continue;
-    addB({ type: 'shed', x, z, w, d, floors: 1, rot: 0 });
-    decals.push({ type: 2, x, z, w: w + 14, d: d + 14, rot: 0 });
-    n++;
+  // 1) south: a villa quarter on a looping lane, joined to the town's southern edge
+  {
+    const cx = -60, cz = 930, rx = 330, rz = 150, loop = [];
+    for (let k = 0; k <= 20; k++) { const a = (k / 20) * Math.PI * 2; loop.push([cx + Math.cos(a) * rx, cz + Math.sin(a) * rz]); }
+    const top = [cx, cz - rz], n0 = node(cx, cz - rz - 200);
+    street(n0.x, n0.z, top[0], top[1], 10);
+    polyStreet(loop, 9);
+    street(cx - 120, cz, cx + 140, cz + 10, 8);
+    const before = segs.length;
+    for (const g of segs.slice(0)) if (g.az > 650 || g.bz > 650) frontage(g, 19, () => ({ type: 'house', w: rng.range(11, 15), d: rng.range(9, 12), floors: rng.chance(0.4) ? 2 : 1 }), 5);
+    void before;
   }
-  // scattered low houses in clusters around the edge
-  for (let c = 0, tries = 0; c < 14 && tries < 300; tries++) {
-    const a = rng.range(0, Math.PI * 2), rr = rng.range(1.18, 1.75);
-    const cx = Math.cos(a) * GEO.town.rx * rr, cz = Math.sin(a) * GEO.town.rz * rr;
-    if (cx > 650) continue; // keep the escarpment side open
-    if (nearRoad(cx, cz, 40)) continue;
-    const m = rng.int(3, 7);
-    let placed = 0;
-    for (let k = 0; k < m * 3 && placed < m; k++) {
-      const x = cx + rng.range(-70, 70), z = cz + rng.range(-60, 60), w = rng.range(9, 15), d = rng.range(8, 12);
-      if (nearRoad(x, z, 14) || !clearOf(x, z, w + 8, d + 8, 3)) continue;
-      addB({ type: 'house', x, z, w, d, floors: rng.chance(0.25) ? 2 : 1, rot: 0 });
-      if (rng.chance(0.6)) decals.push({ type: 2, x: x + rng.range(-3, 3), z: z + rng.range(-3, 3), w: w + 12, d: d + 10, rot: 0 });
-      placed++;
+  // 2) north-east: a newer quarter of 4-6 storey slabs on a curving street
+  {
+    const n0 = node(380, -760);
+    const pts = [[n0.x, n0.z], [n0.x + 20, -780], [420, -900], [560, -980], [760, -990]];
+    const s0 = segs.length;
+    polyStreet(pts, 12);
+    street(420, -900, 300, -1010, 10);
+    for (const g of segs.slice(s0)) frontage(g, 44, () => ({ type: 'slab', w: rng.range(30, 46), d: 12, floors: rng.int(4, 6) }), 9);
+  }
+  // 3) west: light industry along Route 31 beyond the gate, sheds in fenced compounds
+  {
+    const xsI = [-1010, -1260, -1500];
+    for (const x of xsI) street(x, -300, x, 400, 12);
+    street(-1010, -300, -1500, -300, 12); street(-1010, 400, -1500, 400, 12);
+    for (let a = 0; a < 2; a++) for (const [z0, z1] of [[-290, -40], [130, 390]]) {
+      const x0 = xsI[a] - 8, x1 = xsI[a + 1] + 8; // cell between two side streets (x0 > x1)
+      for (let k = 0; k < 2; k++) {
+        const w = rng.range(26, 48), d = rng.range(18, 30);
+        const x = (x0 + x1) / 2 + rng.range(-40, 40), z = z0 + (k + 0.5) * (z1 - z0) / 2 + rng.range(-20, 20);
+        if (nearRoad(x, z, Math.max(w, d) / 2 + 14) || !clearOf(x, z, w + 20, d + 20, 3)) continue;
+        addB({ type: 'shed', x, z, w, d, floors: 1 });
+        const fw = w / 2 + 9, fd = d / 2 + 9;
+        wall(x - fw, z - fd, x + fw, z - fd); wall(x - fw, z + fd, x + fw, z + fd); wall(x - fw, z - fd, x - fw, z + fd);
+        wall(x + fw, z - fd, x + fw, z - 4); wall(x + fw, z + 4, x + fw, z + fd);
+        light(x + fw + 1, z + 5, -1, 0, 6, 'led');
+        decals.push({ type: 2, x, z, w: fw * 2 - 1, d: fd * 2 - 1, rot: 0 });
+      }
     }
-    // a dirt track from the cluster back toward town
-    const steps = 8 + rng.int(0, 6);
-    let px = cx, pz = cz, ang = Math.atan2(-cz, -cx) + rng.range(-0.5, 0.5);
-    for (let s = 0; s < steps; s++) {
+  }
+  // 4) three fenced farm / Bedouin-style compounds out in the desert, each with a gate light and a faint track
+  for (const [cx, cz] of [[-2100, -900], [-1900, 1250], [1300, 900]]) {
+    const R = 34;
+    for (let k = 0; k < 4; k++) {
+      const x = cx + rng.range(-R + 8, R - 8), z = cz + rng.range(-R + 8, R - 8);
+      if (!clearOf(x, z, 12, 10, 2)) continue;
+      addB(rng.chance(0.4) ? { type: 'shed', x, z, w: rng.range(12, 18), d: rng.range(8, 12), floors: 1 } : { type: 'house', x, z, w: rng.range(9, 13), d: rng.range(8, 10), floors: 1 });
+    }
+    wall(cx - R, cz - R, cx + R, cz - R); wall(cx - R, cz + R, cx + R, cz + R); wall(cx - R, cz - R, cx - R, cz + R);
+    wall(cx + R, cz - R, cx + R, cz - 5); wall(cx + R, cz + 5, cx + R, cz + R);
+    light(cx + R + 1, cz, -1, 0, 5, 'sodium');
+    decals.push({ type: 2, x: cx, z: cz, w: R * 2 - 1, d: R * 2 - 1, rot: 0 });
+    let px = cx + R, pz = cz, ang = Math.atan2(-cz, -cx);
+    for (let s = 0; s < 18; s++) {
       const L = 42, nx = px + Math.cos(ang) * L, nz = pz + Math.sin(ang) * L;
-      if (ell(nx, nz) < 1.0) break;
-      decals.push({ type: 4, x: (px + nx) / 2, z: (pz + nz) / 2, w: 5.5, d: L + 4, rot: Math.atan2(nx - px, nz - pz) });
-      px = nx; pz = nz; ang += rng.range(-0.35, 0.35);
+      if (ell(nx, nz) < 1.05 || nearRoad(nx, nz, 4)) break;
+      decals.push({ type: 4, x: (px + nx) / 2, z: (pz + nz) / 2, w: 5, d: L + 4, rot: Math.atan2(nx - px, nz - pz) });
+      px = nx; pz = nz; ang += rng.range(-0.25, 0.25);
     }
-    c++;
   }
   // block interiors: parking courts (with cars), scrub gardens, play areas
   for (const bl of layout.blocks) {
@@ -94,7 +147,7 @@ export function planOutskirts(ctx) {
       n++;
     }
   }
-  return { extra, decals, cars };
+  return { extra, decals, cars, segs, lights };
 }
 
 export function buildDecals(ctx, group, decals) {
