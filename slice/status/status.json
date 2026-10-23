@@ -10,16 +10,63 @@
       "id": "env",
       "name": "Environment & lighting",
       "scope": "Skyline, atmosphere, fog, tone mapping, bloom, SSAO, colour grade",
-      "state": "critique",
+      "state": "building",
       "round": 1,
-      "scores": [],
-      "best": null,
+      "scores": [
+        {
+          "round": 1,
+          "score": 5,
+          "when": "2026-10-23T00:21:48.852Z"
+        }
+      ],
+      "best": 5,
       "noImprove": 0,
-      "shot": "status/shots/env-dev4/noui/S4-alert.png",
-      "issues": [],
-      "note": "Round 1 built (builder self-rates ~7): atmosphere, terrain materials, streets, balconies, cars, shelters, crowd. Critic reviewing.",
+      "shot": "status/shots/env-r1/S4-alert.jpg",
+      "issues": [
+        {
+          "severity": "blocker",
+          "text": "The desert does not read as desert. In S1, S3 and S7 the ground is a blue-grey mottled 'cloud sea' or snowfield with leopard-spot blotches, smeared streaks and visible square value-noise cells near the camera (S1 lower-left). The same pattern repeats edge to edge in S2 and S7, which is exactly the procedural repetition TARGET.md lists as a failure. CoH3 and Iron Harvest night maps keep a warm albedo under cool light; this one is cool on cool."
+        },
+        {
+          "severity": "blocker",
+          "text": "The wadis read as pale topographic contour lines. They are closed, thin, evenly wide loops painted all over the plateau (S2, S7), so the map looks like a survey chart, not eroded ground."
+        },
+        {
+          "severity": "major",
+          "text": "The S3 'lookout' vista has no escarpment, no Dead Sea and only one Moab layer. The flat plateau runs straight into a single dark band with a flat, stepped top (S3, S6 crop). The rift haze that should separate plateau | rift | Moab is missing, so there is no TW:WH3-style foreground/mid/far layering. In S7 the Dead Sea is a flat navy rectangle with a straight edge, no moon glint and almost no shoreline lights."
+        },
+        {
+          "severity": "major",
+          "text": "Lit window interiors are filled with scrambled per-pixel 'glyph' noise instead of curtains or rooms. It is very visible at street level (S5 crop) and sparkles at tactical zoom (S4), which reads as a shader bug, not as blinds."
+        },
+        {
+          "severity": "major",
+          "text": "From the default RTS camera (S2) Arad reads as a game board. It is a near-octagonal grid of identical blocks framed by a hard perimeter road and dropped onto empty desert, with no outskirts, industrial edge, fences or dirt tracks. The block interiors are flat, empty beige lots (S4). The buildings are lit cool blue-grey like an overcast day model (S2 and S6 crops: a 'silver glitter' town), not warm stone under sodium light. Compared with CoH3 and the Cities: Skylines II night reference, it lacks warm street-light pools and edge transitions."
+        },
+        {
+          "severity": "major",
+          "text": "Regional roads are near-black (bluish) ribbons with sharp polyline kinks, no shoulders and a floating look (S1, S2, S7). In S3 the Masada road is a saturated navy strip with crisp edges lying on top of the terrain."
+        },
+        {
+          "severity": "major",
+          "text": "S4-alert is supposed to show people running to the Avenue shelter, but the crowd is a handful of 2-4 px specks that are invisible on first look. The shelter itself reads as a grey box in an empty lot. At this zoom CoH3 and AoE IV keep units readable through scale and contrast."
+        },
+        {
+          "severity": "minor",
+          "text": "Battery pads look like placeholders. In S3 the apron is a thick slab floating above sloped ground with a hard lit edge, and the launchers and trucks are primitive boxes with flat disc floodlights. In S2 and S7 the pad reads as a grey square tile."
+        },
+        {
+          "severity": "minor",
+          "text": "In S5, bright intercepts overhead leave the facades almost pure black. There is no visible flash light on roofs or upper walls, so the 'lighting interplay' WARNO and CoH3 show is missing in the still. The builder flagged this as unverified."
+        },
+        {
+          "severity": "minor",
+          "text": "Broadleaf trees are smooth green icosahedron blobs (S4). Up close they read as primitives."
+        }
+      ],
+      "note": "Critic R1: 5/10. Town and street level decent; desert reads as blue-grey cloud, wadis like contour lines, flat lookout vista, window noise, game-board town edge. Round 2 building.",
       "commit": null,
-      "updated": "2026-10-23T00:14:16.027Z"
+      "updated": "2026-10-23T00:21:48.852Z"
     },
     "vfx": {
       "id": "vfx",
@@ -99,6 +146,10 @@
   },
   "log": [
     {
+      "when": "2026-10-23T00:21:48.852Z",
+      "text": "Env critic R1 scored 5/10 (builder self-rated 7). Round 2 started on the critic's issues."
+    },
+    {
       "when": "2026-10-23T00:15:19.753Z",
       "text": "VFX round 1 finished; critic launched. HUD builder resumed."
     },
@@ -119,5 +170,5 @@
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-23T00:15:19.753Z"
+  "updated": "2026-10-23T00:21:48.852Z"
 }
