@@ -72,8 +72,8 @@
       "id": "vfx",
       "name": "VFX",
       "scope": "Launches, interceptor trails, intercepts, debris, smoke, screen shake",
-      "state": "building",
-      "round": 1,
+      "state": "critique",
+      "round": 2,
       "scores": [
         {
           "round": 1,
@@ -83,7 +83,7 @@
       ],
       "best": 6,
       "noImprove": 0,
-      "shot": "status/shots/vfx-r1/best-C3.jpg",
+      "shot": "status/shots/vfx-dev9/S3-drones.png",
       "issues": [
         {
           "severity": "major",
@@ -122,9 +122,9 @@
           "text": "Every shot logs '[slice] env.update failed TypeError: hemi.color.copy(...).addScaledVector is not a function' (src/env/index.js:131, edited mid-run at 00:25 UTC). The clips rendered before that edit were clean. Per protocol, this caps the score at 6. Env lighting (flash response) was not running for the shots."
         }
       ],
-      "note": "Critic R1: 6/10 (also capped by an env console error). Iron Dome launches at WARNO level; ribbons fold edge-on, flat slab ends, Arrow flashes read as fireworks, faint overhead Sling trails, thin aftermath smoke. Round 2 building.",
+      "note": "Round 2 built: edge-on ribbon fix, tapered ends, exo star flashes, distance-scaled fireballs, darker longer columns, deterministic RNG. Critic reviewing.",
       "commit": null,
-      "updated": "2026-10-23T00:30:59.787Z"
+      "updated": "2026-10-23T05:42:05.763Z"
     },
     "audio": {
       "id": "audio",
@@ -189,6 +189,10 @@
   },
   "log": [
     {
+      "when": "2026-10-23T05:42:05.763Z",
+      "text": "VFX round 2 finished; fresh critic launched."
+    },
+    {
       "when": "2026-10-23T05:37:46.597Z",
       "text": "Env round 2 finished; fresh critic launched."
     },
@@ -221,5 +225,5 @@
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-23T05:37:46.597Z"
+  "updated": "2026-10-23T05:42:05.763Z"
 }
