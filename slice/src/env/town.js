@@ -98,7 +98,7 @@ export function buildStreets(ctx, group, rng) {
     if (mod(vRd.w, 16.0) > 7.5) {
       // gravel shoulder blending into the desert
       float Ws = floor(vRd.w / 16.0) + 6.0; float vs = abs(vRd.y - 0.5) * Ws;
-      diffuseColor.rgb = vec3(0.30, 0.26, 0.21) * (0.8 + 0.4 * rN(vRW.xz * 0.9)) * mix(1.0, 1.15, smoothstep(Ws * 0.5 - 0.5, Ws * 0.5 - 2.5, vs));
+      diffuseColor.rgb = vec3(0.27, 0.23, 0.18) * (0.8 + 0.4 * rN(vRW.xz * 0.9)) * mix(1.0, 1.15, smoothstep(Ws * 0.5 - 0.5, Ws * 0.5 - 2.5, vs));
     } else {
     float W = floor(vRd.w / 16.0) + 7.0, rw = W - 7.0;
     float vm = abs(vRd.y - 0.5) * W;

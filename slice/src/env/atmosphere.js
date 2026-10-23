@@ -27,7 +27,7 @@ float atmLayer(float y, float ry, float dist, float B) {
 }
 // a third, dense layer pooled in the Dead Sea rift (below the plateau): the luminous band that
 // separates the plateau edge from Moab even when the rift floor is hidden
-#define ATM_D2 (1.0 / 5200.0)
+#define ATM_D2 (1.0 / 2600.0)
 #define ATM_B2 (1.0 / 260.0)
 float atmOD(vec3 ro, vec3 rd, float dist) {
   float rift = smoothstep(4000.0, 9000.0, ro.x + rd.x * dist * 0.5) * (1.0 - smoothstep(20000.0, 26000.0, ro.x + rd.x * dist * 0.5));

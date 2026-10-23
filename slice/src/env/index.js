@@ -128,7 +128,7 @@ export function create(ctx) {
       ctx.envLight.flash = flashSum;
       // big flashes light the whole scene from above for a beat (roofs, upper walls, terrain)
       flashCol.multiplyScalar(Math.exp(-dt * 5));
-      hemi.color.setRGB(hemiBase.r + flashCol.r * 0.35, hemiBase.g + flashCol.g * 0.35, hemiBase.b + flashCol.b * 0.35);
+      hemi.color.setRGB(hemiBase.r + flashCol.r * 0.6, hemiBase.g + flashCol.g * 0.6, hemiBase.b + flashCol.b * 0.6);
       terrain.flashU.uFlashSky.value.copy(flashCol).multiplyScalar(0.05);
       const wantRed = ctx.sim.phase === 'alert' ? 0.55 : 0;
       red += (Math.max(wantRed, ctx.fx.red) - red) * Math.min(1, dt * 2);
