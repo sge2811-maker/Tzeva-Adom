@@ -22,18 +22,19 @@ export function create(ctx) {
   // ---------------------------------------------------------------- lighting
   // Moonlight: a low waxing crescent in the west. Silver, not saturated blue, so the desert
   // keeps its sand/rock hue; a weak cool sky fill from the zenith-east models the escarpment.
-  const moon = new THREE.DirectionalLight(new THREE.Color().setRGB(0.72, 0.80, 1.0), 1.3);
+  const moon = new THREE.DirectionalLight(new THREE.Color().setRGB(0.82, 0.85, 0.95), 1.05);
   moon.position.copy(MOON_DIR).multiplyScalar(8000);
   scene.add(moon, moon.target);
   const fill = new THREE.DirectionalLight(new THREE.Color().setRGB(0.55, 0.65, 0.9), 0.22);
   fill.position.set(3000, 8000, -1500);
   scene.add(fill, fill.target);
-  const hemi = new THREE.HemisphereLight(new THREE.Color().setRGB(0.20, 0.25, 0.36), new THREE.Color().setRGB(0.10, 0.075, 0.05), 0.5);
+  const hemi = new THREE.HemisphereLight(new THREE.Color().setRGB(0.22, 0.26, 0.34), new THREE.Color().setRGB(0.12, 0.09, 0.06), 0.6);
   scene.add(hemi);
   // flash lights: a fixed pool of point lights reused for launches/intercepts/impacts. They stay
   // in the scene at intensity 0 (toggling visibility changes the light count and recompiles every
   // material, which is a hitch on real GPUs).
   const pool = [];
+  const flashCol = new THREE.Color(0, 0, 0), hemiBase = new THREE.Color().setRGB(0.22, 0.26, 0.34);
   const nPool = Math.max(2, Math.min(6, quality.s.lightsMax | 0));
   for (let i = 0; i < nPool; i++) { const l = new THREE.PointLight(0xffa860, 0, 1, 2); l.userData = { t: 1, dur: 1, power: 0, on: false }; scene.add(l); pool.push(l); }
   ctx.lights = {
@@ -44,7 +45,8 @@ export function create(ctx) {
       // reuse an idle light, else the one whose remaining energy is lowest
       let l = live.find((q) => !q.userData.on) || live.reduce((a, b) => (a.userData.power * (1 - a.userData.t / a.userData.dur) < b.userData.power * (1 - b.userData.t / b.userData.dur) ? a : b));
       l.position.set(pos.x, pos.y, pos.z); l.color.setRGB(color[0], color[1], color[2]);
-      l.distance = radius; l.userData = { t: 0, dur, power: intensity, on: true }; l.intensity = intensity;
+      l.distance = radius; l.decay = pos.y > 1000 ? 1.0 : 2.0; l.userData = { t: 0, dur, power: pos.y > 1000 ? intensity / Math.max(1, Math.min(4000, pos.y)) : intensity, on: true, sky: Math.min(2.5, intensity / 4e6), col: color }; l.intensity = l.userData.power;
+      flashCol.r += color[0] * l.userData.sky; flashCol.g += color[1] * l.userData.sky; flashCol.b += color[2] * l.userData.sky;
       sky.flash(pos, Math.min(3, intensity / 1.5e6), color);
     },
   };
@@ -123,6 +125,10 @@ export function create(ctx) {
         flashSum += l.intensity / Math.max(1, l.position.distanceToSquared(camera.position));
       }
       ctx.envLight.flash = flashSum;
+      // big flashes light the whole scene from above for a beat (roofs, upper walls, terrain)
+      flashCol.multiplyScalar(Math.exp(-dt * 5));
+      hemi.color.copy(hemiBase).addScaledVector(flashCol, 0.35);
+      terrain.flashU.uFlashSky.value.copy(flashCol).multiplyScalar(0.05);
       const wantRed = ctx.sim.phase === 'alert' ? 0.55 : 0;
       red += (Math.max(wantRed, ctx.fx.red) - red) * Math.min(1, dt * 2);
       grade.uniforms.get('uRed').value = red;

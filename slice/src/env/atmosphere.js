@@ -25,8 +25,14 @@ float atmLayer(float y, float ry, float dist, float B) {
   float k = abs(dy) > 1e-4 ? (1.0 - exp(-clamp(dy, -12.0, 60.0))) / dy : 1.0;
   return base * k;
 }
+// a third, dense layer pooled in the Dead Sea rift (below the plateau): the luminous band that
+// separates the plateau edge from Moab even when the rift floor is hidden
+#define ATM_D2 (1.0 / 5200.0)
+#define ATM_B2 (1.0 / 260.0)
 float atmOD(vec3 ro, vec3 rd, float dist) {
-  return dist * (ATM_D0 * atmLayer(ro.y, rd.y, dist, ATM_B0) + ATM_D1 * atmLayer(ro.y, rd.y, dist, ATM_B));
+  float rift = smoothstep(4000.0, 9000.0, ro.x + rd.x * dist * 0.5) * (1.0 - smoothstep(20000.0, 26000.0, ro.x + rd.x * dist * 0.5));
+  return dist * (ATM_D0 * atmLayer(ro.y, rd.y, dist, ATM_B0) + ATM_D1 * atmLayer(ro.y, rd.y, dist, ATM_B)
+       + ATM_D2 * atmLayer(ro.y + 330.0, rd.y, dist, ATM_B2) * (0.25 + 0.75 * rift));
 }
 float atmGlowAt(vec3 p) {
   vec2 a = p.xz / vec2(900.0, 780.0);
@@ -38,7 +44,7 @@ float atmGlowAt(vec3 p) {
 }
 vec3 atmInscatter(vec3 ro, vec3 rd, float dist, vec3 fogC) {
   float mu = max(dot(rd, ATM_MOON), 0.0);
-  vec3 c = fogC * (1.0 + 0.25 * mu * mu + 0.6 * pow(mu, 24.0));
+  vec3 c = fogC * (1.0 + 0.35 * mu * mu + 0.6 * pow(mu, 24.0)) * (1.0 + 0.5 * exp(-max(ro.y + rd.y * min(dist, 9000.0) * 0.5 + 300.0, 0.0) / 400.0));
   float L = min(dist, 26000.0), g = 0.0;
   for (int i = 0; i < 6; i++) { float t = (float(i) + 0.5) / 6.0; g += atmGlowAt(ro + rd * (L * t * t)); }
   c += vec3(1.0, 0.52, 0.24) * (g / 6.0) * 0.13;
