@@ -1,0 +1,67 @@
+{
+  "stream": "env",
+  "round": 2,
+  "score": 5,
+  "oneLine": "Warmer and more cohesive than a prototype. S5 (skyline) and S7 (rift, Dead Sea and Moab) approach competent indie, but most frames still give away the budget class: S2 is a game-board octagon town on a blank plain, S3 is a featureless beige plane with a pool-blue battery pad and tape-orange road shoulders, Moab ridges render as stacked flat cardboard strips, the near desert is smeared with ink-spot shrubs and dark smudges, and the facades stay black under overhead intercepts.",
+  "strengths": [
+    "The console is clean in all 7 shots. The whole frame stays within budget: 72-90 draw calls and 0.89-1.03 M triangles, so the env share is well inside the 120 calls / 1.1 M limit.",
+    "The desert albedo is finally warm ochre under cool moonlight, not blue-grey. The contour-line wadis and value-noise cells from r1 are gone (S2, S3, S4).",
+    "The S7 vista now has real layers: plateau, then a pale salt rim, then the Dead Sea with a moon-glint path and shore-light sparkle, then the Moab face and two further ridges. This is the first frame with Total War: Warhammer III-style foreground, mid-ground and far separation.",
+    "S5-street is the strongest frame. The window patterns vary and don't repeat, with blinds, some dark floors and a mix of warm and cool colour temperatures. Balconies break the slab silhouettes, and street-light bokeh sits in front. It is close to Cities: Skylines II night windows, and the r1 glyph noise is fixed.",
+    "The S4 town reads as lived-in at tactical zoom: sodium pools along the avenues, palms, parked-car courts, zebra crossings, red-roof houses on the edge, and the shelter's green sign glow reads from above. The crowd is now a visible group of coloured figures at the avenue crossing.",
+    "The sky has no banding. The crescent halo and the warm light-pollution dome over Arad on the S1 horizon are in the spirit of Iron Harvest."
+  ],
+  "issues": [
+    {
+      "severity": "blocker",
+      "area": "town layout / skyline (S2, S6)",
+      "text": "From the default RTS camera (S2), Arad is still a near-octagon of identical square blocks framed by glowing orange perimeter lines, dropped onto a blank plain. The 'outskirts' are scattered single red and white specks with thin pale scratch lines, which look like debug markers rather than an urban fringe. In S6 the whole town reads as silver-white glitter with flat grey facades. Next to an Age of Empires IV high camera or a Cities: Skylines II night overview, this is the first-glance 'procedural' tell.",
+      "evidence": "status/shots/env-r2/S2-tactical.png",
+      "fix": "In the building-generation part of src/world/layout.js, break the ellipse. Push 2-3 neighbourhood lobes out along the regional roads (an industrial zone at the NE road, a villa quarter to the S) and drop or jitter perimeter street segments so the edge is ragged. In src/env/outskirts.js, cluster the sheds and houses into 4-6 coherent compounds with fences, yards and a lit gate light instead of scattering singletons, and fade the dirt tracks to about 30% contrast. In src/env/town.js, cut the facade albedo or moon response at distance (multiply the facade colour by mix(1.0, 0.55, smoothstep(1500.0, 5000.0, dcam))) so the far town reads as warm windows on dark massing, not silver boxes. Add a warm light-pollution dome over the town in S2 and S6 (the sky.js dome is only visible at the horizon), for example a large additive ground-hugging haze disc in atmosphere.js centred on Arad."
+    },
+    {
+      "severity": "major",
+      "area": "far ridges / layered depth (S3, S6, S7)",
+      "text": "The Moab layers are vertical flat curtains with uniform navy fill. From the S7 height they read as stacked paper strips with a hard horizontal top and bottom. The farther ridges are darker than the nearer Moab face, which reverses atmospheric perspective. In S6 the ridge crest is visibly stair-stepped, and in S3 and S6 the plateau edge cuts the rift as a ruler-straight horizontal line, so the escarpment never shows.",
+      "evidence": "status/shots/env-r2/S7-aftermath.png",
+      "fix": "In src/env/terrain.js ridge(): (1) Make each ridge a 2-3 km-deep heightfield strip (two or three rows of vertices stepping east and down to the base) instead of a vertical wall, so it has a lit west slope and the top-down view sees a surface, not a sheet. (2) Replace the flat 0.010-0.028 colour with distance-driven inscatter: run the fragment through atmInscatter (as the sea does), or lerp toward ATM.fog by 0.35, 0.55 and 0.7 for the three ridges, so each one is lighter and bluer than the one in front. (3) Smooth the crest by sampling top at the 45 m step but low-pass filtering ridged() (fewer octaves or a 3-tap average) to kill the stair steps. (4) For S3 and S6, add a thin bright rift-haze band right above the plateau edge (atmosphere.js: boost ATM density for y < 0 inside the rift x-range) so the edge reads as a drop-off, not a cut."
+    },
+    {
+      "severity": "major",
+      "area": "flash lighting on the town (S5)",
+      "text": "A huge intercept flash fills the top of S5, yet every facade is pure black apart from its windows. Only the terrain receives the new flash hemisphere term. Against WARNO and CoH3, where overhead bursts visibly paint roofs and walls, the 'lighting interplay' is missing at the most cinematic moment.",
+      "evidence": "status/shots/env-r2/S5-street.png",
+      "fix": "In src/env/index.js, around line 132, uFlashSky is pushed only to terrain.flashU. Share the same uniform object with the facade material (town.js line 169 onBeforeCompile), roofs and street materials (town.js line 80), and city.js props. In each one add totalEmissiveRadiance += uFlashSky * diffuseColor.rgb * (0.35 + 0.65 * max(normalW.y, 0.0)) plus a side-wall term ~0.4 for vertical faces, so the walls facing the flash pick up a warm wash. Raise the multiplier from 0.05 to about 0.15 for bursts under 3 km slant range."
+    },
+    {
+      "severity": "major",
+      "area": "ground near camera (S1, S7, S3)",
+      "text": "The near desert in S1 and in the lower half of S7 is smeared with large dark, soft streaks that read as cloud shadows or soot on snow, and peppered with blue-black 'ink spot' shrub blobs. In S3 the opposite happens: the plateau is a completely featureless beige plane with no micro-relief or material variety for kilometres. Neither reads as Negev hamada next to CoH3 or Iron Harvest ground.",
+      "evidence": "status/shots/env-r2/S1-intro.png",
+      "fix": "In src/env/terrain.js (lines 126-136), the wadi fringe darkening (fringe*0.25 + shrub*(0.25+0.5*fringe)) creates the smudges. Cut it to fringe*0.10 and shrub*0.18, and tint the darkening warm (mix toward vec3(0.22,0.18,0.13) instead of multiplying, which turns blue under the moon). Raise the shrub frequency from 0.11 to about 0.35 with a tighter threshold (0.80-0.86) so the shrubs read as sparse 2-3 m bushes, not 9 m ink blots. On flat ground (S3) add a low-contrast gravel-pavement layer: mix in vec3(0.36,0.31,0.24) by gN(xz*0.0025) at ±12%, plus the BH bump at amp ≈ 1.5 inside 1.5 km, so flat hamada shows desert-pavement mottling and faint rills."
+    },
+    {
+      "severity": "major",
+      "area": "battery pads / roads (S3)",
+      "text": "In the lookout shot the battery apron reads as a navy-blue swimming pool with a hard dark rim, and the boxy launchers sit in it. The Masada road has saturated orange-tan shoulders as wide as the carriageway, so it looks like masking tape on a tabletop.",
+      "evidence": "status/shots/env-r2/S3-drones.png",
+      "fix": "In src/env/batteries.js line 15, the pad uses a plain MeshStandardMaterial that receives none of the terrain's warm treatment, so at grazing angle it picks up only cool moon and hemisphere light. Give the apron and skirt the terrain's onBeforeCompile warm-emissive and uFlashSky terms, or vertex-colour them from the terrain palette ×1.15. Also verify that the draped PlaneGeometry normals face +Y after computeVertexNormals. Merge the berm into a soft-edged alpha gradient instead of a dark rim. In src/env/town.js line 69, narrow the gravel shoulders from r.w + 6 to r.w + 2.5 and desaturate the walk colour in the shoulder shader (0x7a756c is fine, but the shoulder shader at line 99 is boosting it). Blend its edge alpha to 0 so it dissolves into the desert."
+    },
+    {
+      "severity": "minor",
+      "area": "block interiors / night exposure (S4)",
+      "text": "At tactical zoom the block interiors are large flat beige lots, evenly lit almost like dusk. The new decals are square green or yellow patches that read as placed tiles. The sodium pools exist, but the ground between them isn't dark enough for them to pop the way CoH3 night maps and CS2 do.",
+      "evidence": "status/shots/env-r2/S4-alert.png",
+      "fix": "In src/env/town.js or city.js, darken unlit lot ground to about 55% of its current value (lower the ground albedo or the hemisphere ground term inside the town radius) so the existing pools carry the light. Make the decals irregular (radial alpha falloff with noise and rotated patches) and add 2-3 decal types per block: parking courts with car rows, a playground pad and scrub. Add low courtyard walls as instanced thin boxes along lot edges."
+    },
+    {
+      "severity": "minor",
+      "area": "buildings up close (S4, S5)",
+      "text": "Roofs are uniform flat grey slabs with one box and a red dot. In S5 the slabs have balconies, but at S4 zoom the roofs dominate and read as untextured. Rooftop clutter (solar heaters, tanks, parapets) isn't visible at tactical zoom.",
+      "evidence": "status/shots/env-r2/S4-alert.png",
+      "fix": "In src/env/town.js, add a parapet lip (a thin inset darker band on the roof edge in the roof shader) and a roof albedo variation per building (seeded ±15% and a tar or gravel tint). Scale the instanced solar heaters and tanks in city.js up about 1.4× and cluster 3-8 per roof so they read at S4 distance."
+    }
+  ],
+  "benchmarkNotes": "Company of Heroes 3 night maps: S4 has the vocabulary (lamp pools, parked cars, palms, readable shelter glow and a visible crowd cluster), but the ground between the pools is too evenly bright and the lots are empty, so it reads closer to a 2015 city builder than to CoH3's dense, darkened streets. Iron Harvest: the sky, moon halo and horizon dome are in the right spirit, but there is still no volumetric-looking haze between layers in S3 and S6, and the S1 foreground ground has unnatural dark smears. Total War: Warhammer III vistas: S7 finally layers plateau, salt rim, sea and Moab, but the ridges are flat dark curtains that get darker with distance, the opposite of TW:WH3's atmospheric perspective. The S3 lookout still has no escarpment drop and its foreground is an empty plane. Cities: Skylines II night: the S5 window treatment is genuinely close to the reference, but the facades go black under flash, and the S2 and S6 overviews show a silver box-grid town with no light-pollution bloom over it. Age of Empires IV high camera: the S2 octagon town with orange-outlined blocks and speck outskirts is the first-glance procedural giveaway. Net: cohesive and much warmer than r1, but most canonical frames would sit visibly below the references in a store-page row. Mid-tier competent indie, with prototype tells remaining in S2 and S3.",
+  "bestShot": "status/shots/env-r2/S5-street.jpg"
+}
