@@ -18,13 +18,20 @@ const VERT = (lit) => /* glsl */`
   void main() {
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     vec3 tv = (modelViewMatrix * vec4(aTan, 0.0)).xyz;
-    vec3 sd = cross(tv, mv.xyz); float sl = length(sd); sd = sl > 1e-6 ? sd / sl : vec3(1.0, 0.0, 0.0);
+    vec3 vd = normalize(mv.xyz); float tl = length(tv);
+    vec3 sd = cross(tv, vd); float sl = length(sd);
+    // edge-on (trail pointing at the camera): blend to a stable screen-space side, widen and fade,
+    // so the ribbon reads as a soft cross-section instead of folding into flat triangles
+    float f = tl > 1e-6 ? abs(dot(tv / tl, vd)) : 1.0;
+    float eo = smoothstep(0.82, 0.97, f);
+    vec3 fb = normalize(cross(vec3(0.0, 1.0, 0.0), vd) + vec3(1e-4, 0.0, 0.0));
+    sd = normalize(mix(sl > 1e-6 ? sd / sl : fb, fb, eo));
     float dz = max(1.0, -mv.z);
-    float hw = abs(aW); float px = hw * uScale / dz;
+    float hw = abs(aW) * (1.0 + eo * 1.6); float px = hw * uScale / dz;
     float side = aW < 0.0 ? -1.0 : 1.0;
     mv.xyz += sd * max(hw, uMinPx * dz / uScale) * side;
     gl_Position = projectionMatrix * mv;
-    vA = aA; vA.x *= min(1.0, px / uMinPx);
+    vA = aA; vA.x *= min(1.0, px / uMinPx) * (1.0 - 0.55 * eo) * smoothstep(hw * 1.5, hw * 6.0, dz);
     vSide = side; vC = uCols[int(aCid + 0.5)];
     vAtm = vfxAtm(position);
     ${lit ? 'vec3 ld; vLC = vfxLight(position, ld);' : ''}
@@ -38,8 +45,9 @@ const FRAG_SMOKE = /* glsl */`
     float v = vSide;
     float n = fbm3(vec2(vA.z, v * 0.75 + vA.z * 0.37));
     float n2 = vn(vec2(vA.z * 3.1 + 7.0, v * 1.6));
-    float e = abs(v) + (n - 0.5) * (0.45 + 0.75 * vA.y);
-    float dens = smoothstep(1.0, 0.12, e) * (0.5 + 0.55 * n + 0.25 * n2);
+    float n3 = vn(vec2(vA.z * 9.0 - 3.0, v * 3.2 + vA.z));
+    float e = abs(v) + (n - 0.5) * (0.7 + 0.75 * vA.y) + (n3 - 0.5) * 0.25;
+    float dens = smoothstep(0.85, 0.1, e) * (0.5 + 0.55 * n + 0.25 * n2);
     float shade = 0.75 + 0.25 * v;
     vec3 lit = vC * (uAmb + uMoonC * shade + vLC * 0.85);
     lit += vec3(1.0, 0.42, 0.13) * vA.w * max(0.0, 1.0 - abs(v) * 1.2);
@@ -49,9 +57,10 @@ const FRAG_SMOKE = /* glsl */`
 
 const FRAG_HOT = /* glsl */`
   varying vec4 vA; varying vec3 vC; varying float vSide; varying vec4 vAtm;
+  ${NOISE}
   void main() {
     float e = 1.0 - abs(vSide);
-    vec3 c = mix(vC, vC * vec3(0.85, 0.36, 0.12), vA.y);
+    vec3 c = mix(vC, vC * vec3(0.85, 0.36, 0.12), vA.y) * (0.6 + 0.55 * vn(vec2(vA.z * 3.0, 0.5)));
     gl_FragColor = vec4(c * (e * e * 0.7 + pow(e, 6.0) * 1.4) * vA.x * (1.0 - vAtm.a), 1.0);
   }`;
 
@@ -123,7 +132,9 @@ export class TrailSet {
     // commit the head: give it its own turbulence and width variation
     const r = this.rand, tb = st.turb || 0;
     this.VX[h] = (r() - 0.5) * 2 * tb; this.VY[h] = (r() - 0.5) * 2 * tb * 0.6; this.VZ[h] = (r() - 0.5) * 2 * tb;
-    this.WK[h] = (0.75 + 0.5 * r()) * (this.S[h] < 250 && st.boost ? 1 + st.boost * (1 - this.S[h] / 250) : 1);
+    const wv = st.wkVar ?? 0.5;
+    this.WK[h] = (1 - wv / 2 + wv * r()) * (this.S[h] < 250 && st.boost ? 1 + st.boost * (1 - this.S[h] / 250) : 1) * (st.altGrow ? 1 + Math.max(0, y) / st.altGrow : 1);
+    if (st.breakup) this.AK[h] *= 1 - st.breakup + st.breakup * r();
     if (c === M) { s0 = this.rs[sl] = (s0 + 1) % M; c--; }
     const nh = base + (s0 + c) % M;
     this._put(nh, x, y, z, t, this.S[h], ak);
@@ -153,6 +164,7 @@ export class TrailSet {
       const life = st.life, w0 = st.w0, dw = st.w1 - st.w0, hf = st.headFade || 0, fp = st.fadePow || 1.4;
       const warmK = st.warm || 0, nl = 1 / (st.noiseLen || 50), cidv = st._cid, al0 = st.alpha;
       const vb = v;
+      const sFirst = S[base + s0 % M], sLast = S[base + (s0 + c - 1) % M], tlen = 2 * st.minSeg;
       for (let i = 0; i < c; i++) {
         const j = base + (s0 + i) % M;
         if (i < last && dt > 0) {
@@ -161,11 +173,14 @@ export class TrailSet {
         }
         const ja = base + (s0 + (i > 0 ? i - 1 : 0)) % M, jb = base + (s0 + (i < c - 1 ? i + 1 : i)) % M;
         const ageS = t > T[j] ? t - T[j] : 0, age = ageS < life ? ageS / life : 1;
-        const hw = 0.5 * (w0 + dw * Math.sqrt(age)) * WK[j];
+        const hw = 0.5 * (w0 + dw * Math.sqrt(age)) * WK[j] * (0.55 + 0.45 * Math.min(1, (S[j] - sFirst) / tlen));
         const head = hf && ageS < hf ? ageS / hf : 1;
         const om = 1 - age;
         const fade = fp > 1.45 ? om * om : fp > 1.25 ? om * Math.sqrt(om) : om;
-        const alpha = al0 * AK[j] * fade * head;
+        let tp = Math.min(1, (S[j] - sFirst) / tlen);
+        if (!al) tp = Math.min(tp, (sLast - S[j]) / tlen);
+        tp = tp < 0 ? 0 : tp * tp * (3 - 2 * tp);
+        const alpha = al0 * AK[j] * fade * head * tp;
         const warm = warmK && ageS < 2 ? warmK * Math.exp(-ageS / 0.35) : 0;
         const sn = S[j] * nl;
         const tx = X[jb] - X[ja], ty = Y[jb] - Y[ja], tz = Z[jb] - Z[ja];

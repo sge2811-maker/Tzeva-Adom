@@ -24,11 +24,11 @@ const ST = {
     hot: { life: 0.32, w0: 4.5, w1: 1.2, col: [12, 8.5, 5], alpha: 1, minSeg: 10 }, head: 7, body: 1.3,
   },
   sling: {
-    smoke: { life: 14, w0: 12, w1: 70, col: [0.86, 0.86, 0.88], alpha: 0.9, minSeg: 80, turb: 3, rise: 0.8, warm: 1.8, noiseLen: 55, boost: 1.2, headFade: 0.1, fadePow: 1.5 },
+    smoke: { life: 14, w0: 18, w1: 90, col: [0.88, 0.88, 0.9], alpha: 0.95, altGrow: 3000, minSeg: 80, turb: 3, rise: 0.8, warm: 1.8, noiseLen: 55, boost: 1.2, headFade: 0.1, fadePow: 1.5 },
     hot: { life: 0.3, w0: 7, w1: 1.6, col: [13, 9.5, 6], alpha: 1, minSeg: 18 }, head: 10, body: 2,
   },
   arrow: {
-    smoke: { life: 18, w0: 16, w1: 110, col: [0.86, 0.86, 0.9], alpha: 0.85, minSeg: 220, turb: 4, rise: 0.5, warm: 1.6, noiseLen: 110, boost: 2.2, headFade: 0.1, fadePow: 1.4 },
+    smoke: { life: 18, w0: 22, w1: 130, col: [0.95, 0.95, 0.97], alpha: 1.0, altGrow: 4000, minSeg: 220, turb: 4, rise: 0.5, warm: 1.6, noiseLen: 110, boost: 2.2, headFade: 0.1, fadePow: 1.4 },
     hot: { life: 0.45, w0: 11, w1: 2, col: [14, 11, 8], alpha: 1, minSeg: 50 }, head: 14, body: 3,
   },
   aam: {
@@ -36,7 +36,7 @@ const ST = {
     hot: { life: 0.22, w0: 3, w1: 0.8, col: [8, 9, 12], alpha: 1, minSeg: 12 }, head: 5, body: 1,
   },
   ballistic: {
-    smoke: { life: 12, w0: 24, w1: 150, col: [0.55, 0.5, 0.48], alpha: 0.3, minSeg: 220, turb: 5, rise: 0, warm: 0, noiseLen: 260, fadePow: 1.2 },
+    smoke: { life: 12, w0: 24, w1: 170, col: [0.55, 0.5, 0.48], alpha: 0.32, minSeg: 220, turb: 25, rise: 0, warm: 0, noiseLen: 160, fadePow: 1.2, wkVar: 1.0, breakup: 0.6 },
     hot: { life: 3.2, w0: 70, w1: 14, col: [11, 4.2, 1.4], alpha: 1, minSeg: 90 },
   },
   drone: { hot: { life: 0.15, w0: 1.2, w1: 0.4, col: [2.5, 1.1, 0.4], alpha: 0.5, minSeg: 20 } },
@@ -54,13 +54,16 @@ export function create(ctx) {
   const { scene, bus, sim, camera, quality } = ctx;
   const rng = makeRng(ctx.params.seed, 'vfx');
   const R = (a, b) => rng.range(a, b);
+  // per-frame emitters use their own stream so event bursts are identical at any frame rate
+  const rngF = makeRng(ctx.params.seed, 'vfx-frame');
+  const RF = (a, b) => rngF.range(a, b);
   const MUL = () => quality.s.particleMul;
   const shared = createShared();
   const fire = new Pool(scene, 20000, true, 1.5, 9, shared);
   const smoke = new Pool(scene, 12000, false, 1.3, 7, shared);
   fire.rand = smoke.rand = rng.next;
-  const smokeTr = new TrailSet(scene, { maxTrails: 360, maxPts: 96, additive: false, order: 6, shared, minPx: 1.6, rand: rng.next });
-  const hotTr = new TrailSet(scene, { maxTrails: 360, maxPts: 40, additive: true, order: 8, shared, minPx: 1.3, rand: rng.next });
+  const smokeTr = new TrailSet(scene, { maxTrails: 360, maxPts: 96, additive: false, order: 6, shared, minPx: 1.6, rand: rngF.next });
+  const hotTr = new TrailSet(scene, { maxTrails: 360, maxPts: 40, additive: true, order: 8, shared, minPx: 1.3, rand: rngF.next });
   const scorch = createScorch(scene, shared);
   const glow = (x, y, z, r, g, b, s, a = 1, type = T_GLOW, h = 0) => fire.add(x, y, z, 0, 0, 0, r, g, b, s, s, a, -1, 0, 0, 0, type, h);
 
@@ -94,7 +97,7 @@ export function create(ctx) {
     let l = null;
     for (let i = 0; i < LMAX; i++) if (!lights[i].on) { l = lights[i]; break; }
     if (!l) { l = lights[0]; for (let i = 1; i < LMAX; i++) if (lights[i].score < l.score) l = lights[i]; }
-    l.on = true; l.x = x; l.y = y; l.z = z; l.r = r; l.g = g; l.b = b; l.rad = rad; l.t = 0; l.dur = dur; l.kind = kind; l.ph = rng.next() * 20; l.cur = 0; l.score = 1e9;
+    l.on = true; l.x = x; l.y = y; l.z = z; l.r = r; l.g = g; l.b = b; l.rad = rad; l.t = 0; l.dur = dur; l.kind = kind; l.ph = Math.abs(x * 0.013 + z * 0.007) % 20; l.cur = 0; l.score = 1e9;
     return l;
   }
   const sel = new Int32Array(NL);
@@ -162,7 +165,8 @@ export function create(ctx) {
       smoke.add(x + d.x * off, y + d.y * off * 0.7, z + d.z * off, vx * 0.04 + d.x * sp, vy * 0.04 + d.y * sp * 0.6, vz * 0.04 + d.z * sp,
         smokeAlb, smokeAlb * 0.97, smokeAlb * 0.94, Rf * R(0.5, 0.8), Rf * R(1.9, 3.0), R(0.5, 0.7), R(16, 30), -1, 0.5, 1.1, T_SMOKE, R(1.4, 2.4), R(0.12, 0.45), 1);
     }
-    addLight(x, y, z, 1 * lightI, 0.72 * lightI, 0.45 * lightI, Rf * 3.5, 1.8, 0);
+    addLight(x, y, z, 1 * lightI, 0.72 * lightI, 0.45 * lightI, Rf * 8, 1.8, 0);
+    if (opts.smudge) for (let i = 0; i < 5; i++) { const d = randDir(), off = R(0, 0.5) * Rf; smoke.add(x + d.x * off, y + d.y * off, z + d.z * off, vx * 0.02 + d.x * 6, vy * 0.02, vz * 0.02 + d.z * 6, 0.3, 0.29, 0.28, Rf * 0.8, Rf * R(2.2, 3.2), 0.6, R(30, 45), 0.2, 0.3, 1.5, T_SMOKE, 0.6, R(0.4, 1.0), 1); }
   }
 
   // ---------------------------------------------------------------- debris
@@ -170,14 +174,14 @@ export function create(ctx) {
   const debris = [];
   for (let i = 0; i < DMAX; i++) debris.push({ on: false, key: 0, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, life: 0, heat: 0, breakAt: 0, gen: 0, smoke: false, sz: 1 });
   let dSerial = 0;
-  function spawnDebris(x, y, z, vx, vy, vz, heat, gen, sz) {
+  function spawnDebris(x, y, z, vx, vy, vz, heat, gen, sz, g = rng) {
     let d = null;
     for (let i = 0; i < DMAX; i++) if (!debris[i].on) { d = debris[i]; break; }
     if (!d) return;
     d.on = true; d.key = KD + (dSerial = (dSerial + 1) % 600000);
     d.x = x; d.y = y; d.z = z; d.vx = vx; d.vy = vy; d.vz = vz; d.life = 0; d.heat = heat; d.gen = gen; d.sz = sz;
-    d.breakAt = gen === 0 && rng.chance(0.35) ? R(0.8, 2.5) : 1e9;
-    d.smoke = gen === 0 && rng.chance(0.5);
+    d.breakAt = gen === 0 && g.chance(0.35) ? g.range(0.8, 2.5) : 1e9;
+    d.smoke = gen === 0 && g.chance(0.5);
     hotTr.start(d.key, ST.debris.hot);
     if (d.smoke) smokeTr.start(d.key, ST.debris.smoke);
   }
@@ -188,7 +192,7 @@ export function create(ctx) {
     let f = null;
     for (let i = 0; i < FMAX; i++) if (!fires[i].on) { f = fires[i]; break; }
     if (!f) return;
-    f.on = true; f.x = x; f.z = z; f.y = groundAt(x, z); f.t = 0; f.dur = R(5, 12); f.acc = 0; f.s = s;
+    f.on = true; f.x = x; f.z = z; f.y = groundAt(x, z); f.t = 0; f.dur = RF(5, 12); f.acc = 0; f.s = s;
     addLight(x, f.y + 4, z, 1.6 * s, 0.7 * s, 0.25 * s, 40, f.dur, 1);
   }
 
@@ -247,23 +251,23 @@ export function create(ctx) {
     if (exo) { // Arrow 3: exo-atmospheric hit-to-kill, a star-flash with glints and a fading debris cloud
       const k = e.kill ? 1 : 0.45;
       fire.add(e.x, e.y, e.z, 0, 0, 0, 16 * k, 15 * k, 14 * k, 1400, 1900, 1, 0.55, 0, 0, 0, T_STAR, 1.1);
-      fire.add(e.x, e.y, e.z, 0, 0, 0, 1.6 * k, 1.5 * k, 1.45 * k, 900, 1700, 0.45, 0.9, 0, 0, 0, T_GLOW, 0, 0, 1);
+      fire.add(e.x, e.y, e.z, 0, 0, 0, 1.6 * k, 1.5 * k, 1.45 * k, 360, 700, 0.4, 0.25, 0, 0, 0, T_GLOW, 0, 0, 1);
       const nd = Math.round((e.kill ? 40 : 12) * mul);
       for (let i = 0; i < nd; i++) {
         const q = randDir(), sp = R(60, 420);
-        fire.add(e.x, e.y, e.z, q.x * sp + e.vx * 0.3, q.y * sp + e.vy * 0.3, q.z * sp + e.vz * 0.3, 9, 5, 2, R(40, 90), 30, 1, R(2, 6), 4, 0.15, 0.45);
+        fire.add(e.x, e.y, e.z, q.x * sp + e.vx * 0.3, q.y * sp + e.vy * 0.3, q.z * sp + e.vz * 0.3, 9, 5, 2, R(50, 110), 40, 1, R(3, 6), 4, 0.15, 0.4);
       }
-      if (e.kill) for (let i = 0; i < 6 * mul + 2; i++) { const q = randDir(), off = R(0, 250); smoke.add(e.x + q.x * off, e.y + q.y * off, e.z + q.z * off, e.vx * 0.2 + q.x * 30, e.vy * 0.2 + q.y * 30, e.vz * 0.2 + q.z * 30, 0.6, 0.6, 0.65, 300, R(1200, 1900), 0.28, R(14, 22), 0, 0.05, 0.9, T_SMOKE, 0.6); }
+      if (e.kill) for (let i = 0; i < 6 * mul + 2; i++) { const q = randDir(), off = R(0, 250); smoke.add(e.x + q.x * off, e.y + q.y * off, e.z + q.z * off, e.vx * 0.2 + q.x * 30, e.vy * 0.2 + q.y * 30, e.vz * 0.2 + q.z * 30, 0.75, 0.75, 0.8, 300, R(1400, 2400), 0.3, R(18, 28), 0, 0.05, 0.9, T_SMOKE, 0.6); }
       addLight(e.x, e.y, e.z, 9 * k, 8 * k, 7.5 * k, 1800, 1.0, 0);
       envFlash(e.x, e.y, e.z, [0.95, 0.9, 1], e.kill ? 6e5 : 2.5e5, 1, 0.55);
       ctx.fx.flash = Math.min(2.5, ctx.fx.flash + (e.kill ? 0.12 : 0.04));
       return;
     }
     const big = e.threatType === 'ballistic';
-    const Rf = (big ? 120 : e.threatType === 'cruise' ? 75 : 65) * (e.kill ? 1 : 0.55);
+    const Rf = (big ? 120 : e.threatType === 'cruise' ? 75 : 65) * (e.kill ? 1 : 0.55) * Math.min(2.4, Math.max(1, Math.sqrt(d / 2500)));
     explosion(e.x, e.y, e.z, e.vx, e.vy, e.vz, Rf, {
       sparks: e.kill ? (big ? 90 : 45) : 14, smokeN: e.kill ? (big ? 16 : 8) : 3, bright: e.kill ? 1 : 0.7,
-      lightI: big ? 12 : 6, life: big ? 1.7 : 1.15, ring: e.kill,
+      lightI: big ? 12 : 6, life: big ? 1.7 : 1.15, ring: e.kill, smudge: e.kill,
     });
     if (e.kill) {
       const nd = Math.round((big ? 12 : 4) * mul) + 1;
@@ -307,16 +311,16 @@ export function create(ctx) {
     for (let i = 0; i < nr; i++) {
       const a = (i / nr) * 6.283 + R(-0.1, 0.1), sp = R(110, 230) * s;
       smoke.add(e.x + Math.cos(a) * 12 * s, y + R(3, 8) * s, e.z + Math.sin(a) * 12 * s, Math.cos(a) * sp, R(2, 10) * s, Math.sin(a) * sp,
-        0.62, 0.52, 0.4, 18 * s, R(70, 120) * s, R(0.45, 0.65), R(7, 13), 0.5, 1.7, 1.3, T_DUST, R(0.6, 1.2), 0, 1);
+        0.62, 0.52, 0.4, 18 * s, R(70, 120) * s, R(0.22, 0.34), R(7, 13), 0.5, 1.7, 1.3, T_DUST, R(0.6, 1.2), 0, 1);
     }
     // ejecta: glowing clods in arcs
     for (let i = 0; i < 50 * mul * s + 6; i++) { const a = R(0, 6.283), sp = R(50, 220) * s; fire.add(e.x, y + 5, e.z, Math.cos(a) * sp, R(70, 260) * s, Math.sin(a) * sp, 10, 5, 1.6, 4 * s, 2, 1, R(1, 3), 95, 0.35, 1.2); }
     // the cloud above the blast, lit by the fireball, then the persistent column
-    for (let i = 0; i < 10 * mul + 3; i++) { const q = randDir(); smoke.add(e.x + q.x * 30 * s, y + R(30, 90) * s, e.z + q.z * 30 * s, q.x * 18 * s, R(20, 45) * s, q.z * 18 * s, 0.3, 0.28, 0.26, 50 * s, R(160, 260) * s, 0.7, R(18, 30), -1, 0.6, 0.7, T_SMOKE, R(1.8, 2.8), R(0.1, 0.4), 1); }
+    for (let i = 0; i < 10 * mul + 3; i++) { const q = randDir(); smoke.add(e.x + q.x * 30 * s, y + R(30, 90) * s, e.z + q.z * 30 * s, q.x * 18 * s, R(20, 45) * s, q.z * 18 * s, 0.2, 0.19, 0.18, 50 * s, R(180, 300) * s, 0.75, R(24, 36), -1, 0.6, 1.4, T_SMOKE, R(1.0, 1.6), R(0.1, 0.4), 1); }
     let c = null; for (let i = 0; i < CMAX; i++) if (!columns[i].on) { c = columns[i]; break; }
     if (c) { c.on = true; c.x = e.x; c.y = y; c.z = e.z; c.s = s; c.t = 0; c.acc = 0; c.eacc = 0; c.life = e.type === 'ballistic' ? 120 : 60; c.fire = e.kind === 'open' ? 9 : c.life * 0.75; }
     addLight(e.x, y + 40 * s, e.z, 20 * s, 12 * s, 6 * s, 450 * s, 2.2, 0);
-    if (c) addLight(e.x, y + 30 * s, e.z, 6 * s, 2.8 * s, 0.9 * s, 380 * s, c.fire, 1);
+    if (c) addLight(e.x, y + 20 * s, e.z, 4.5 * s, 2.0 * s, 0.6 * s, 200 * s, c.fire, 1);
     scorch.add(e.x, e.z, 48 * s, rng.next(), shared.uTime.value, e.kind === 'open' ? 0.5 : 1);
     envFlash(e.x, y + 60, e.z, [1, 0.62, 0.32], 3e7 * s, 9000, 0.9);
     const d = camDist(e.x, y, e.z);
@@ -338,6 +342,7 @@ export function create(ctx) {
       t += dt; frame++; curFrame = frame;
       shared.uTime.value = t;
       fire.purgeFrame();
+      fire.rand = smoke.rand = rngF.next;
       const mul = MUL();
       // ---- threats
       let di = 0, ci = 0, bi = 0;
@@ -386,7 +391,7 @@ export function create(ctx) {
           glow(p.x, p.y, p.z, 16 * f, 13 * f, 9 * f, st.head * (0.85 + 0.3 * f), 1);
           glow(p.x, p.y, p.z, 5 * f, 2.6 * f, 1.1 * f, st.head * 4, 0.45 * (1 - exoK));
           smokeTr.push(key, p.x, p.y, p.z, t, 1 - exoK);
-        } else glow(p.x, p.y, p.z, 9, 9, 10, st.head * 2.2, 1, T_STAR, 0.25);
+        } else glow(p.x, p.y, p.z, 9 * f, 9 * f, 10 * f, st.head * 2.4, 1);
         hotTr.push(key, p.x, p.y, p.z, t, 1 - exoK * 0.6);
       }
       ints.count = ii;
@@ -422,23 +427,23 @@ export function create(ctx) {
         if (heat > 0.04) {
           glow(d.x, d.y, d.z, 7 * heat * fl, 3 * heat * fl, 0.9 * heat, 6 * d.sz, 1);
           hotTr.push(d.key, d.x, d.y, d.z, t, Math.min(1, heat * 1.3));
-          if (rng.next() < dt * 6 * mul) fire.add(d.x, d.y, d.z, R(-4, 4), R(-2, 4), R(-4, 4), 8, 3.5, 1, 1.5, 0.6, 1, R(0.3, 0.7), 10, 1, 2.5);
+          if (rngF.next() < dt * 6 * mul) fire.add(d.x, d.y, d.z, RF(-4, 4), RF(-2, 4), RF(-4, 4), 8, 3.5, 1, 1.5, 0.6, 1, RF(0.3, 0.7), 10, 1, 2.5);
         }
         if (d.smoke) smokeTr.push(d.key, d.x, d.y, d.z, t);
         if (d.life > d.breakAt) { // breaks up: two hot fragments and a spit of sparks
           d.breakAt = 1e9;
-          for (let c = 0; c < 2; c++) spawnDebris(d.x, d.y, d.z, d.vx + R(-50, 50), d.vy + R(-10, 40), d.vz + R(-50, 50), heat * 0.9, 1, d.sz * 0.6);
-          for (let c = 0; c < 8 * mul; c++) { const q = randDir(); fire.add(d.x, d.y, d.z, d.vx + q.x * 60, d.vy + q.y * 60, d.vz + q.z * 60, 10, 5, 1.6, 2, 1, 1, R(0.4, 1), 30, 1, 2); }
+          for (let c = 0; c < 2; c++) spawnDebris(d.x, d.y, d.z, d.vx + RF(-50, 50), d.vy + RF(-10, 40), d.vz + RF(-50, 50), heat * 0.9, 1, d.sz * 0.6, rngF);
+          for (let c = 0; c < 8 * mul; c++) { const q = randDir(); fire.add(d.x, d.y, d.z, d.vx + q.x * 60, d.vy + q.y * 60, d.vz + q.z * 60, 10, 5, 1.6, 2, 1, 1, RF(0.4, 1), 30, 1, 2); }
           fire.add(d.x, d.y, d.z, d.vx * 0.2, d.vy * 0.2, d.vz * 0.2, 1, 1, 1, 6 * d.sz, 18 * d.sz, 1, 0.6, 0, 1, 2.5, T_FIREBALL, 1, 0, 1);
         }
         const gy = d.y < 700 ? groundAt(d.x, d.z) : -1e9;
         if (d.y <= gy || d.life > 40) {
           hotTr.end(d.key); smokeTr.end(d.key); d.on = false;
           if (d.y <= gy && heat > 0.1) {
-            for (let k = 0; k < 10 * mul + 2; k++) fire.add(d.x, gy + 1, d.z, R(-14, 14), R(6, 26), R(-14, 14), 9, 4, 1.2, 1.4, 0.5, 1, R(0.4, 1.2), 30, 0.6, 1.6);
+            for (let k = 0; k < 10 * mul + 2; k++) fire.add(d.x, gy + 1, d.z, RF(-14, 14), RF(6, 26), RF(-14, 14), 9, 4, 1.2, 1.4, 0.5, 1, RF(0.4, 1.2), 30, 0.6, 1.6);
             fire.add(d.x, gy + 2, d.z, 0, 0, 0, 7, 4.5, 2.5, 12, 16, 1, 0.15, 0, 0, 0, T_STAR, 0.3);
-            for (let k = 0; k < 3; k++) smoke.add(d.x, gy + 2, d.z, R(-6, 6), R(1, 4), R(-6, 6), 0.55, 0.47, 0.38, 4, 18, 0.5, R(4, 7), 0, 1, 1.5, T_DUST, 0.8);
-            if (heat > 0.35 && rng.chance(0.6)) smallFire(d.x, d.z, Math.min(1, heat));
+            for (let k = 0; k < 3; k++) smoke.add(d.x, gy + 2, d.z, RF(-6, 6), RF(1, 4), RF(-6, 6), 0.55, 0.47, 0.38, 4, 18, 0.5, RF(4, 7), 0, 1, 1.5, T_DUST, 0.8);
+            if (heat > 0.35 && rngF.chance(0.6)) smallFire(d.x, d.z, Math.min(1, heat));
           }
         }
       }
@@ -451,8 +456,8 @@ export function create(ctx) {
         const k = 1 - f.t / f.dur, rate = 0.09 / mul;
         while (f.acc > rate) {
           f.acc -= rate;
-          fire.add(f.x + R(-2, 2), f.y + R(0.5, 2), f.z + R(-2, 2), R(-1, 1), R(4, 9), R(-1, 1), 1, 1, 1, 2.4 * f.s, 5 * f.s, k, R(0.5, 1.0), -3, 0.5, 2.2, T_FIREBALL, R(0.8, 1.05));
-          if (rng.next() < 0.35) smoke.add(f.x, f.y + 4, f.z, R(-1, 1), R(3, 6), R(-1, 1), 0.25, 0.24, 0.23, 4, R(14, 26), 0.45 * k, R(6, 10), -0.2, 0.2, 1.2, T_SMOKE, 0.8);
+          fire.add(f.x + RF(-2, 2), f.y + RF(0.5, 2), f.z + RF(-2, 2), RF(-1, 1), RF(4, 9), RF(-1, 1), 1, 1, 1, 2.4 * f.s, 5 * f.s, k, RF(0.5, 1.0), -3, 0.5, 2.2, T_FIREBALL, RF(0.8, 1.05));
+          if (rngF.next() < 0.35) smoke.add(f.x, f.y + 4, f.z, RF(-1, 1), RF(3, 6), RF(-1, 1), 0.25, 0.24, 0.23, 4, RF(14, 26), 0.45 * k, RF(6, 10), -0.2, 0.2, 1.2, T_SMOKE, 0.8);
         }
       }
       // ---- impact columns: flames and embers at the base, a dark rising column lit from below
@@ -461,20 +466,22 @@ export function create(ctx) {
         c.t += dt; c.acc += dt; c.eacc += dt;
         if (c.t > c.life) { c.on = false; continue; }
         const k = 1 - c.t / c.life, s = c.s;
-        const rate = 0.14 / mul;
+        const rate = 0.12 / mul;
         while (c.acc > rate) {
           c.acc -= rate;
           const hot = c.t < c.fire;
-          smoke.add(c.x + R(-12, 12) * s, c.y + R(4, 18) * s, c.z + R(-12, 12) * s, R(-4, 4), R(26, 44) * s, R(-4, 4),
-            0.27, 0.24, 0.22, R(16, 24) * s, R(260, 420) * s, 0.85 * Math.min(1, k * 1.5), R(26, 36), -0.5, 0.05, 1.3, T_SMOKE, hot ? R(1.4, 2.2) : 0, 0, 0);
+          const lo = rngF.next() < 0.35; // low, fire-lit puffs vs the dark column aloft
+          const ab = lo ? 0.26 : 0.15;
+          smoke.add(c.x + RF(-12, 12) * s, c.y + RF(4, 18) * s, c.z + RF(-12, 12) * s, RF(-4, 4), (lo ? RF(8, 16) : RF(40, 70)) * s, RF(-4, 4),
+            ab, ab * 0.93, ab * 0.88, RF(18, 28) * s, (lo ? RF(120, 200) : RF(380, 600)) * s, 0.85 * Math.min(1, k * 1.5), lo ? RF(8, 14) : RF(45, 60), lo ? 0 : -0.5, lo ? 0.3 : 0.04, 1.0, T_SMOKE, hot && lo ? RF(1.4, 2.2) : 0, 0, 0);
         }
         if (c.t < c.fire) {
           const fk = 1 - c.t / c.fire;
           const fr = 0.07 / mul;
           while (c.eacc > fr) {
             c.eacc -= fr;
-            fire.add(c.x + R(-16, 16) * s, c.y + R(2, 8) * s, c.z + R(-16, 16) * s, R(-2, 2), R(8, 22) * s, R(-2, 2), 1, 1, 1, 9 * s, R(22, 38) * s * (0.5 + 0.5 * fk), 1, R(0.6, 1.2), -4, 0.6, 1.8, T_FIREBALL, R(0.85, 1.1) * (0.6 + 0.4 * fk), 0, 1);
-            if (rng.next() < 0.5) fire.add(c.x + R(-10, 10) * s, c.y + R(5, 15), c.z + R(-10, 10) * s, R(-6, 6), R(18, 45), R(-6, 6), 9, 3.6, 1, 1.6, 1, 1, R(2, 4), -2, 0.3, 0.7);
+            fire.add(c.x + RF(-16, 16) * s, c.y + RF(2, 8) * s, c.z + RF(-16, 16) * s, RF(-2, 2), RF(8, 22) * s, RF(-2, 2), 1, 1, 1, 9 * s, RF(22, 38) * s * (0.5 + 0.5 * fk), 1, RF(0.6, 1.2), -4, 0.6, 1.8, T_FIREBALL, RF(0.85, 1.1) * (0.6 + 0.4 * fk), 0, 1);
+            if (rngF.next() < 0.5) fire.add(c.x + RF(-10, 10) * s, c.y + RF(5, 15), c.z + RF(-10, 10) * s, RF(-6, 6), RF(18, 45), RF(-6, 6), 9, 3.6, 1, 1.6, 1, 1, RF(2, 4), -2, 0.3, 0.7);
           }
         }
       }
@@ -499,6 +506,7 @@ export function create(ctx) {
       if (fc && fc.isColor) shared.uFogC.value.copy(fc);
       else if (scene.fog && scene.fog.color) shared.uFogC.value.copy(scene.fog.color);
       shared.uFogD.value = scene.fog && scene.fog.density != null && HAS_ATM ? scene.fog.density : 1;
+      fire.rand = smoke.rand = rng.next;
       PT.F = performance.now();
       void camPos;
     },

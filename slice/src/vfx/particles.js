@@ -22,10 +22,13 @@ const VERT = (lit) => /* glsl */`
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     float dz = max(1.0, -mv.z);
     float px = aSize * uScale / dz;
-    float k = min(1.0, px / uMinPx);
-    vA = aAlpha * ${lit ? 'k' : 'k * k'};
-    vPx = px;
-    gl_PointSize = clamp(px, uMinPx, uMaxPx);
+    int ty = int(aAux.x + 0.5);
+    // star flashes keep a fixed minimum on-screen size (lens flare), fireballs keep more energy
+    float mpx = ${lit ? 'uMinPx' : '(ty == 2 ? 64.0 : uMinPx)'};
+    float k = min(1.0, px / mpx);
+    vA = aAlpha * ${lit ? 'k' : '(ty == 2 ? 1.0 : ty == 1 ? k : k * k)'};
+    vPx = max(px, mpx);
+    gl_PointSize = clamp(px, mpx, uMaxPx);
     vec4 cp = projectionMatrix * mv;
     vec4 mv2 = mv; mv2.z += min(aSize * 0.5, dz * 0.5);
     vec4 cp2 = projectionMatrix * mv2;
@@ -60,8 +63,9 @@ const FRAG_FIRE = /* glsl */`
       float T = vAux.y * (1.3 - edge * 0.75) * (0.62 + 0.7 * n2);
       col = ramp(T) * dens * vC;
     } else if (ty == 2) {
-      float sh = clamp(vPx * 0.6, 6.0, 90.0);
-      float core = exp(-r * r * 60.0) * 3.0 + exp(-r * r * 8.0) * 0.45 + exp(-r * 3.0) * 0.12;
+      float sh = clamp(vPx * 0.5, 14.0, 90.0);
+      float cs = max(60.0, vPx * vPx * 0.004);
+      float core = exp(-r * r * cs) * 3.0 + exp(-r * r * cs * 0.12) * 0.4;
       float sp = exp(-abs(uv.y) * sh) * pow(1.0 - abs(uv.x), 3.0) + exp(-abs(uv.x) * sh) * pow(1.0 - abs(uv.y), 3.0);
       vec2 dg = vec2(uv.x + uv.y, uv.x - uv.y) * 0.7071;
       sp += 0.3 * (exp(-abs(dg.y) * sh * 1.3) * pow(max(0.0, 1.0 - abs(dg.x) * 1.4), 3.0) + exp(-abs(dg.x) * sh * 1.3) * pow(max(0.0, 1.0 - abs(dg.y) * 1.4), 3.0));
@@ -72,7 +76,7 @@ const FRAG_FIRE = /* glsl */`
     } else {
       col = vC * (exp(-r * r * 7.0) * 0.8 + pow(1.0 - r, 2.5) * 0.3);
     }
-    gl_FragColor = vec4(col * vA * (1.0 - vAtm.a), 1.0);
+    gl_FragColor = vec4(col * vA * (1.0 - vAtm.a) * smoothstep(1.0, 0.65, r), 1.0);
   }`;
 
 const FRAG_SMOKE = /* glsl */`
