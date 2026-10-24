@@ -11,7 +11,7 @@
       "name": "Environment & lighting",
       "scope": "Skyline, atmosphere, fog, tone mapping, bloom, SSAO, colour grade",
       "state": "building",
-      "round": 2,
+      "round": 3,
       "scores": [
         {
           "round": 1,
@@ -59,14 +59,14 @@
       ],
       "note": "Critic R2: 5/10 (no change). Warmer and layered (S7 depth, S5 windows near CS2), but the town still reads as a game board at S2/S6, Moab ridges are flat sheets, facades go black under flashes, near ground smudgy or blank. Round 3 building.",
       "commit": null,
-      "updated": "2026-10-23T05:43:58.949Z"
+      "updated": "2026-10-24T14:14:22.470Z"
     },
     "vfx": {
       "id": "vfx",
       "name": "VFX",
       "scope": "Launches, interceptor trails, intercepts, debris, smoke, screen shake",
-      "state": "building",
-      "round": 2,
+      "state": "critique",
+      "round": 3,
       "scores": [
         {
           "round": 1,
@@ -81,7 +81,7 @@
       ],
       "best": 7,
       "noImprove": 0,
-      "shot": "status/shots/vfx-r2/S5-street.jpg",
+      "shot": "status/shots/vfx-dev10/S5-street.png",
       "issues": [
         {
           "severity": "major",
@@ -116,9 +116,9 @@
           "text": "David's Sling smoke trails seen from below are still thin white lines, about 3-5px at 1600px (S5 right edge, C4). They are readable now, but not the billowing ribbons of the Dome launch."
         }
       ],
-      "note": "Critic R2: 7/10 (up from 6). Iron Dome climb and street-level barrage trailer-grade; Arrow exo kills sit in a bloom disc, impacts lack scale from afar, ballistic hot trails read as lasers, cotton-ball smudges, CPU spikes. Round 3 building.",
+      "note": "Round 3 built: crisp exo star flashes, distance-scaled impacts with smouldering columns, de-lasered ballistic trails, smeared smudges. Critic reviewing.",
       "commit": null,
-      "updated": "2026-10-24T14:06:12.337Z"
+      "updated": "2026-10-24T14:14:22.172Z"
     },
     "audio": {
       "id": "audio",
@@ -222,6 +222,10 @@
   },
   "log": [
     {
+      "when": "2026-10-24T14:14:22.470Z",
+      "text": "VFX round 3 finished; critic launched. Env round 3 resumed."
+    },
+    {
       "when": "2026-10-24T14:06:12.337Z",
       "text": "VFX critic R2 scored 7/10 (up from 6). Round 3 started."
     },
@@ -274,5 +278,5 @@
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-24T14:06:12.337Z"
+  "updated": "2026-10-24T14:14:22.470Z"
 }
