@@ -239,7 +239,7 @@ export function create(ctx) {
 
   // ---------------------------------------------------------------- hit-stop, slow motion, shake
   const shake = { trauma: 0, t: 0 };
-  let lastStopReal = -9, slowDone = false, realT = 0;
+  let lastStopReal = -9, slowDone = false, slingSlow = true, realT = 0;
   const feelOn = () => !params.capture || (scriptName === 'trailer');
   const onScreen = (x, y, z) => { tmpV.set(x, y, z).project(camera); return tmpV.z < 1 && Math.abs(tmpV.x) < 1.05 && Math.abs(tmpV.y) < 1.05; };
   bus.on('shake', ({ amp }) => { shake.trauma = Math.min(1, shake.trauma + Math.min(1.2, amp) * 0.5); });
@@ -251,6 +251,11 @@ export function create(ctx) {
     if (!slowDone && e.kind === 'arrow' && e.y > 15000 && vis) {
       slowDone = true; clock.slowMo(1.25, 0.32, 0.12, 0.5); lastStopReal = realT;
       logFeel('slowmo', { dur: 1.25, scale: 0.32, d: Math.round(d) }); return;
+    }
+    // trailer only: a beat of slow motion on the first David's Sling kill over the town
+    if (!slingSlow && scriptName && e.kind === 'sling' && vis) {
+      slingSlow = true; clock.slowMo(1.4, 0.3, 0.1, 0.55); lastStopReal = realT;
+      logFeel('slowmo', { dur: 1.4, scale: 0.3, d: Math.round(d), kind: 'sling' }); return;
     }
     // hit-stop: big kills near the camera and in view, at most one per 1.1 s, <= 80 ms
     if (e.big && vis && d < 9000 && realT - lastStopReal > 1.1) {
@@ -282,7 +287,7 @@ export function create(ctx) {
     const c = shot.cam; if (!c) return;
     scriptName = null; travel = null; pendingBeats.length = 0;
     if (c.mode === 'pose') { mode = 'pose'; pose = { pos: new THREE.Vector3(...c.pos), look: new THREE.Vector3(...c.look), fov: c.fov || 50 }; }
-    else if (c.mode === 'tactical') { mode = 'tactical'; setRig({ tx: c.target[0], tz: c.target[1], dist: c.dist, yaw: c.yaw, pitch: c.pitch }); exactShot = true; }
+    else if (c.mode === 'tactical') { mode = 'tactical'; setRig({ tx: c.target[0], tz: c.target[1], dist: c.dist, yaw: c.yaw, pitch: c.pitch }); exactShot = true; idleT = 999; }
   });
   let exactShot = false; // a critic shot's tactical pose is honoured exactly (no anti-clip nudges)
 
@@ -303,7 +308,7 @@ export function create(ctx) {
     script(name) {
       if (!name || name === 'off') { if (scriptName) { scriptName = null; toTactical(); } return; }
       if (name !== 'trailer') throw new Error(`Unknown camera script ${name}`);
-      scriptName = name; scriptT = sim.t; mode = 'script'; pendingBeats.length = 0; slowDone = sim.t > 250.5;
+      scriptName = name; scriptT = sim.t; mode = 'script'; pendingBeats.length = 0; slingSlow = false;
       bus.emit('camera:mode', { mode, script: name });
     },
     pickGround(x, y) { camera.updateMatrixWorld(); const p = pickGround(camera, x, y, innerWidth, innerHeight, new THREE.Vector3()); return p && { x: p.x, y: p.y, z: p.z }; },
@@ -336,7 +341,7 @@ export function create(ctx) {
       if (bank) camera.rotateZ(bank);
       if (Math.abs(camera.fov - fov) > 0.01) { camera.fov = fov; camera.updateProjectionMatrix(); }
       applyShake(dt);
-      if (mode !== 'pose') { const gy = groundAt(camera.position.x, camera.position.z) + 2.5; if (camera.position.y < gy) camera.position.y = gy; }
+      { const gy = groundAt(camera.position.x, camera.position.z) + 2.5; if (camera.position.y < gy) camera.position.y = gy; }
       camera.updateMatrixWorld();
     },
   };
@@ -389,7 +394,7 @@ export function create(ctx) {
     // the look-at height follows the ground smoothly (no bob over the escarpment)
     const gy = groundAt(rig.tx, rig.tz);
     rig.ty = exactShot ? gy : rig.ty + (gy - rig.ty) * (1 - Math.exp(-dt * 6));
-    if (idleT < 0.05 || travel) exactShot = false;
+    if (idleT < 0.5 || travel) exactShot = false;
     const P = rigPose({ tx: rig.tx, tz: rig.tz, dist: rig.dist, yaw: rig.yaw, pitch: rig.pitch }, rig.ty);
     // anti-clipping: lift the camera so it and its sight line clear terrain and roofs
     // (rises fast, settles slowly; hard floor every frame)

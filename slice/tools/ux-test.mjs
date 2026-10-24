@@ -87,6 +87,18 @@ await withRenderLock(async () => {
     }
     await tick(12);
     await snap('ux-2-siren.png');
+    const edges = await page.$$eval('.mk-edge:not([hidden])', (els) => els.map((e) => e.textContent.trim()));
+    console.log(`info  edge pointers at the siren: ${edges.length ? edges.join(', ') : 'none (all trouble on screen)'}`);
+    // the roster is a second way in: clicking a row selects the group and pans the camera to it
+    try {
+      const before = await sim(() => { const c = window.__slice.ctx.systems.camera; return c && c.goal ? { x: c.goal.tx, z: c.goal.tz } : null; });
+      await page.locator('[data-group="G4"]').click({ timeout: 3000 });
+      await tick(2);
+      const after = await sim(() => { const c = window.__slice.ctx.systems.camera, g = window.__slice.sim.groupInfo().find((q) => q.id === 'G4'); return { x: c.goal.tx, z: c.goal.tz, gx: g.x, gz: g.z, sel: document.querySelector('[data-mk="G4"]').classList.contains('sel') }; });
+      check('roster click selects the group and pans the camera to it', after.sel && Math.hypot(after.x - after.gx, after.z - after.gz) < 5, `goal ${before ? before.x.toFixed(0) + ',' + before.z.toFixed(0) : '?'} -> ${after.x.toFixed(0)},${after.z.toFixed(0)}`);
+      await page.keyboard.press('Escape');
+      await tick(2);
+    } catch (e) { check('roster click selects the group and pans the camera to it', false, e.message.split('\n')[0]); }
 
     // 4. the impact window
     const t3 = await seek(235.3);

@@ -222,7 +222,10 @@
 .mk.m-compact .stem { height: 9px !important; }
 .mk.m-compact .lbl { bottom: 11px !important; }
 .mk.m-dot .lbl, .mk.m-dot .stem { display: none; }
-.mk.m-dot .foot { left: -7px; top: -7px; width: 14px; height: 14px; background: color-mix(in srgb, var(--c) 30%, rgba(5,9,13,0.8)); }
+.mk .foot .ic { display: none; }
+.mk.m-dot .foot { left: -9px; top: -9px; width: 18px; height: 18px; transform: none; border-radius: 4px; display: grid; place-items: center; background: var(--c); border-color: rgba(5,9,13,0.8); box-shadow: 0 1px 6px rgba(0,0,0,0.5); }
+.mk-group.m-dot .foot { border-radius: 50%; }
+.mk.m-dot .foot .ic { display: block; width: 12px; height: 12px; stroke-width: 2.1; color: #071016; }
 .mk.m-hidden { display: none; }
 .mk .lbl:hover { background: rgba(14,22,30,0.95); }
 /* groups */

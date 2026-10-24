@@ -24,7 +24,7 @@ const VERT = (lit) => /* glsl */`
     float px = aSize * uScale / dz;
     int ty = int(aAux.x + 0.5);
     // star flashes keep a fixed minimum on-screen size (lens flare), fireballs keep more energy
-    float mpx = ${lit ? '(ty == 2 ? 20.0 : uMinPx)' : '(ty == 2 ? 64.0 : uMinPx)'};
+    float mpx = ${lit ? '(ty == 2 ? 30.0 : uMinPx)' : '(ty == 2 ? 64.0 : uMinPx)'};
     float k = min(1.0, px / mpx);
     vA = aAlpha * ${lit ? '(ty == 2 ? 1.0 : k)' : '(ty == 2 ? 1.0 : ty == 1 ? k : k * k)'};
     vPx = max(px, mpx);

@@ -1,0 +1,165 @@
+{
+  "when": "2026-10-24T14:12:39.819Z",
+  "viewport": [
+    480,
+    270
+  ],
+  "fps": 4.423604352826956,
+  "results": [
+    {
+      "name": "drag: latency to first movement",
+      "ok": false,
+      "value": "719ms/2f",
+      "limit": "<= 1 frame",
+      "extra": ""
+    },
+    {
+      "name": "drag: settle after release",
+      "ok": true,
+      "value": "0ms",
+      "limit": "<= 350 ms",
+      "extra": ""
+    },
+    {
+      "name": "drag: overshoot",
+      "ok": true,
+      "value": "0.00%",
+      "limit": "<= 1%",
+      "extra": "moved 905 m"
+    },
+    {
+      "name": "fling: glides after release",
+      "ok": false,
+      "value": "1m",
+      "limit": "> 3% of dist",
+      "extra": ""
+    },
+    {
+      "name": "fling: stops by itself",
+      "ok": true,
+      "value": "1200ms",
+      "limit": "<= 1400 ms",
+      "extra": ""
+    },
+    {
+      "name": "fling: no reversal",
+      "ok": true,
+      "value": "0.00m",
+      "limit": "~0",
+      "extra": ""
+    },
+    {
+      "name": "zoom: latency to first movement",
+      "ok": false,
+      "value": "none",
+      "limit": "<= 1 frame",
+      "extra": ""
+    },
+    {
+      "name": "zoom: settle",
+      "ok": true,
+      "value": "0ms",
+      "limit": "<= 450 ms",
+      "extra": "2600 -> 2600 m"
+    },
+    {
+      "name": "zoom: overshoot",
+      "ok": true,
+      "value": "0.00%",
+      "limit": "<= 1%",
+      "extra": ""
+    },
+    {
+      "name": "zoom: cursor anchor drift",
+      "ok": true,
+      "value": "0.0m",
+      "limit": "<= 78 m (3%)",
+      "extra": ""
+    },
+    {
+      "name": "zoom: pitch eases with zoom",
+      "ok": false,
+      "value": "35.5->35.5deg",
+      "limit": "shallower when nearer",
+      "extra": ""
+    },
+    {
+      "name": "rotate: latency to first movement",
+      "ok": false,
+      "value": "none",
+      "limit": "<= 1 frame",
+      "extra": ""
+    },
+    {
+      "name": "rotate: settle",
+      "ok": true,
+      "value": "0ms",
+      "limit": "<= 350 ms",
+      "extra": "0.0 deg"
+    },
+    {
+      "name": "rotate: overshoot",
+      "ok": true,
+      "value": "0.00%",
+      "limit": "<= 1%",
+      "extra": ""
+    },
+    {
+      "name": "keys: latency to first movement",
+      "ok": false,
+      "value": "1425ms/2f",
+      "limit": "<= 1 frame",
+      "extra": ""
+    },
+    {
+      "name": "keys: stop after key-up",
+      "ok": true,
+      "value": "244ms",
+      "limit": "<= 250 ms",
+      "extra": ""
+    },
+    {
+      "name": "keys: pan jitter (speed CV)",
+      "ok": false,
+      "value": "0.000",
+      "limit": "<= 0.12",
+      "extra": "1 frames, frame dt varies on SwiftShader"
+    },
+    {
+      "name": "keys: Z zooms in",
+      "ok": false,
+      "value": "2600->2600m",
+      "limit": "closer",
+      "extra": ""
+    },
+    {
+      "name": "focus (F): arrives, no travel left",
+      "ok": false,
+      "value": "518m moved",
+      "limit": "arrive <= 1.25 s",
+      "extra": ""
+    },
+    {
+      "name": "clearance: never clips terrain/roofs",
+      "ok": true,
+      "value": "48.0m",
+      "limit": ">= 3 m",
+      "extra": "30 frames incl. 150 m zoom over towers and the escarpment"
+    },
+    {
+      "name": "bounds: target and zoom clamped",
+      "ok": true,
+      "value": "807,746 d1022",
+      "limit": "x<=12000 z<=9000 d<=12000",
+      "extra": ""
+    },
+    {
+      "name": "console: no errors",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "extra": ""
+    }
+  ],
+  "pass": false
+}

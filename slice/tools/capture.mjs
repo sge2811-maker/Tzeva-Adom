@@ -4,6 +4,8 @@
 // Usage:
 //   node tools/capture.mjs --clip C1-arrow --out status/clips/vfx-r1 [--w 960 --h 540]
 //   node tools/capture.mjs --t 200 --len 30 --fps 30 --cam S6-salvo --camscript trailer --w 1920 --h 1080 --audio --out final
+//   node tools/capture.mjs --intro [--len 27] [--fps 4] --out status/clips/camera-dev/intro   (intro flyover from
+//     introT = 0 through the hand-off into gameplay; contact-sheet timestamps are intro seconds)
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -13,7 +15,7 @@ const a = args();
 const { SHOTS, CLIPS } = await import(path.join(SLICE, 'src/core/shots.js'));
 const clip = a.clip ? CLIPS[a.clip] : null;
 if (a.clip && !clip) throw new Error(`Unknown clip ${a.clip}. Known: ${Object.keys(CLIPS).join(', ')}`);
-const t0 = +(a.t ?? clip?.t ?? 200), len = +(a.len ?? clip?.len ?? 8), fps = +(a.fps ?? clip?.fps ?? 12);
+const t0 = a.intro ? +(a.from ?? 0) : +(a.t ?? clip?.t ?? 200), len = +(a.len ?? clip?.len ?? (a.intro ? 27 : 8)), fps = +(a.fps ?? clip?.fps ?? 12);
 const camShot = a.cam || clip?.cam || null;
 const w = +(a.w || 960), h = +(a.h || 540);
 const out = path.resolve(a.out || path.join(SLICE, '.capture', a.clip || 'clip'));
@@ -28,7 +30,8 @@ await withRenderLock(async () => {
   try {
     const q = new URLSearchParams({ seed: a.seed || '1', q: a.q || 'high', ui: a.ui === '0' ? '0' : '1', capture: '1', nointro: '1', fps: String(fps) });
     const { page, logs } = await openSlice(browser, url, { w, h, query: q.toString() });
-    await page.evaluate(({ t0, camShot, script }) => {
+    if (a.intro) await page.evaluate((t0) => { const c = window.__slice.ctx; c.setFlow('intro'); c.introT = t0; }, t0);
+    else await page.evaluate(({ t0, camShot, script }) => {
       const S = window.__slice;
       S.seek(t0, 6);
       if (camShot) { const mod = S.ctx.shots || null; }
@@ -46,6 +49,7 @@ await withRenderLock(async () => {
       if (i % 30 === 0) console.error(`[capture] frame ${i}/${n} t=${(t0 + i / fps).toFixed(2)}`);
     }
     const info = await page.evaluate(() => window.__slice.info());
+    const feelLog = await page.evaluate(() => { const c = window.__slice.ctx.systems.camera; return c && c.feelLog ? c.feelLog.slice() : null; });
     let audio = null;
     if (a.audio) {
       audio = await page.evaluate(async ({ t0, len }) => {
@@ -57,7 +61,7 @@ await withRenderLock(async () => {
       if (audio) fs.writeFileSync(path.join(out, 'audio.wav'), Buffer.from(audio, 'base64'));
       else console.error('[capture] __slice.audioOffline() not available: video will be silent');
     }
-    fs.writeFileSync(path.join(out, 'capture.json'), JSON.stringify({ t0, len, fps, w, h, camShot, camscript: a.camscript || null, frames: n, info, consoleErrors: logs.slice(0, 30), seconds: (Date.now() - t1) / 1000 }, null, 2));
+    fs.writeFileSync(path.join(out, 'capture.json'), JSON.stringify({ t0, len, fps, w, h, camShot, camscript: a.camscript || null, frames: n, intro: !!a.intro, info, feelLog, consoleErrors: logs.slice(0, 30), seconds: (Date.now() - t1) / 1000 }, null, 2));
     await page.close();
   } finally { await browser.close(); srv.close(); }
 }, { label: `capture ${a.clip || t0}` });

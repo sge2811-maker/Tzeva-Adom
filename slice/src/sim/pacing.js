@@ -28,8 +28,11 @@ export const PACING = {
     { enter: 222, n: 15, errant: 1 },
     { enter: 241, n: 11, errant: 1 },
   ],
-  shelterHold: 26,         // "stay inside for 10 minutes", compressed
-  aftermath: 24,           // all-clear -> debrief
+  // Beat timing (camera & game-feel stream): no stretch without a beat longer than ~20 s.
+  // Hold 274 -> 294 (HUD all-clear countdown), all-clear 294 -> debrief 313.5. Keeps S7-aftermath
+  // (t 312) in the aftermath with people out of the shelters, and S8-debrief (t 330) on the debrief.
+  shelterHold: 20,         // "stay inside for 10 minutes", compressed (was 26)
+  aftermath: 19.5,         // all-clear -> debrief (was 24)
 };
 
 export function firstImpactT(p = PACING) { return p.alertAt + p.countdown; }

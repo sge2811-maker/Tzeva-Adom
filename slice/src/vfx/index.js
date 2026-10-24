@@ -483,7 +483,7 @@ export function create(ctx) {
           c.acc -= rate;
           const hot = c.t < c.fire;
           const lo = rngF.next() < 0.35; // low, fire-lit puffs vs the dark column aloft
-          const ab = lo ? 0.26 : 0.15;
+          const ab = lo ? 0.26 : 0.24;
           smoke.add(c.x + RF(-12, 12) * s, c.y + RF(4, 18) * s, c.z + RF(-12, 12) * s, RF(-4, 4), (lo ? RF(8, 16) : RF(40, 70)) * s, RF(-4, 4),
             ab, ab * 0.93, ab * 0.88, RF(18, 28) * s, (lo ? RF(120, 200) : RF(600, 900)) * s, 0.85 * Math.min(1, k * 1.5), lo ? RF(8, 14) : RF(45, 60), lo ? 0 : -0.5, lo ? 0.3 : 0.04, 1.0, lo ? T_SMOKE : T_COLUMN, hot && lo ? RF(1.4, 2.2) : 0, 0, 0);
           if (!lo) smoke.v[(smoke.n - 1) * 3] += RF(4, 10); // shear: the top drifts downwind

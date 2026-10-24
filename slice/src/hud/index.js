@@ -178,7 +178,7 @@ export function create(ctx) {
     const el = document.createElement('div');
     el.className = `mk mk-${kind} m-compact`;
     el.dataset.mk = id;
-    el.innerHTML = `<i class="stem"></i><i class="foot"></i><div class="lbl"><span class="ico">${ic(icon)}</span><b class="n"></b><span class="e"></span><span class="x"></span></div>`;
+    el.innerHTML = `<i class="stem"></i><i class="foot">${ic(icon)}</i><div class="lbl"><span class="ico">${ic(icon)}</span><b class="n"></b><span class="e"></span><span class="x"></span></div>`;
     const lbl = el.querySelector('.lbl');
     const m = {
       kind, id, el, lbl, world, icon, stem: el.querySelector('.stem'), nEl: el.querySelector('.n'), eEl: el.querySelector('.e'), xEl: el.querySelector('.x'), icoEl: el.querySelector('.ico'),
@@ -193,7 +193,7 @@ export function create(ctx) {
     return m;
   }
   function setText(m, n, e, x, icon) {
-    if (icon && icon !== m.icon) { m.icon = icon; m.icoEl.innerHTML = ic(icon); }
+    if (icon && icon !== m.icon) { m.icon = icon; m.icoEl.innerHTML = ic(icon); m.el.querySelector('.foot').innerHTML = ic(icon); }
     if (n !== m.n) { m.n = n; m.nEl.textContent = n; }
     if (e !== m.e) { m.e = e; m.eEl.textContent = e; }
     if (x !== m.x) { m.x = x; m.xEl.textContent = x; }
@@ -299,8 +299,8 @@ export function create(ctx) {
   bus.on('cmd:rejected', ({ why }) => toast(why, 'bad', 'warn'));
 
   // ---------------------------------------------------------------- feed, toasts, banners
-  let toastT = 0, bannerT = -1, routeFlashT = 0;
-  function toast(text, kind = 'info', icon = 'route') { const t = $('toast'); t.className = 'iw-toast ' + kind; t.innerHTML = ic(icon); t.append(text); t.hidden = false; toastT = 3.4; obsAcc = 1; }
+  let toastT = 0, toastSim = 0, bannerT = -1, routeFlashT = 0;
+  function toast(text, kind = 'info', icon = 'route') { const t = $('toast'); t.className = 'iw-toast ' + kind; t.innerHTML = ic(icon); t.append(text); t.hidden = false; toastT = 3.4; toastSim = sim.t; obsAcc = 1; }
   function banner(a, b, kind) { const el = $('banner'); el.querySelector('b').textContent = a; el.querySelector('span').textContent = b; el.className = 'iw-banner ' + kind; el.hidden = false; bannerT = sim.t + 4.2; obsAcc = 1; }
   const feedItems = [];
   bus.on('msg', (m) => {
@@ -866,7 +866,7 @@ export function create(ctx) {
         flashes.set(m, nt); const k = nt / 1.2; m.fl.style.opacity = k.toFixed(2); m.fl.style.transform = `scale(${(1 + (1 - k) * 0.35).toFixed(3)})`;
       }
       if (routeFlashT > 0) routeFlashT = Math.max(0, routeFlashT - dt);
-      if (toastT > 0 && (toastT -= dt) <= 0) { $('toast').hidden = true; obsAcc = 1; }
+      if (toastT > 0 && ((toastT -= dt) <= 0 || sim.t - toastSim > 5 * clock.speed)) { toastT = 0; $('toast').hidden = true; obsAcc = 1; }
       if (bannerT > 0 && sim.t > bannerT) { $('banner').hidden = true; bannerT = -1; obsAcc = 1; }
       for (const f of feedItems) { const age = sim.t - f.t, st = age > 14 ? 2 : age > 8 ? 1 : 0; if (st !== (f.st || 0)) { f.st = st; f.d.classList.toggle('old', st === 1); f.d.hidden = st === 2; } }
     },
