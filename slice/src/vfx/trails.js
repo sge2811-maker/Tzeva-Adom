@@ -12,7 +12,7 @@ import { NOISE, LIGHTS } from './shaderlib.js';
 const VERT = (lit) => /* glsl */`
   attribute vec3 aTan; attribute float aW; attribute vec4 aA; attribute float aCid;
   uniform float uScale; uniform float uMinPx; uniform vec3 uCols[16];
-  varying vec4 vA; varying vec3 vC; varying float vSide; varying vec4 vAtm;
+  varying vec4 vA; varying vec3 vC; varying float vSide; varying vec4 vAtm; varying float vEo;
   ${lit ? 'varying vec3 vLC;' : ''}
   ${LIGHTS}
   void main() {
@@ -23,22 +23,24 @@ const VERT = (lit) => /* glsl */`
     // edge-on (trail pointing at the camera): blend to a stable screen-space side, widen and fade,
     // so the ribbon reads as a soft cross-section instead of folding into flat triangles
     float f = tl > 1e-6 ? abs(dot(tv / tl, vd)) : 1.0;
-    float eo = smoothstep(0.82, 0.97, f);
+    float eo = smoothstep(0.55, 0.92, f); vEo = eo;
     vec3 fb = normalize(cross(vec3(0.0, 1.0, 0.0), vd) + vec3(1e-4, 0.0, 0.0));
     sd = normalize(mix(sl > 1e-6 ? sd / sl : fb, fb, eo));
     float dz = max(1.0, -mv.z);
     float hw = abs(aW) * (1.0 + eo * 1.6); float px = hw * uScale / dz;
     float side = aW < 0.0 ? -1.0 : 1.0;
-    mv.xyz += sd * max(hw, uMinPx * dz / uScale) * side;
+    float hwu = max(hw, uMinPx * dz / uScale);
+    ${lit ? '' : 'hwu = min(hwu, 18.0 * dz / uScale);'}
+    mv.xyz += sd * hwu * side;
     gl_Position = projectionMatrix * mv;
-    vA = aA; vA.x *= min(1.0, px / uMinPx) * (1.0 - 0.55 * eo) * smoothstep(hw * 1.5, hw * 6.0, dz);
+    vA = aA; vA.x *= min(1.0, px / uMinPx) * (1.0 - 0.55 * eo) * ${lit ? 'smoothstep(hw * 1.5, hw * 6.0, dz)' : 'smoothstep(hw * 4.0, hw * 30.0, dz)'};
     vSide = side; vC = uCols[int(aCid + 0.5)];
-    vAtm = vfxAtm(position);
+    vAtm = vfxAtm(position); vAtm.a *= mix(1.0, 0.5, smoothstep(6000.0, 10000.0, position.y));
     ${lit ? 'vec3 ld; vLC = vfxLight(position, ld);' : ''}
   }`;
 
 const FRAG_SMOKE = /* glsl */`
-  varying vec4 vA; varying vec3 vC; varying float vSide; varying vec4 vAtm; varying vec3 vLC;
+  varying vec4 vA; varying vec3 vC; varying float vSide; varying vec4 vAtm; varying vec3 vLC; varying float vEo;
   uniform vec3 uAmb; uniform vec3 uMoonC; uniform vec3 uFogC;
   ${NOISE}
   void main() {
@@ -47,7 +49,7 @@ const FRAG_SMOKE = /* glsl */`
     float n2 = vn(vec2(vA.z * 3.1 + 7.0, v * 1.6));
     float n3 = vn(vec2(vA.z * 9.0 - 3.0, v * 3.2 + vA.z));
     float e = abs(v) + (n - 0.5) * (0.7 + 0.75 * vA.y) + (n3 - 0.5) * 0.25;
-    float dens = smoothstep(0.85, 0.1, e) * (0.5 + 0.55 * n + 0.25 * n2);
+    float dens = smoothstep(0.85, 0.1, e) * (0.5 + 0.55 * n + 0.25 * n2) * (1.0 - vEo * smoothstep(0.4, 1.0, abs(v)));
     float shade = 0.75 + 0.25 * v;
     vec3 lit = vC * (uAmb + uMoonC * shade + vLC * 0.85);
     lit += vec3(1.0, 0.42, 0.13) * vA.w * max(0.0, 1.0 - abs(v) * 1.2);
@@ -56,11 +58,13 @@ const FRAG_SMOKE = /* glsl */`
   }`;
 
 const FRAG_HOT = /* glsl */`
-  varying vec4 vA; varying vec3 vC; varying float vSide; varying vec4 vAtm;
+  varying vec4 vA; varying vec3 vC; varying float vSide; varying vec4 vAtm; varying float vEo; uniform float uTime;
   ${NOISE}
   void main() {
     float e = 1.0 - abs(vSide);
-    vec3 c = mix(vC, vC * vec3(0.85, 0.36, 0.12), vA.y) * (0.6 + 0.55 * vn(vec2(vA.z * 3.0, 0.5)));
+    float fl = 0.62 + 0.38 * vn(vec2(vA.z * 0.4 - uTime * 2.3, 0.3));
+    fl *= 1.0 - 0.7 * smoothstep(0.72, 0.9, vn(vec2(vA.z * 1.3 + uTime * 5.0, 2.7)));
+    vec3 c = mix(vC, vC * vec3(0.85, 0.36, 0.12), vA.y) * fl;
     gl_FragColor = vec4(c * (e * e * 0.7 + pow(e, 6.0) * 1.4) * vA.x * (1.0 - vAtm.a), 1.0);
   }`;
 
@@ -133,7 +137,7 @@ export class TrailSet {
     const r = this.rand, tb = st.turb || 0;
     this.VX[h] = (r() - 0.5) * 2 * tb; this.VY[h] = (r() - 0.5) * 2 * tb * 0.6; this.VZ[h] = (r() - 0.5) * 2 * tb;
     const wv = st.wkVar ?? 0.5;
-    this.WK[h] = (1 - wv / 2 + wv * r()) * (this.S[h] < 250 && st.boost ? 1 + st.boost * (1 - this.S[h] / 250) : 1) * (st.altGrow ? 1 + Math.max(0, y) / st.altGrow : 1);
+    this.WK[h] = (1 - wv / 2 + wv * r()) * (this.S[h] < 250 && st.boost ? 1 + st.boost * (1 - this.S[h] / 250) : 1) * (st.altGrow ? Math.min(2.2, 1 + Math.max(0, y) / st.altGrow) : 1);
     if (st.breakup) this.AK[h] *= 1 - st.breakup + st.breakup * r();
     if (c === M) { s0 = this.rs[sl] = (s0 + 1) % M; c--; }
     const nh = base + (s0 + c) % M;

@@ -6,7 +6,7 @@
 // (flashes, fires, town glow) chosen each frame. Requests camera shake via bus 'shake', terrain
 // light via ctx.lights.flash and the screen flash via ctx.fx.flash.
 import * as THREE from 'three';
-import { Pool, T_GLOW, T_FIREBALL, T_STAR, T_RING, T_SMOKE, T_DUST } from './particles.js';
+import { Pool, T_GLOW, T_FIREBALL, T_STAR, T_RING, T_SMOKE, T_DUST, T_COLUMN } from './particles.js';
 import { TrailSet } from './trails.js';
 import { createShared, NL, HAS_ATM } from './shaderlib.js';
 import { createScorch } from './decals.js';
@@ -28,7 +28,7 @@ const ST = {
     hot: { life: 0.3, w0: 7, w1: 1.6, col: [13, 9.5, 6], alpha: 1, minSeg: 18 }, head: 10, body: 2,
   },
   arrow: {
-    smoke: { life: 18, w0: 22, w1: 130, col: [0.95, 0.95, 0.97], alpha: 1.0, altGrow: 4000, minSeg: 220, turb: 4, rise: 0.5, warm: 1.6, noiseLen: 110, boost: 2.2, headFade: 0.1, fadePow: 1.4 },
+    smoke: { life: 18, w0: 22, w1: 120, col: [0.95, 0.95, 0.97], alpha: 1.0, altGrow: 5000, minSeg: 220, turb: 4, rise: 0.5, warm: 1.6, noiseLen: 110, boost: 2.2, headFade: 0.1, fadePow: 1.4 },
     hot: { life: 0.45, w0: 11, w1: 2, col: [14, 11, 8], alpha: 1, minSeg: 50 }, head: 14, body: 3,
   },
   aam: {
@@ -37,7 +37,7 @@ const ST = {
   },
   ballistic: {
     smoke: { life: 12, w0: 24, w1: 170, col: [0.55, 0.5, 0.48], alpha: 0.32, minSeg: 220, turb: 25, rise: 0, warm: 0, noiseLen: 160, fadePow: 1.2, wkVar: 1.0, breakup: 0.6 },
-    hot: { life: 3.2, w0: 70, w1: 14, col: [11, 4.2, 1.4], alpha: 1, minSeg: 90 },
+    hot: { life: 1.4, w0: 80, w1: 10, col: [11, 4.2, 1.4], alpha: 1, minSeg: 70, fadePow: 1.6 },
   },
   drone: { hot: { life: 0.15, w0: 1.2, w1: 0.4, col: [2.5, 1.1, 0.4], alpha: 0.5, minSeg: 20 } },
   cruise: {
@@ -166,7 +166,7 @@ export function create(ctx) {
         smokeAlb, smokeAlb * 0.97, smokeAlb * 0.94, Rf * R(0.5, 0.8), Rf * R(1.9, 3.0), R(0.5, 0.7), R(16, 30), -1, 0.5, 1.1, T_SMOKE, R(1.4, 2.4), R(0.12, 0.45), 1);
     }
     addLight(x, y, z, 1 * lightI, 0.72 * lightI, 0.45 * lightI, Rf * 8, 1.8, 0);
-    if (opts.smudge) for (let i = 0; i < 5; i++) { const d = randDir(), off = R(0, 0.5) * Rf; smoke.add(x + d.x * off, y + d.y * off, z + d.z * off, vx * 0.02 + d.x * 6, vy * 0.02, vz * 0.02 + d.z * 6, 0.3, 0.29, 0.28, Rf * 0.6, Rf * R(1.6, 2.4), 0.38, R(30, 45), 0.2, 0.3, 1.5, T_SMOKE, 0.4, R(0.4, 1.0), 1); }
+    if (opts.smudge) { const vl = Math.hypot(vx, vy, vz) || 1; for (let i = 0; i < 8; i++) { const d = randDir(), a = R(-1.5, 1.5) * Rf, off = R(0, 0.35) * Rf; smoke.add(x + vx / vl * a + d.x * off, y + vy / vl * a + d.y * off, z + vz / vl * a + d.z * off, vx * 0.02 + d.x * 6, vy * 0.02, vz * 0.02 + d.z * 6, 0.3, 0.29, 0.28, Rf * R(0.3, 0.6), Rf * R(0.6, 2.4), 0.22, R(30, 45), 0.2, 0.3, 1.5, T_SMOKE, 0.4, R(0.4, 1.0), 1); } }
   }
 
   // ---------------------------------------------------------------- debris
@@ -250,16 +250,17 @@ export function create(ctx) {
     }
     if (exo) { // Arrow 3: exo-atmospheric hit-to-kill, a star-flash with glints and a fading debris cloud
       const k = e.kill ? 1 : 0.45;
-      fire.add(e.x, e.y, e.z, 0, 0, 0, 16 * k, 15 * k, 14 * k, 1400, 1900, 1, 0.5, 0, 0, 0, T_STAR, 2.2);
+      fire.add(e.x, e.y, e.z, 0, 0, 0, 7 * k, 6.6 * k, 6.2 * k, 1400, 1900, 1, 0.5, 0, 0, 0, T_STAR, 3.5);
+      fire.add(e.x, e.y, e.z, e.vx * 0.2, e.vy * 0.2, e.vz * 0.2, 3 * k, 2.6 * k, 2.2 * k, 900, 700, 1, R(1.2, 1.6), 0, 0, 0, T_STAR, 0.6);
       fire.add(e.x, e.y, e.z, 0, 0, 0, 1.6 * k, 1.5 * k, 1.45 * k, 360, 700, 0.4, 0.25, 0, 0, 0, T_GLOW, 0, 0, 1);
-      const nd = Math.round((e.kill ? 40 : 12) * mul);
+      const nd = Math.round((e.kill ? 20 : 8) * mul);
       for (let i = 0; i < nd; i++) {
         const q = randDir(), sp = R(60, 420);
-        fire.add(e.x, e.y, e.z, q.x * sp + e.vx * 0.3, q.y * sp + e.vy * 0.3, q.z * sp + e.vz * 0.3, 9, 5, 2, R(50, 110), 40, 1, R(3, 6), 4, 0.15, 0.4);
+        fire.add(e.x, e.y, e.z, q.x * sp + e.vx * 0.3, q.y * sp + e.vy * 0.3, q.z * sp + e.vz * 0.3, 4, 2.4, 1.2, R(30, 60), 20, 0.8, R(1.5, 3), 4, 0.15, 0.25);
       }
-      if (e.kill) for (let i = 0; i < 6 * mul + 2; i++) { const q = randDir(), off = R(0, 250); smoke.add(e.x + q.x * off, e.y + q.y * off, e.z + q.z * off, e.vx * 0.2 + q.x * 30, e.vy * 0.2 + q.y * 30, e.vz * 0.2 + q.z * 30, 0.75, 0.75, 0.8, 300, R(1400, 2400), 0.3, R(18, 28), 0, 0.05, 0.9, T_SMOKE, 0.6); }
+      if (e.kill) for (let i = 0; i < 4; i++) { const f = i * 0.4; smoke.add(e.x + e.vx * f * 0.4 + R(-120, 120), e.y + e.vy * f * 0.4, e.z + e.vz * f * 0.4 + R(-120, 120), e.vx * 0.15, e.vy * 0.15, e.vz * 0.15, 0.75, 0.75, 0.8, 300, R(900, 1600), R(0.12, 0.18), R(14, 22), 0, 0.05, 0.9, T_SMOKE, 0.4); }
       addLight(e.x, e.y, e.z, 9 * k, 8 * k, 7.5 * k, 1800, 1.0, 0);
-      envFlash(e.x, e.y, e.z, [0.95, 0.9, 1], e.kill ? 2.5e5 : 1e5, 1, 0.4);
+      envFlash(e.x, e.y, e.z, [0.95, 0.9, 1], e.kill ? 0.8e5 : 0.4e5, 1, 0.4);
       ctx.fx.flash = Math.min(2.5, ctx.fx.flash + (e.kill ? 0.12 : 0.04));
       return;
     }
@@ -297,28 +298,39 @@ export function create(ctx) {
     const mul = MUL();
     const s = e.type === 'ballistic' ? 1.3 : e.type === 'cruise' ? 0.7 : 0.42;
     const y = groundAt(e.x, e.z);
+    // blast visuals grow with camera distance so impacts read from the 4-5 km RTS camera
+    const d0 = camDist(e.x, y, e.z), sv = s * Math.min(2.2, Math.max(1, Math.sqrt(d0 / 2500)));
     // flash + ground fireball
-    fire.add(e.x, y + 25 * s, e.z, 0, 0, 0, 16, 13, 10, 320 * s, 420 * s, 1, 0.2, 0, 0, 0, T_STAR, 0.6);
+    fire.add(e.x, y + 25 * s, e.z, 0, 0, 0, 16, 13, 10, 320 * sv, 420 * sv, 1, 0.2, 0, 0, 0, T_STAR, 0.6);
     const nf = Math.round((8 + 8 * mul) * Math.max(0.5, s));
     for (let i = 0; i < nf; i++) {
-      const a = R(0, 6.283), rr = R(0, 30) * s;
-      fire.add(e.x + Math.cos(a) * rr, y + R(8, 45) * s, e.z + Math.sin(a) * rr, Math.cos(a) * R(10, 40) * s, R(25, 85) * s, Math.sin(a) * R(10, 40) * s,
-        1, 1, 1, 30 * s, R(70, 130) * s, 1, R(1.2, 2.3), -6, 1.2, 0.9, T_FIREBALL, R(1.05, 1.3), i < 3 ? 0 : R(0, 0.2), 1);
+      const a = R(0, 6.283), rr = R(0, 30) * sv;
+      fire.add(e.x + Math.cos(a) * rr, y + R(8, 45) * sv, e.z + Math.sin(a) * rr, Math.cos(a) * R(10, 40) * sv, R(25, 85) * sv, Math.sin(a) * R(10, 40) * sv,
+        1, 1, 1, 40 * sv, R(160, 260) * s, 1, R(1.2, 2.3), -6, 1.2, 0.9, T_FIREBALL, R(1.05, 1.3), i < 3 ? 0 : R(0, 0.2), 1);
     }
-    fire.add(e.x, y + 6, e.z, 0, 0, 0, 1.4, 1.2, 1, 40 * s, 360 * s, 0.5, 0.45, 0, 0, 0, T_RING, 0, 0, 1);
+    for (let i = 0; i < 3; i++) fire.add(e.x + R(-15, 15) * s, y + 30 * s, e.z + R(-15, 15) * s, R(-10, 10), R(120, 180) * s, R(-10, 10), 1, 1, 1, 40 * sv, R(110, 170) * sv, 1, R(1.4, 2.0), 40, 0.9, 1.1, T_FIREBALL, 1.2, R(0.05, 0.2), 1); // rising hot cap
+    fire.add(e.x, y + 6, e.z, 0, 0, 0, 1.4, 1.2, 1, 40 * sv, 360 * sv, 0.5, 0.45, 0, 0, 0, T_RING, 0, 0, 1);
     // dust ring racing outward along the ground
     const nr = Math.round(40 * mul * Math.max(0.5, s)) + 6;
     for (let i = 0; i < nr; i++) {
-      const a = (i / nr) * 6.283 + R(-0.1, 0.1), sp = R(110, 230) * s;
+      const a = (i / nr) * 6.283 + R(-0.1, 0.1), sp = R(110, 230) * sv;
       smoke.add(e.x + Math.cos(a) * 12 * s, y + R(3, 8) * s, e.z + Math.sin(a) * 12 * s, Math.cos(a) * sp, R(2, 10) * s, Math.sin(a) * sp,
-        0.62, 0.52, 0.4, 18 * s, R(70, 120) * s, R(0.22, 0.34), R(7, 13), 0.5, 1.7, 1.3, T_DUST, R(0.6, 1.2), 0, 1);
+        0.62, 0.52, 0.4, 18 * s, R(140, 220) * sv, R(0.35, 0.5), R(7, 13), 0.5, 1.7, 1.3, T_DUST, R(0.6, 1.2), 0, 1);
     }
     // ejecta: glowing clods in arcs
     for (let i = 0; i < 50 * mul * s + 6; i++) { const a = R(0, 6.283), sp = R(50, 220) * s; fire.add(e.x, y + 5, e.z, Math.cos(a) * sp, R(70, 260) * s, Math.sin(a) * sp, 10, 5, 1.6, 4 * s, 2, 1, R(1, 3), 95, 0.35, 1.2); }
     // the cloud above the blast, lit by the fireball, then the persistent column
     for (let i = 0; i < 10 * mul + 3; i++) { const q = randDir(); smoke.add(e.x + q.x * 30 * s, y + R(30, 90) * s, e.z + q.z * 30 * s, q.x * 18 * s, R(20, 45) * s, q.z * 18 * s, 0.2, 0.19, 0.18, 50 * s, R(180, 300) * s, 0.75, R(24, 36), -1, 0.6, 1.4, T_SMOKE, R(1.0, 1.6), R(0.1, 0.4), 1); }
-    let c = null; for (let i = 0; i < CMAX; i++) if (!columns[i].on) { c = columns[i]; break; }
-    if (c) { c.on = true; c.x = e.x; c.y = y; c.z = e.z; c.s = s; c.t = 0; c.acc = 0; c.eacc = 0; c.life = e.type === 'ballistic' ? 120 : 60; c.fire = e.kind === 'open' ? 9 : c.life * 0.75; }
+    let c = null;
+    const nCol = e.type === 'ballistic' ? 1 + (rng.chance(0.5) ? 2 : 1) : 1; // main column + smouldering satellites
+    for (let n = 0; n < nCol; n++) {
+      let cc = null; for (let i = 0; i < CMAX; i++) if (!columns[i].on) { cc = columns[i]; break; }
+      if (!cc) break;
+      const sat = n > 0, a = R(0, 6.283), off = sat ? R(60, 150) : 0;
+      cc.on = true; cc.x = e.x + Math.cos(a) * off; cc.z = e.z + Math.sin(a) * off; cc.y = groundAt(cc.x, cc.z); cc.s = sat ? s * R(0.35, 0.5) : s;
+      cc.t = sat ? -R(0.5, 2) : 0; cc.acc = 0; cc.eacc = 0; cc.life = e.type === 'ballistic' ? (sat ? 90 : 120) : 60; cc.fire = e.kind === 'open' ? 9 : cc.life * 0.75;
+      if (!sat) c = cc;
+    }
     addLight(e.x, y + 40 * s, e.z, 20 * s, 12 * s, 6 * s, 450 * s, 2.2, 0);
     if (c) addLight(e.x, y + 20 * s, e.z, 4.5 * s, 2.0 * s, 0.6 * s, 200 * s, c.fire, 1);
     scorch.add(e.x, e.z, 48 * s, rng.next(), shared.uTime.value, e.kind === 'open' ? 0.5 : 1);
@@ -463,7 +475,7 @@ export function create(ctx) {
       // ---- impact columns: flames and embers at the base, a dark rising column lit from below
       for (let i = 0; i < CMAX; i++) {
         const c = columns[i]; if (!c.on) continue;
-        c.t += dt; c.acc += dt; c.eacc += dt;
+        c.t += dt; if (c.t < 0) continue; c.acc += dt; c.eacc += dt;
         if (c.t > c.life) { c.on = false; continue; }
         const k = 1 - c.t / c.life, s = c.s;
         const rate = 0.12 / mul;
@@ -473,7 +485,8 @@ export function create(ctx) {
           const lo = rngF.next() < 0.35; // low, fire-lit puffs vs the dark column aloft
           const ab = lo ? 0.26 : 0.15;
           smoke.add(c.x + RF(-12, 12) * s, c.y + RF(4, 18) * s, c.z + RF(-12, 12) * s, RF(-4, 4), (lo ? RF(8, 16) : RF(40, 70)) * s, RF(-4, 4),
-            ab, ab * 0.93, ab * 0.88, RF(18, 28) * s, (lo ? RF(120, 200) : RF(380, 600)) * s, 0.85 * Math.min(1, k * 1.5), lo ? RF(8, 14) : RF(45, 60), lo ? 0 : -0.5, lo ? 0.3 : 0.04, 1.0, T_SMOKE, hot && lo ? RF(1.4, 2.2) : 0, 0, 0);
+            ab, ab * 0.93, ab * 0.88, RF(18, 28) * s, (lo ? RF(120, 200) : RF(600, 900)) * s, 0.85 * Math.min(1, k * 1.5), lo ? RF(8, 14) : RF(45, 60), lo ? 0 : -0.5, lo ? 0.3 : 0.04, 1.0, lo ? T_SMOKE : T_COLUMN, hot && lo ? RF(1.4, 2.2) : 0, 0, 0);
+          if (!lo) smoke.v[(smoke.n - 1) * 3] += RF(4, 10); // shear: the top drifts downwind
         }
         if (c.t < c.fire) {
           const fk = 1 - c.t / c.fire;
@@ -489,10 +502,12 @@ export function create(ctx) {
       updateLights(dt, t);
       fire.update(dt, WIND);
       smokeAcc += dt;
-      const smokeDue = smokeAcc >= 1 / 40 || dt === 0 || dt >= 1 / 40;
+      // smoke pool and smoke ribbons rebuild on alternate frames at 60 fps (every frame at capture rates)
+      const slow = dt === 0 || dt >= 1 / 40;
+      const smokeDue = slow || ((frame & 1) === 0 && smokeAcc >= 1 / 45) || smokeAcc >= 1 / 20;
       if (smokeDue) { smoke.update(smokeAcc, WIND); smokeAcc = 0; }
       PT.D = performance.now();
-      smokeTr.update(t, dt, WIND, 1 / 40); hotTr.update(t, dt, 0);
+      smokeTr.update(t, dt, WIND, slow || (frame & 1) === 1 ? 0 : 1e9); hotTr.update(t, dt, 0);
       PT.E = performance.now();
       fire.upload(); if (smokeDue) smoke.upload();
       // shared uniforms: pixel scale, moon direction in view space, env ambient / fog

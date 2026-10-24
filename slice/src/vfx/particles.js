@@ -10,7 +10,7 @@ import * as THREE from 'three';
 import { NOISE, LIGHTS } from './shaderlib.js';
 
 export const T_GLOW = 0, T_FIREBALL = 1, T_STAR = 2, T_RING = 3;
-export const T_SMOKE = 0, T_DUST = 1;
+export const T_SMOKE = 0, T_DUST = 1, T_COLUMN = 2;
 
 const VERT = (lit) => /* glsl */`
   attribute float aSize; attribute float aAlpha; attribute vec3 aCol; attribute float aSeed; attribute vec3 aAux;
@@ -24,9 +24,9 @@ const VERT = (lit) => /* glsl */`
     float px = aSize * uScale / dz;
     int ty = int(aAux.x + 0.5);
     // star flashes keep a fixed minimum on-screen size (lens flare), fireballs keep more energy
-    float mpx = ${lit ? 'uMinPx' : '(ty == 2 ? 64.0 : uMinPx)'};
+    float mpx = ${lit ? '(ty == 2 ? 20.0 : uMinPx)' : '(ty == 2 ? 64.0 : uMinPx)'};
     float k = min(1.0, px / mpx);
-    vA = aAlpha * ${lit ? 'k' : '(ty == 2 ? 1.0 : ty == 1 ? k : k * k)'};
+    vA = aAlpha * ${lit ? '(ty == 2 ? 1.0 : k)' : '(ty == 2 ? 1.0 : ty == 1 ? k : k * k)'};
     vPx = max(px, mpx);
     gl_PointSize = clamp(px, mpx, uMaxPx);
     vec4 cp = projectionMatrix * mv;
@@ -64,7 +64,7 @@ const FRAG_FIRE = /* glsl */`
       col = ramp(T) * dens * vC;
     } else if (ty == 2) {
       float sh = clamp(vPx * 0.5, 14.0, 90.0);
-      float cs = max(60.0, vPx * vPx * 0.004);
+      float cs = max(130.0, vPx * vPx * 0.006);
       float core = exp(-r * r * cs) * 3.2 + exp(-r * r * cs * 0.25) * 0.22;
       float sp = exp(-abs(uv.y) * sh) * pow(1.0 - abs(uv.x), 3.0) + exp(-abs(uv.x) * sh) * pow(1.0 - abs(uv.y), 3.0);
       vec2 dg = vec2(uv.x + uv.y, uv.x - uv.y) * 0.7071;
@@ -90,7 +90,7 @@ const FRAG_SMOKE = /* glsl */`
     float cs = cos(ang), sn = sin(ang); vec2 q = vec2(cs * uv.x - sn * uv.y, sn * uv.x + cs * uv.y);
     float n = fbm3(q * 1.5 + vSeed * 23.0 + vec2(vAux.z * 0.04, -vAux.z * 0.06));
     float n2 = vn(q * 4.2 - vSeed * 11.0 + vec2(0.0, vAux.z * 0.1));
-    float edge = r + (n - 0.5) * 1.05 + (n2 - 0.5) * 0.25;
+    float edge = r + (n - 0.5) * mix(1.6, 1.05, smoothstep(20.0, 80.0, vPx)) + (n2 - 0.5) * 0.25;
     float dens = smoothstep(1.0, 0.15, edge) * (0.45 + 0.75 * n) * (0.7 + 0.5 * n2);
     vec3 N = normalize(vec3(uv.x, -uv.y, sqrt(max(0.0, 1.0 - r * r)) + 0.25) + vec3(n - 0.5) * 0.9);
     float moon = 0.3 + 0.7 * max(dot(N, uMoonV), 0.0);

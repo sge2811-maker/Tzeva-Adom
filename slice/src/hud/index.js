@@ -59,17 +59,17 @@ export function create(ctx) {
         <div class="clock panel"><b data-r="clock">23:00</b><span data-r="phase">Drones inbound</span></div>
         <div class="money panel"><span class="kick">Budget</span><b data-r="budget">$300M</b></div>
       </div>
-      <div class="iw-alert" data-r="alert" hidden><div class="box">
+      <div class="iw-topc" data-r="topc"><div class="iw-alert" data-r="alert" hidden><div class="box">
         <div class="he" lang="he" dir="rtl" data-r="alHe">צבע אדום</div>
         <div class="en" data-r="alEn">RED ALERT · ARAD</div>
         <div class="big" data-r="alBig"><b data-r="alNum">75</b><span data-r="alUnit">SEC</span></div>
         <div class="bar" data-r="alBarW"><i data-r="alBar"></i></div>
         <div class="sub" data-r="alSub">TO REACH A PROTECTED SPACE</div>
         <div class="shel" data-r="alShel"><span>IN PROTECTED SPACES</span><b data-r="alIn">0 / 92</b></div>
-      </div></div>
+      </div></div><div class="iw-toast" data-r="toast" hidden></div><button class="iw-btn back" data-r="back" hidden><span>Back to the report</span>${ic('route')}</button></div>
       <section class="iw-obj panel" data-r="objp" aria-label="Objectives"><div class="kick">Objectives</div><ul data-r="obj"></ul></section>
       <section class="iw-roster panel" data-r="roster" aria-label="People outside" hidden>
-        <div class="hd"><span class="kick">People outside</span><b data-r="rosterN">92</b></div>
+        <div class="hd"><span class="kick">Outside</span><b data-r="rosterN">92</b></div>
         <div data-r="rosterRows"></div>
         <div class="legend"><span style="--c:var(--good)">on time</span><span style="--c:var(--amber)">tight</span><span style="--c:var(--threat)">late / locked</span></div>
       </section>
@@ -87,8 +87,8 @@ export function create(ctx) {
       </nav>
       <div class="iw-hint" data-r="hint" hidden></div>
       <div class="iw-feed" data-r="feed"></div>
-      <div class="iw-toast" data-r="toast" hidden></div>
-      <div class="iw-banner" data-r="banner" hidden><b></b><span></span></div>
+      <div class="iw-banner" data-r="banner" hidden><div class="plate"><b></b><span></span></div></div>
+      <div class="iw-edges" data-r="edges"></div>
       <div class="iw-pop" data-r="pop" hidden></div>
     </div>
     <div class="iw-debrief" data-r="debrief" hidden><div class="sheet" data-r="debriefSheet"></div></div>`;
@@ -260,8 +260,15 @@ export function create(ctx) {
     const role = { dome: 'Drones and cruise missiles · short range', sling: 'Cruise and ballistic · low in the atmosphere' };
     pop.innerHTML = `<div class="kick">Deploy at ${p.name}</div>` + p.allow.map((t) => `<button data-build="${t}" ${sim.budget < BAT[t].cost ? 'disabled' : ''}>${ic(TYPE_ICON[t])}<span><b>${BAT[t].name}</b><small>${role[t] || ''}</small></span><span class="px">$${BAT[t].cost}M</span></button>`).join('');
     pop.hidden = false; pop.dataset.pad = p.id;
-    const x = Math.min(innerWidth - 260, Math.max(8, m.sx - 124)), y = m.sy + 12 > innerHeight - 160 ? m.sy - 190 : m.sy + 12;
-    pop.style.transform = `translate(${x}px, ${y}px)`;
+    const pw = pop.offsetWidth, ph = pop.offsetHeight, W = innerWidth, H = innerHeight;
+    const cands = [[m.sx - pw / 2, m.sy - 40 - ph], [m.sx + 20, m.sy - ph / 2], [m.sx - 20 - pw, m.sy - ph / 2], [m.sx - pw / 2, m.sy + 16]];
+    let best = cands[0];
+    for (const [x, y] of cands) {
+      if (x < 8 || y < 8 || x + pw > W - 8 || y + ph > H - 8) continue;
+      if (obstacles.some((o) => x < o[2] && x + pw > o[0] && y < o[3] && y + ph > o[1])) continue;
+      best = [x, y]; break;
+    }
+    pop.style.transform = `translate(${Math.round(Math.min(W - pw - 8, Math.max(8, best[0])))}px, ${Math.round(Math.min(H - ph - 8, Math.max(8, best[1])))}px)`;
     pop.querySelectorAll('[data-build]').forEach((b) => (b.onclick = (e) => {
       e.stopPropagation();
       const r = sim.cmd('build', { pad: p.id, type: b.dataset.build });
@@ -293,8 +300,8 @@ export function create(ctx) {
 
   // ---------------------------------------------------------------- feed, toasts, banners
   let toastT = 0, bannerT = -1, routeFlashT = 0;
-  function toast(text, kind = 'info', icon = 'route') { const t = $('toast'); t.className = 'iw-toast ' + kind; t.innerHTML = ic(icon); t.append(text); t.hidden = false; toastT = 3.4; }
-  function banner(a, b, kind) { const el = $('banner'); el.querySelector('b').textContent = a; el.querySelector('span').textContent = b; el.className = 'iw-banner ' + kind; el.hidden = false; bannerT = sim.t + 4.2; }
+  function toast(text, kind = 'info', icon = 'route') { const t = $('toast'); t.className = 'iw-toast ' + kind; t.innerHTML = ic(icon); t.append(text); t.hidden = false; toastT = 3.4; obsAcc = 1; }
+  function banner(a, b, kind) { const el = $('banner'); el.querySelector('b').textContent = a; el.querySelector('span').textContent = b; el.className = 'iw-banner ' + kind; el.hidden = false; bannerT = sim.t + 4.2; obsAcc = 1; }
   const feedItems = [];
   bus.on('msg', (m) => {
     if (/^Municipal crew opening|is open\.$|^צבע אדום|Home Front Command early warning|^Plan the shelters now|^Last salvo is down|All clear\. People/.test(m.text)) return; // the alert module, markers and toasts already say this
@@ -314,6 +321,7 @@ export function create(ctx) {
   bus.on('allclear', () => { clearT0 = sim.t; });
   bus.on('phase', () => refreshSlow());
   bus.on('mission:end', (r) => showDebrief(r));
+  $('back').onclick = () => { $('back').hidden = true; $('debrief').hidden = false; $('play').classList.add('dim'); };
 
   // ---------------------------------------------------------------- route canvas
   const rc = $('route'), rx = rc.getContext('2d');
@@ -386,7 +394,7 @@ export function create(ctx) {
       const s = m.s, full = s.occ >= s.cap;
       const st = s.locked ? (s.opening > 0 ? 'st-opening' : 'st-locked') : full ? 'st-full' : 'st-open';
       let n, e = '', x = shortName(s), icon = s.locked ? (s.opening > 0 ? 'unlock' : 'lock') : 'shelter', extra = '';
-      if (s.locked) n = s.opening > 0 ? `OPENING ${Math.ceil(s.opening)}` : 'LOCKED';
+      if (s.locked) n = s.opening > 0 ? `${Math.ceil(s.opening)}s` : 'LOCKED';
       else n = `${s.occ}/${s.cap}`;
       if (sel && sel.status !== 'sheltered') {
         const eta = etaTo(sel.id, s.id), es = etaStatus(eta), free = freeAt(s.id, sel.id);
@@ -396,7 +404,7 @@ export function create(ctx) {
         if (s.locked && s.opening <= 0) x = 'click: open + send';
       } else if (s.locked && s.opening <= 0) x = 'click to open';
       setText(m, n, e, x, icon);
-      setCls(m, st + extra + (sel && sel.shelter === s.id ? ' tgt' : '') + (hoverShelter === s.id ? ' hov' : ''));
+      setCls(m, st + extra + (sel && sel.shelter === s.id ? ' tgt' : '') + (hoverShelter === s.id ? ' hov' : '') + (s.locked || sel ? ' urg' : ''));
       m.prio = (hoverShelter === s.id ? 200 : 0) + (s.locked ? 80 : 30) + (sel ? 40 : 0) + (sel && sel.shelter === s.id ? 20 : 0);
       m.forceFull = !!sel || hoverShelter === s.id || (s.locked && s.opening <= 0 && sim.phase === 'alert');
     }
@@ -414,7 +422,7 @@ export function create(ctx) {
       const e = status === 'blocked' ? '' : `${sim.phase === 'prep' ? 'ETA ' : ''}${secs(g.eta)}`;
       const x = sim.phase === 'prep' ? `${g.name} · ${why}` : `${why} · ${g.name}`;
       setText(m, String(left), e, x, 'people');
-      setCls(m, `st-${status}${selGroup === g.id ? ' sel' : ''}`);
+      setCls(m, `st-${status}${selGroup === g.id ? ' sel' : ''}${status !== 'ok' || selGroup === g.id || sim.phase === 'alert' ? ' urg' : ''}`);
       m.prio = selGroup === g.id ? 300 : (selGroup ? 5 : 0) + (status === 'late' || status === 'blocked' ? 95 : status === 'tight' ? 70 : 55) - (selGroup ? 60 : 0);
       m.forceFull = selGroup === g.id || ((status === 'late' || status === 'blocked') && sim.phase === 'alert');
     }
@@ -440,12 +448,13 @@ export function create(ctx) {
   const placed = [];   // rect pool: [x0, y0, x1, y1]
   let nPlaced = 0;
   const obstacles = [];
+  let mkScale = 1;
   function pushRect(x0, y0, x1, y1) { let r = placed[nPlaced]; if (!r) placed[nPlaced] = r = [0, 0, 0, 0]; r[0] = x0; r[1] = y0; r[2] = x1; r[3] = y1; nPlaced++; }
   function hits(x0, y0, x1, y1) { for (let i = 0; i < nPlaced; i++) { const r = placed[i]; if (x0 < r[2] && x1 > r[0] && y0 < r[3] && y1 > r[1]) return true; } return false; }
   let order = markers.slice();
-  const TRY_FULL = ['full', 0, 'full', 24, 'full', 48, 'compact', 0, 'compact', 24, 'compact', 48], TRY_CMP = ['compact', 0, 'compact', 24, 'compact', 48];
+  const TRY_FULL = ['full', 0, 'full', 24, 'compact', 0], TRY_CMP = ['compact', 0];
   function fits(m, md, d, sx, sy) {
-    const w = md === 'full' ? m.wF : m.wC, y1 = sy - STEM - d, y0 = y1 - LBL_H;
+    const w = (md === 'full' ? m.wF : m.wC) * mkScale, y1 = sy - STEM - d, y0 = y1 - LBL_H * mkScale;
     if (hits(sx - w / 2 - 2, y0 - 2, sx + w / 2 + 2, y1 + 2)) return false;
     pushRect(sx - w / 2 - 2, y0 - 2, sx + w / 2 + 2, y1 + 2);
     return true;
@@ -457,6 +466,7 @@ export function create(ctx) {
     const cluster = townDist > CLUSTER_DIST;
     const hideAll = sim.phase === 'debrief';
     for (const m of order) {
+      m.under = false;
       let on = !hideAll;
       if (on && (m.kind === 'group' || m.kind === 'shelter')) on = !cluster && !(m.kind === 'group' && m.done);
       if (on && m === aradM) on = cluster;
@@ -464,6 +474,9 @@ export function create(ctx) {
       if (on) { m.d = camera.position.distanceTo(m.world); if (m.kind === 'pad' && m.d > 9000 && !m.pad.battery) on = false; }
       if (!on) { if (m.mode !== 'hidden') { m.mode = 'hidden'; m.el.className = `mk mk-${m.kind} ${m.cls} m-hidden`; } continue; }
       const sx = (v.x + 1) / 2 * W, sy = (1 - v.y) / 2 * H;
+      m.under = false;
+      for (const o of obstacles) if (sx > o[0] && sx < o[2] && sy > o[1] && sy < o[3]) { m.under = true; break; }
+      if (m.under) { if (m.mode !== 'hidden') { m.mode = 'hidden'; m.el.className = `mk mk-${m.kind} ${m.cls} m-hidden`; } continue; }
       const want = m.forceFull || m.d < FULL_DIST ? 'full' : 'compact';
       // try: previous placement first (stability), then full/compact at increasing lifts, then a dot
       let mode = null, dy = 0;
@@ -482,12 +495,70 @@ export function create(ctx) {
       if (Math.abs(sx - m.sx) > 0.3 || Math.abs(sy - m.sy) > 0.3) { m.sx = sx; m.sy = sy; m.el.style.transform = `translate3d(${sx.toFixed(1)}px,${sy.toFixed(1)}px,0)`; }
     }
   }
+  // ---------------------------------------------------------------- edge pointers for off-screen trouble
+  const edgeEls = new Map();
+  const ev = new THREE.Vector3();
+  function edgeFor(m) {
+    let e = edgeEls.get(m);
+    if (!e) {
+      const el = document.createElement('button');
+      el.className = 'mk-edge'; el.dataset.edge = m.id;
+      el.innerHTML = `<i class="arw"><svg viewBox="0 0 12 12"><path d="M2 2l8 4-8 4z"/></svg></i><span class="ico"></span><b></b>`;
+      el.onclick = (q) => { q.stopPropagation(); focusCam(m.world.x, m.world.z); if (m.kind === 'group') selectGroup(m.g.id); };
+      $('edges').appendChild(el);
+      e = { el, arw: el.querySelector('.arw'), ico: el.querySelector('.ico'), b: el.querySelector('b'), on: false, x: 0, y: 0, a: 0, txt: '', icon: '', cls: '' };
+      edgeEls.set(m, e);
+    }
+    return e;
+  }
+  function placeEdges(cluster) {
+    const W = innerWidth, H = innerHeight, cx = W / 2, cy = H / 2;
+    const L = 290 * mkScale, T = 96, Rr = W - 46, B = H - 96 * mkScale;
+    for (const m of markers) {
+      const trouble = !cluster && (sim.phase === 'alert' || (sim.phase === 'prep' && sim.t >= pacing.earlyWarning)) && (
+        (m.kind === 'shelter' && m.s.locked && m.s.opening <= 0) ||
+        (m.kind === 'group' && sim.phase === 'alert' && !m.done && (m.status === 'late' || m.status === 'blocked')));
+      const need = trouble && (m.mode === 'hidden' || m.under);
+      const e = need || edgeEls.has(m) ? edgeFor(m) : null;
+      if (!e) continue;
+      if (!need) { if (e.on) { e.on = false; e.el.hidden = true; } continue; }
+      if (!e.on) { e.on = true; e.el.hidden = false; }
+      ev.copy(m.world).applyMatrix4(camera.matrixWorldInverse);
+      // direction in screen space; points behind the camera are mirrored
+      let dx = ev.x, dy = -ev.y; const zf = Math.max(1, -ev.z);
+      if (ev.z > 0) { dx = -dx; dy = -dy; }
+      dx /= zf; dy /= zf; if (Math.abs(dx) + Math.abs(dy) < 1e-6) dy = 1;
+      const kx = dx > 0 ? (Rr - cx) / dx : (L - cx) / dx, ky = dy > 0 ? (B - cy) / dy : (T - cy) / dy;
+      const k = Math.min(Math.abs(kx), Math.abs(ky));
+      let x = cx + dx * k, y = cy + dy * k;
+      if (m.under) { const p = (ev.copy(m.world).project(camera)); x = Math.max(L, Math.min(Rr, (p.x + 1) / 2 * W)); y = Math.max(T, Math.min(B, (1 - p.y) / 2 * H)); }
+      for (const o of obstacles) if (x > o[0] - 70 && x < o[2] + 70 && y > o[1] - 16 && y < o[3] + 16) y = o[3] + 22;
+      const a = Math.atan2(dy, dx) * 180 / Math.PI;
+      const txt = m.kind === 'shelter' ? `${shortName(m.s)} locked` : `${m.n} ${m.status === 'blocked' ? 'locked out' : 'late'}`;
+      const icon = m.kind === 'shelter' ? 'lock' : 'people';
+      if (txt !== e.txt) { e.txt = txt; e.b.textContent = txt; e.hw = (4 + 18 + 6 + textW(txt.toUpperCase(), '600 12px "IW Sans"', 0.72) + 10) / 2; e.a = 999; }
+      if (icon !== e.icon) { e.icon = icon; e.ico.innerHTML = ic(icon); }
+      if (Math.abs(x - e.x) > 0.5 || Math.abs(y - e.y) > 0.5) { e.x = x; e.y = y; e.el.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) translate(-50%,-50%)`; }
+      if (Math.abs(a - e.a) > 1.5) {
+        e.a = a; const ca = Math.cos(a * Math.PI / 180), sa = Math.sin(a * Math.PI / 180);
+        const r = Math.min(Math.abs(ca) > 1e-3 ? (e.hw + 7) / Math.abs(ca) : 1e9, Math.abs(sa) > 1e-3 ? 20 / Math.abs(sa) : 1e9);
+        e.arw.style.transform = `translate(${(ca * r).toFixed(1)}px,${(sa * r).toFixed(1)}px) rotate(${a.toFixed(0)}deg)`;
+      }
+    }
+  }
+  function focusCam(x, z) {
+    const cam = ctx.systems.camera; if (!cam) return;
+    if (typeof cam.focus === 'function') { cam.focus(x, z); return; }
+    if (cam.goal && cam.mode === 'tactical') { cam.goal.tx = x; cam.goal.tz = z; }
+  }
   function readObstacles() {
     obstacles.length = 0;
-    for (const r of ['status', 'objp', 'ad', 'bar', 'alert', 'roster', 'hint', 'feed']) {
+    for (const r of ['status', 'objp', 'ad', 'bar', 'alert', 'toast', 'back', 'roster', 'hint', 'feed', 'pop']) {
       const el = $(r); if (el.hidden) continue;
       const b = el.getBoundingClientRect(); if (b.width && b.height) obstacles.push([b.left - 4, b.top - 4, b.right + 4, b.bottom + 4]);
     }
+    const bn = $('banner'); if (!bn.hidden) { const b = bn.firstChild.getBoundingClientRect(); obstacles.push([b.left - 6, b.top - 6, b.right + 6, b.bottom + 6]); }
+    mkScale = matchMedia('(max-height: 640px), (max-width: 1100px)').matches ? 0.84 : 1;
   }
 
   // ---------------------------------------------------------------- panels (10 Hz)
@@ -499,7 +570,7 @@ export function create(ctx) {
     b.dataset.group = g.id;
     b.innerHTML = '<i></i><span class="nm"></span><span class="n"></span><span class="e"></span>';
     b.querySelector('.nm').textContent = g.name;
-    b.onclick = (e) => { e.stopPropagation(); selectGroup(selGroup === g.id ? null : g.id); };
+    b.onclick = (e) => { e.stopPropagation(); const on = selGroup !== g.id; selectGroup(on ? g.id : null); if (on) { const q = infoById.get(g.id); focusCam(q.x, q.z); } };
     $('rosterRows').appendChild(b); rosterEls.set(g.id, { b, n: b.querySelector('.n'), e: b.querySelector('.e'), c: '', cls: '' });
   }
   const batEls = new Map();
@@ -522,6 +593,7 @@ export function create(ctx) {
       else if (o.id === 'nevatim') { val = `${Math.round(sim.nevatim)}%`; frac = sim.nevatim / 100; }
       else if (o.id === 'town') val = sim.townHits ? `${sim.townHits} hit${sim.townHits > 1 ? 's' : ''}` : '0';
       else if (o.id === 'hold') val = sim.phase === 'hold' ? `${Math.ceil(Math.max(0, sim.holdUntil - sim.t))}s` : o.state === 'done' ? 'done' : '';
+      if (o.id === 'shelter' && (sim.phase === 'alert' || sim.phase === 'barrage') && o.state === 'active') val = '';
       set(li._v, 'textContent', val);
       li._b.hidden = frac == null;
       if (frac != null) { li._bi.style.width = `${Math.round(frac * 100)}%`; li._bi.style.background = o.id === 'nevatim' ? (sim.nevatim < 60 ? 'var(--threat)' : sim.nevatim < 80 ? 'var(--amber)' : 'var(--good)') : ''; }
@@ -535,11 +607,11 @@ export function create(ctx) {
         const r = rosterEls.get(g.id), m = grM.find((q) => q.g.id === g.id), st = m.status || g.status, left = g.n - g.inside;
         out += left;
         set(r.n, 'textContent', left ? String(left) : '');
-        set(r.e, 'textContent', g.status === 'sheltered' ? 'SAFE' : st === 'blocked' ? 'LOCKED' : secs(g.eta));
+        set(r.e, 'textContent', g.status === 'sheltered' ? 'safe' : st === 'blocked' ? 'lock' : secs(g.eta));
         const c = COL[st] || COL.idle; if (c !== r.c) { r.c = c; r.b.style.setProperty('--c', c); }
         const cls = (selGroup === g.id ? 'sel' : '') + (g.status === 'sheltered' ? ' done' : ''); if (cls !== r.cls) { r.cls = cls; r.b.className = cls; }
       }
-      set($('rosterN'), 'textContent', `${out}/${total}`);
+      set($('rosterN'), 'textContent', String(out));
     }
     // air defence
     const live = { drone: 0, cruise: 0, ballistic: 0 }; for (const th of sim.threats) if (th.alive) live[th.type]++;
@@ -621,7 +693,7 @@ export function create(ctx) {
       $('alBar').style.transform = `scaleX(${(left / pacing.shelterHold).toFixed(4)})`;
     } else if (mode === 'barrage') {
       const ids = Object.keys(sim.salvos).map(Number), cur = ids.length ? Math.max(...ids) : 0;
-      set($('alSub'), 'textContent', cur ? `SALVO ${cur} OF ${pacing.salvos.length} · INTERCEPTS AND FALLING DEBRIS` : 'BALLISTIC MISSILES INBOUND');
+      set($('alSub'), 'textContent', cur ? `SALVO ${cur} OF ${pacing.salvos.length} · DEBRIS OVERHEAD` : 'BALLISTIC MISSILES INBOUND');
     }
     if (mode === 'alert' || mode === 'barrage') {
       const total = sim.civ.total, inside = info.reduce((a, g) => a + g.inside, 0);
@@ -652,6 +724,7 @@ export function create(ctx) {
   rad.width = RW * 2; rad.height = RH * 2;
   const rxp = (x) => (x - X0) * sc, rzp = (z) => (z - Z0) * sc;
   const camDir = new THREE.Vector3();
+  let radPing = 0;
   function drawRadar() {
     const c = rg; c.setTransform(2, 0, 0, 2, 0, 0); c.clearRect(0, 0, RW, RH);
     c.fillStyle = 'rgba(70,120,150,0.16)'; c.fillRect(rxp(9800), 0, rxp(16300) - rxp(9800), RH);
@@ -684,6 +757,19 @@ export function create(ctx) {
     c.fillStyle = '#bfefff';
     for (const it of sim.interceptors) { if (!it.alive || it.pos.x < X0 || it.pos.x > X1) continue; c.fillRect(rxp(it.pos.x) - 0.75, rzp(it.pos.z) - 0.75, 1.5, 1.5); }
     for (const j of sim.jets) { if (!j.alive) continue; c.fillStyle = '#6fd3ff'; c.beginPath(); c.arc(rxp(Math.min(X1, Math.max(X0, j.pos.x))), rzp(j.pos.z), 2, 0, Math.PI * 2); c.fill(); }
+    // town: shelters and groups, with a ping on anything that needs the player
+    radPing = (radPing + 0.2) % 1;
+    for (const sh of sim.shelters) {
+      const bad = sh.locked && sh.opening <= 0;
+      c.fillStyle = bad ? '#ff5a47' : sh.locked ? '#ffb547' : 'rgba(159,230,255,0.9)'; c.fillRect(rxp(sh.x) - 1, rzp(sh.z) - 1, 2, 2);
+      if (bad && (sim.phase === 'alert' || sim.phase === 'prep' && sim.t >= pacing.earlyWarning)) { c.strokeStyle = `rgba(255,90,71,${(1 - radPing).toFixed(2)})`; c.beginPath(); c.arc(rxp(sh.x), rzp(sh.z), 2 + radPing * 7, 0, Math.PI * 2); c.stroke(); }
+    }
+    for (const g of info) {
+      if (g.status === 'sheltered' || g.status === 'out') continue;
+      const bad = sim.phase === 'alert' && (g.status === 'late' || g.status === 'blocked');
+      c.fillStyle = COL[g.status] || COL.idle; c.fillRect(rxp(g.x) - 0.75, rzp(g.z) - 0.75, 1.5, 1.5);
+      if (bad) { c.strokeStyle = `rgba(255,181,71,${(1 - radPing).toFixed(2)})`; c.beginPath(); c.arc(rxp(g.x), rzp(g.z), 2 + radPing * 6, 0, Math.PI * 2); c.stroke(); }
+    }
     // camera
     camera.getWorldDirection(camDir);
     const cx = rxp(camera.position.x), cz = rzp(camera.position.z), a = Math.atan2(camDir.z, camDir.x);
@@ -692,15 +778,14 @@ export function create(ctx) {
   rad.addEventListener('pointerdown', (e) => {
     e.stopPropagation();
     const cam = ctx.systems.camera; if (!cam || !cam.goal) return;
-    const b = rad.getBoundingClientRect(), x = X0 + (e.clientX - b.left) / sc, z = Z0 + (e.clientY - b.top) / sc;
-    if (cam.mode !== 'tactical') return;
-    cam.goal.tx = x; cam.goal.tz = z;
+    const b = rad.getBoundingClientRect(), x = X0 + (e.clientX - b.left) / b.width * RW / sc, z = Z0 + (e.clientY - b.top) / b.height * RH / sc;
+    focusCam(x, z);
   });
 
   // ---------------------------------------------------------------- debrief
   function showDebrief(r) {
     const s = r.stats, k = s.killed, L = s.launched;
-    const tot = L.drone + L.cruise + L.ballistic, kills = k.drone + k.cruise + k.ballistic;
+    const kills = k.drone + k.cruise + k.ballistic, im = s.impacts, hits = im.nevatim + im.town + im.open, rate = kills + hits ? Math.round(kills / (kills + hits) * 100) : 100;
     const by = s.by || {};
     const layers = [['arrow', 'Arrow 3', by.arrow || 0], ['sling', "David's Sling", by.sling || 0], ['dome', 'Iron Dome', by.dome || 0], ['jet', 'Air patrol', by.aam || 0], ['radar', 'Allies, off-map', s.coalition + s.sm3]];
     const mx = Math.max(1, ...layers.map((l) => l[2]));
@@ -714,7 +799,7 @@ export function create(ctx) {
         <div class="stats">
           <div><b>${r.total - r.exposed}/${r.total}</b><span>People sheltered before impact</span></div>
           <div><b style="color:${r.nevatim < 60 ? 'var(--threat)' : r.nevatim < 80 ? 'var(--amber)' : 'var(--good)'}">${Math.round(r.nevatim)}%</b><span>Nevatim Air Base operational</span></div>
-          <div><b>${kills}/${tot}</b><span>Threats intercepted in the sector</span></div>
+          <div><b>${rate}%</b><span>Intercepted in your sector · ${kills} of ${kills + hits}</span></div>
           <div><b>$${Math.round(s.spent)}M</b><span>Cost of the night</span></div>
         </div>
         <div class="layers"><div class="kick">Intercepts by layer</div>${layers.map(([i, n, c]) => `<div class="layer">${ic(i)}<span>${n}</span><u><i style="width:${Math.round(c / mx * 100)}%"></i></u><em>${c}</em></div>`).join('')}</div>
@@ -724,7 +809,7 @@ export function create(ctx) {
     $('debrief').hidden = false;
     $('play').classList.add('dim');
     root.querySelector('[data-r="again"]').onclick = () => location.reload();
-    root.querySelector('[data-r="watch"]').onclick = () => { $('debrief').hidden = true; };
+    root.querySelector('[data-r="watch"]').onclick = () => { $('debrief').hidden = true; $('play').classList.remove('dim'); $('back').hidden = false; obsAcc = 1; };
   }
 
   // ---------------------------------------------------------------- intro cards (dt-driven)
@@ -772,6 +857,7 @@ export function create(ctx) {
       else if (radarDue === 2) { radarDue = 0; drawRadar(); }
       const townDist = camera.position.distanceTo(townPos);
       placeMarkers(townDist);
+      placeEdges(townDist > CLUSTER_DIST);
       drawRoutes(townDist);
       animateAlert(dt);
       for (const [m, t] of flashes) {
@@ -780,8 +866,8 @@ export function create(ctx) {
         flashes.set(m, nt); const k = nt / 1.2; m.fl.style.opacity = k.toFixed(2); m.fl.style.transform = `scale(${(1 + (1 - k) * 0.35).toFixed(3)})`;
       }
       if (routeFlashT > 0) routeFlashT = Math.max(0, routeFlashT - dt);
-      if (toastT > 0 && (toastT -= dt) <= 0) $('toast').hidden = true;
-      if (bannerT > 0 && sim.t > bannerT) { $('banner').hidden = true; bannerT = -1; }
+      if (toastT > 0 && (toastT -= dt) <= 0) { $('toast').hidden = true; obsAcc = 1; }
+      if (bannerT > 0 && sim.t > bannerT) { $('banner').hidden = true; bannerT = -1; obsAcc = 1; }
       for (const f of feedItems) { const age = sim.t - f.t, st = age > 14 ? 2 : age > 8 ? 1 : 0; if (st !== (f.st || 0)) { f.st = st; f.d.classList.toggle('old', st === 1); f.d.hidden = st === 2; } }
     },
   };
