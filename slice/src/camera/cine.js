@@ -82,19 +82,21 @@ export function createCine(ctx, floorAt) {
       const lost = !cur && S.subj;
       if (cur) S.last = { x: cur.x, y: cur.y, z: cur.z };
       if (lost) S.lostT += dt; else S.lostT = 0;
-      const minHold = S.siren > 0 ? 4 : 3.5;
-      if (!S.subj || S.lostT > 2.2 || (S.shotT > minHold && !S.siren && S.shotT > (lost ? 0 : 8)) || (S.shotT > minHold && !cur)) {
+      // a shot ends when its subject has been gone 2.2 s (explosion played out) or after 8 s;
+      // the establishing shot gives way as soon as something better exists (after 3.5 s)
+      const expired = !S.subj || S.lostT > 2.2 || S.shotT > 8 || (S.key === 'establish' && S.shotT > 3.5);
+      if (expired && S.siren <= 0) {
         const c = candidates().filter((q) => q.key !== S.key).sort((a, b) => b.score - a.score)[0];
-        if (c && (!S.subj || S.shotT > minHold || S.lostT > 2.2)) {
-          const p = c.get();
-          if (p) {
-            S.subj = c; S.key = c.key; S.shotT = 0; S.lostT = 0; S.side = -S.side; S.last = { x: p.x, y: p.y, z: p.z };
-            const np = place(p);
-            S.cut = Math.hypot(np.x - S.pos.x, np.z - S.pos.z) > 250 || S.t < 0.05;
-            S.pos = S.cut ? np : S.pos; S.goal = np;
-          }
-        } else if (!S.subj) {
-          S.subj = { get: () => ({ x: 600, y: 2600, z: 0 }), fixed: true }; S.key = 'establish'; S.shotT = 0; S.cut = true; S.pos = { x: -1700, y: groundAt(-1700, 500) + 90, z: 500 };
+        const p = c && c.get();
+        if (p) {
+          S.subj = c; S.key = c.key; S.shotT = 0; S.lostT = 0; S.side = -S.side; S.last = { x: p.x, y: p.y, z: p.z };
+          const np = place(p);
+          S.cut = Math.hypot(np.x - S.pos.x, np.z - S.pos.z) > 250 || S.t < 0.05;
+          if (S.cut) S.pos = np;
+          S.goal = np;
+        } else if (S.key !== 'establish' || S.shotT > 12) {
+          S.subj = { get: () => ({ x: 600, y: 2600, z: 0 }), fixed: true }; S.key = 'establish'; S.shotT = 0; S.lostT = 0; S.cut = true;
+          S.side = -S.side; S.pos = { x: -1700, y: groundAt(-1700, 500 * S.side) + 90, z: 500 * S.side }; S.goal = null;
         }
       }
       const s = S.last;
