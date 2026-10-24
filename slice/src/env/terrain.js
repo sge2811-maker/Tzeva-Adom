@@ -127,8 +127,11 @@ export function createTerrain(ctx) {
         float wk = vLand.x * (1.0 - smoothstep(0.25, 0.6, vGlow)) * (1.0 - smoothstep(3500.0, 9000.0, dcam)) * (1.0 - rockK * 0.6);
         float bed = smoothstep(0.55, 0.95, vLand.x), fringe = smoothstep(0.15, 0.55, vLand.x) * (1.0 - bed);
         col = mix(col, vec3(0.44, 0.39, 0.31), bed * wk * 0.8);
-        float shrub = smoothstep(0.62, 0.78, gN(vWP.xz * 0.11 + 9.0)) * near;
-        col *= 1.0 - (fringe * 0.25 + shrub * (0.25 + 0.5 * fringe)) * min(1.0, wk + 0.25 * concave);
+        float shrub = smoothstep(0.80, 0.86, gN(vWP.xz * 0.35 + 9.0)) * (1.0 - smoothstep(300.0, 1500.0, dcam));
+        col = mix(col, vec3(0.22, 0.18, 0.13), clamp((fringe * 0.10 + shrub * 0.18) * min(1.0, wk + 0.4 * concave + 0.3), 0.0, 1.0));
+        // flat hamada: low-contrast desert-pavement mottling
+        float flatK2 = 1.0 - smoothstep(0.04, 0.14, slope);
+        col = mix(col, vec3(0.36, 0.31, 0.24), (gN(vWP.xz * 0.0025 + 4.0) - 0.5) * 0.24 * flatK2 + 0.0);
         // large-scale hamada/loess variation, gentle
         col *= 0.93 + 0.14 * m1;
         col *= 0.96 + 0.08 * m2 * (1.0 - rockK);
@@ -143,7 +146,7 @@ export function createTerrain(ctx) {
           vec2 q = vWP.xz;
           #define BH(p) (0.9 * gN((p) * 0.018) + 0.45 * gN((p) * 0.06 + 3.0) * (1.0 - smoothstep(500.0, 2500.0, dcam)) + 0.15 * gN((p) * 0.2 + 1.0) * (1.0 - smoothstep(150.0, 700.0, dcam)))
           float h0 = BH(q), hx = BH(q + vec2(e, 0.0)), hz = BH(q + vec2(0.0, e));
-          float amp = (1.0 + 2.5 * rockK) * (1.0 - 0.7 * smoothstep(0.15, 0.6, vGlow));
+          float amp = (1.0 + 2.5 * rockK + 0.5 * (1.0 - smoothstep(600.0, 1500.0, dcam))) * (1.0 - 0.7 * smoothstep(0.15, 0.6, vGlow));
           vec3 gW = vec3(-(hx - h0) / e, 0.0, -(hz - h0) / e) * amp * fadeB;
           normal = normalize(normal + (viewMatrix * vec4(gW, 0.0)).xyz);
         }`)
@@ -225,45 +228,56 @@ export function createTerrain(ctx) {
 
   // ---- far Moab ridges: fine silhouettes that layer through the haze (lighter, bluer with distance)
   const ridges = new THREE.Group(); ridges.name = 'far-ridges';
-  const rmat = new THREE.ShaderMaterial({
-    fog: true, side: THREE.DoubleSide,
-    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog]),
+  // each ridge is a 4-row heightfield strip (west foot, shoulder, crest, back slope) so it has a
+  // moonlit west face and reads as a surface from above; each layer is pulled further toward the
+  // haze colour than the one in front of it (aerial perspective)
+  const mkRidgeMat = (mixK) => new THREE.ShaderMaterial({
+    fog: true,
+    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uMix: { value: mixK }, uFogC: { value: ATM.fog } }]),
     vertexShader: /* glsl */`
       #include <fog_pars_vertex>
-      attribute float aTop; varying float vTop;
-      void main() { vTop = aTop; vec4 mvPosition = viewMatrix * modelMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mvPosition;
+      varying vec3 vN;
+      void main() { vN = normal; vec4 mvPosition = viewMatrix * modelMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mvPosition;
         #include <fog_vertex>
       }`,
     fragmentShader: /* glsl */`
       #include <fog_pars_fragment>
-      varying float vTop;
+      varying vec3 vN; uniform float uMix; uniform vec3 uFogC;
+      ${ATM_GLSL}
       void main() {
-        // dark rock, a faint moonlit crest on the west face
-        vec3 col = vec3(0.010, 0.010, 0.011) + vec3(0.018, 0.019, 0.022) * smoothstep(0.0, 1.0, vTop);
+        vec3 n = normalize(vN);
+        float lit = max(dot(n, ATM_MOON), 0.0);
+        vec3 col = vec3(0.30, 0.26, 0.21) / 3.14159 * (vec3(0.82, 0.85, 0.95) * 1.05 * lit + vec3(0.22, 0.26, 0.34) * 0.6 * (0.5 + 0.5 * n.y));
+        col = mix(col, uFogC * 1.15, uMix);
         gl_FragColor = vec4(col, 1.0);
         #include <fog_fragment>
       }`,
   });
-  const ridge = (x0, seed, base, amp, followTerrain) => {
-    const P = [], T = [], I = [];
-    const step = 45, z0 = -70000, z1 = 70000;
-    let n = 0;
-    for (let z = z0; z <= z1; z += step, n++) {
+  const ridge = (x0, seed, base, amp, followTerrain, mixK) => {
+    const step = 45, z0 = -70000, z1 = 70000, rows = [[-2600, 0.0], [-1100, 0.72], [0, 1.0], [1600, 0.82]];
+    const tops = [], xs2 = [];
+    for (let z = z0; z <= z1; z += step) {
       const x = x0 + (fbm(z * 0.00006 + seed, seed * 3.1, 3) - 0.5) * 5000;
-      let top = base + amp * (0.55 * ridged(z * 0.00022 + seed, seed, 4) + 0.45 * fbm(z * 0.0011 + seed * 2, 1.7, 3));
+      let top = base + amp * (0.6 * ridged(z * 0.00018 + seed, seed, 3) + 0.4 * fbm(z * 0.0007 + seed * 2, 1.7, 2));
       if (followTerrain) { let m = -400; for (let d = 0; d <= 3000; d += 500) m = Math.max(m, heightAt(x + d, z)); top = Math.max(top, m + 25); }
-      P.push(x, -450, z, x, top, z); T.push(0, 1);
-      if (n) { const a = (n - 1) * 2; I.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
+      tops.push(top); xs2.push(x);
     }
+    // low-pass the crest (kills stair steps)
+    const sm = tops.map((t, i) => (tops[Math.max(0, i - 2)] + tops[Math.max(0, i - 1)] * 2 + t * 3 + tops[Math.min(tops.length - 1, i + 1)] * 2 + tops[Math.min(tops.length - 1, i + 2)]) / 9);
+    const P = [], I = [], R = rows.length;
+    sm.forEach((top, i) => {
+      const z = z0 + i * step;
+      for (const [dx, k] of rows) P.push(xs2[i] + dx, k === 0 ? -450 : -450 + (top + 450) * k, z);
+      if (i) for (let r = 0; r < R - 1; r++) { const a = (i - 1) * R + r, b = i * R + r; I.push(a, b, a + 1, b, b + 1, a + 1); }
+    });
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
-    g.setAttribute('aTop', new THREE.Float32BufferAttribute(T, 1));
-    g.setIndex(I);
-    const m = new THREE.Mesh(g, rmat); m.frustumCulled = false; ridges.add(m);
+    g.setIndex(I); g.computeVertexNormals();
+    const m = new THREE.Mesh(g, mkRidgeMat(mixK)); m.frustumCulled = false; ridges.add(m);
   };
-  ridge(20500, 3.3, 520, 380, true);
-  ridge(29000, 7.7, 820, 520, false);
-  ridge(41000, 11.1, 980, 650, false);
+  ridge(20500, 3.3, 520, 380, true, 0.2);
+  ridge(29000, 7.7, 820, 520, false, 0.45);
+  ridge(41000, 11.1, 980, 650, false, 0.65);
   ctx.scene.add(ridges);
 
   return {
