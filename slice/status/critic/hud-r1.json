@@ -1,0 +1,76 @@
+{
+  "stream": "hud",
+  "round": 1,
+  "score": 7,
+  "oneLine": "A restrained, well-typed HUD with a strong red-alert module, start screen and debrief, and routing that works with real clicks. Overlays still collide with world markers, nothing points to off-screen trouble at the siren, and a few panels overflow or go illegible over the scene.",
+  "strengths": [
+    "Red-alert module (S4-alert, C2) is unmissable but elegant: Hebrew צבע אדום set correctly in IBM Plex Sans Hebrew, the English line, a big tabular countdown, a draining bar and an 'in protected spaces 0/92' line. The early warning (amber) to alert (red) to barrage ('STAY INSIDE' plus the Hebrew instruction) states read as one designed system. It is close to the CoH3 objective-banner restraint.",
+    "Start screen (S0-menu) and intro title card (S1-intro) feel like a shipped game: big condensed IRON WALL, dim Hebrew subtitle, amber date line, two clear CTAs, a key legend and a dramatisation disclaimer. The intro card is at AoE IV campaign-intro level.",
+    "Debrief (S8-debrief) reads like a game's after-action report, not a web page: verdict headline, four objective columns, big mono stats, an intercepts-by-layer bar chart and an 'In history' coda.",
+    "Coherent type system (Plex Sans Condensed for words, Plex Mono for data) and one colour per meaning (cyan friend, red threat, amber warning, green safe). Original SVG icons are used consistently, with no emoji.",
+    "Panels are edge-anchored and compact: clock and budget top-left, objectives top-right, air defence with sector radar bottom-left, commands bottom-centre, quiet feed bottom-right. The centre stays for the world, in the spirit of the AoE IV and Iron Harvest layout.",
+    "Routing UX works end to end and is visible: selecting a group colours every shelter label by ETA against the countdown (green fits, red too late, with places left). Locked shelters say 'click: open + send', and the coach line explains the step. tools/ux-test.mjs passes 10/10 with real clicks (pad build, pre-alert G7 to S7, siren unlocks of S1/S5, 0/92 exposed at the impact window) and no console errors.",
+    "Marker declutter works at the canonical zooms: no label overlaps in S2, S4 or S4b, priority goes to locked shelters and late groups, and far away the town collapses to one ARAD cluster pin (S7-aftermath).",
+    "Clean console in every shot (report.json), in the C2 capture (capture.json) and in the UX test."
+  ],
+  "issues": [
+    {
+      "severity": "major",
+      "area": "overlay collisions",
+      "text": "Toasts and banners are drawn over the world markers. They are not treated as obstacles, and they sit exactly where the town's markers cluster at the alert camera. In ux-2 the 'Opening West shelter' toast hides a group label. In ux-1 the 'David's Sling deploying' toast sits between the DEPLOY pad and a LOCKED shelter. In ux-3 the 'ALL 92 IN PROTECTED SPACES' banner is crossed by shelter labels (16/24, 8/40) and becomes hard to read. AoE IV and CoH3 never let notification text fight world pins.",
+      "evidence": "status/shots/hud-r1c/ux/ux-2-siren.png, status/shots/hud-r1c/ux/ux-3-impact-window.png, status/shots/hud-r1c/ux/ux-1-route-preview.png",
+      "fix": "src/hud/index.js: add 'toast' and 'banner' to the readObstacles() list, and force readObstacles() when toast()/banner() shows (set obsAcc=1), so markers lift or dot around them. Better: move the toast into a fixed slot under the alert module (top: alert bottom + 8px) with a solid panel background. Give .iw-banner a dark backing plate (the panel colour at 0.6, 40px vertical padding) and, while it is visible, hide markers whose rect intersects it (mode 'dot')."
+    },
+    {
+      "severity": "major",
+      "area": "routing UX / off-screen awareness",
+      "text": "At the siren, the things the player must act on are often off-screen or jammed at the screen edge, and nothing points to them. In C2 f00040 the locked Lookout shelter and its 16-person group are wedged into the corner between the clock and the roster, and the second locked shelter (West) is not on screen at all. The roster says LOCKED, but clicking a roster row does not move the camera. The radar shows no shelters or groups. CoH3 and AoE IV use edge arrows and minimap pings for this.",
+      "evidence": "status/clips/hud-r1c/C2/frames/f00040.jpg, status/clips/hud-r1c/C2/frames/f00000.jpg",
+      "fix": "src/hud/index.js: (1) in placeMarkers(), when a locked shelter, or a group with status late/blocked, projects off-screen or into an obstacle rect, draw a clamped edge chevron (a small .mk-edge element with the lock/people icon and the count) at the screen border, pointing toward it, and make it clickable to focus the camera (ctx.systems.camera.goal.tx/tz). (2) Make a roster-row click also pan the camera to the group (same goal API as the radar click), and double-click to centre. (3) In drawRadar(), plot shelters (red square if locked) and groups (status-coloured dots) when the camera is near Arad, and ping the locked ones on alert:start."
+    },
+    {
+      "severity": "minor",
+      "area": "panel polish / legibility",
+      "text": "The roster's right column has no right padding: 'LOCKED' and the ETAs (31s, 26s) touch or cross the panel border, and it is worse in compact mode. Feed timestamps are illegible because the row gradient starts fully transparent exactly where <time> sits (23:46 over a road in S2). The barrage subline 'SALVO 2 OF 3 · INTERCEPTS AND FALLING DEBRIS' wraps, leaving 'DEBRIS' as an orphan line in the alert box.",
+      "evidence": "status/shots/hud-r1c/S2-tactical.png, status/shots/hud-r1c/S2-tactical-960.png, status/shots/hud-r1c/ux/ux-3-impact-window.png",
+      "fix": "src/hud/hud.css: .iw-roster button grid-template-columns 8px 1fr auto 46px plus padding-right 14px, or use 'LOCK' with a lock icon instead of the word. .iw-feed .ev background: start the gradient at rgba(6,10,14,0.55) rather than 0 alpha, or give <time> its own dark chip. src/hud/index.js updateAlert(): shorten the barrage sub to `SALVO ${cur}/${n} · DEBRIS FALLING`, or add white-space:nowrap with a smaller letter-spacing on .iw-alert .sub."
+    },
+    {
+      "severity": "minor",
+      "area": "marker styling and density",
+      "text": "World markers read more like debug tooltips than game pins. Every one is a mono-text box with a 1px stem, and at the S4b wide view or in compact 960x540 the town becomes a field of 14+ boxes with long, crossing leader lines from the 24/48 px lifts. Compact mode zooms the panels to 0.78 but not the markers, so at 960 they dominate (S2-tactical-960). Group feet that drop to 'dot' mode lose all identity. Compare the AoE IV and CoH3 icon-first pins, where text appears on hover or selection.",
+      "evidence": "status/shots/hud-r1c/S4b-alert-wide.png, status/shots/hud-r1c/S2-tactical-960.png",
+      "fix": "src/hud/hud.css: in the compact @media block add .iw-markers { zoom: 0.85 }, or scale .mk .lbl through a --mk-scale variable, and make textW()/fits() in index.js account for that scale. In index.js placeMarkers(), at mid zoom (m.d > FULL_DIST) show icon-only chips for OK groups and open shelters with spare capacity (count only on hover or selection), keeping text for locked, late and selected items. Cap the lift at 24 px and prefer a sideways offset (±w/2) before stacking upward, so stems do not cross."
+    },
+    {
+      "severity": "minor",
+      "area": "popups and edge overlap",
+      "text": "The pad build popup opens over the air-defence panel and the command bar (ux-0), and marker feet and route rings render under the semi-transparent panels (a group ring under the roster and a diamond between the clock and the roster in C2; the 20/20 pad stem runs into the command bar in S7). The pad label in compact mode shows only '13/20' or 'DEPLOY' with no pad name or battery type.",
+      "evidence": "status/shots/hud-r1c/ux/ux-0-pad-popup.png, status/shots/hud-r1c/S7-aftermath.png, status/clips/hud-r1c/C2/frames/f00110.jpg",
+      "fix": "src/hud/index.js openPad(): place the popup against the obstacles list (try above, then right, then left of the marker, picking the first spot that does not intersect an obstacle rect). In placeMarkers(), hide markers ('hidden', or an edge chevron) whose foot falls inside an obstacle rect instead of only lifting the label. Clip the route canvas to exclude panel rects (rx.save(); a clip path with an evenodd rule over the obstacles)."
+    },
+    {
+      "severity": "minor",
+      "area": "flow bug",
+      "text": "On the debrief, 'Watch the sky' hides the debrief but leaves .iw-play.dim (opacity 0) on, so the player gets a bare scene with no HUD and no way back to the debrief or to Play again.",
+      "evidence": "src/hud/index.js:725-727",
+      "fix": "In the 'watch' handler, remove the 'dim' class (or show a minimal HUD: clock plus a small 'Back to report' button bottom-right that re-shows $('debrief'))."
+    },
+    {
+      "severity": "minor",
+      "area": "information consistency",
+      "text": "The same numbers are framed three ways at once: the roster says 'People outside 92/92', the alert says 'In protected spaces 0/92' and the objective says '0/92'. The debrief says '56/68 threats intercepted' while the AD panel said 86% and the history note says 99%. Each is defensible, but the hierarchy goal is one place per fact.",
+      "evidence": "status/shots/hud-r1c/S4-alert.png, status/shots/hud-r1c/S8-debrief.png",
+      "fix": "src/hud/index.js: during the alert, hide the shelter objective's value (the alert module owns it) and label the roster header 'Outside 92'. In showDebrief(), show the intercept rate as a percentage with the same denominator as the AD panel, and add 'in your sector' next to it, so it does not read as contradicting the historical 99%."
+    },
+    {
+      "severity": "minor",
+      "area": "compact mode input",
+      "text": "In compact mode, the AD panel is CSS-zoomed to 0.78, but the radar click handler maps clientX/Y with the unzoomed scale (sc = 226/width), so radar clicks land at the wrong world position below 1100x640.",
+      "evidence": "src/hud/index.js:692-698, src/hud/hud.css:289",
+      "fix": "In the radar pointerdown handler, compute x = X0 + (e.clientX - b.left) / b.width * RW / sc (and likewise z using b.height and RH) rather than dividing raw pixels by sc."
+    }
+  ],
+  "benchmarkNotes": "AoE IV: the hierarchy (one corner per job, compact objectives with progress, a calm command bar) and the start screen and intro title card are at this level. The gaps are the marker style (text boxes rather than icon-first pins) and the lack of off-screen and minimap pings for urgent events. CoH3: the red-alert module and the impact-window banner match CoH3's restrained objective banners in tone. CoH3 never lets banners or toasts overlap world UI, though, and here they do (ux-2, ux-3). Iron Harvest: the cinematic restraint is good: letterboxed intro cards, a thin hairline aesthetic and a quiet feed. The siren-synced red frame is tasteful, though the overall red cast in S4 is mostly the scene grade (env stream). WARNO / Broken Arrow: the sector radar and battery ammo/reload bars are believable but small. Threat counts are fine, but the radar lacks shelters, groups and engagement-ring emphasis. Overall: a 7. It is close to the bar, and a player would notice the collisions, the missing off-screen pointers, the overflowing roster and feed text, and the text-heavy marker field.",
+  "bestShot": "status/shots/hud-r1c/S4-alert.jpg"
+}
