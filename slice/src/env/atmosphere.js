@@ -83,3 +83,43 @@ ${ATM_GLSL}
   scene.fog = new THREE.FogExp2(ATM.fog.clone(), ATM.density);
   return scene.fog;
 }
+
+// Light-pollution haze domes: ground-hugging ellipsoids of warm scattered light over Arad and
+// Nevatim, seen from outside (fades out as the camera enters). The chord through the ellipsoid
+// is integrated analytically (density 1 - r^2), so the glow is soft and volumetric-looking.
+export function createGlowDomes(ctx) {
+  const domes = [];
+  const mk = (cx, cy, cz, rx, ry, rz, gain) => {
+    const mat = new THREE.ShaderMaterial({
+      side: THREE.BackSide, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, fog: false,
+      uniforms: { uC: { value: new THREE.Vector3(cx, cy, cz) }, uR: { value: new THREE.Vector3(rx, ry, rz) }, uGain: { value: gain } },
+      vertexShader: /* glsl */`
+        varying vec3 vW;
+        void main() { vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+      fragmentShader: /* glsl */`
+        uniform vec3 uC; uniform vec3 uR; uniform float uGain; varying vec3 vW;
+        ${ATM_GLSL}
+        void main() {
+          vec3 o = (cameraPosition - uC) / uR, d = normalize((vW - cameraPosition) / uR);
+          float b = dot(o, d), c = dot(o, o) - 1.0, disc = b * b - c;
+          if (disc <= 0.0) discard;
+          float h = sqrt(disc);                       // half chord in unit-sphere space
+          float t0 = max(-b - h, 0.0), t1 = -b + h;
+          vec3 m = o + d * (t0 + t1) * 0.5;
+          float g = h * h * h * exp(-max(m.y, 0.0) * 1.2);
+          float camD = length((cameraPosition - uC).xz) / max(uR.x, uR.z);
+          float outside = smoothstep(0.55, 1.4, camD);
+          vec3 rel = uC - cameraPosition; float dist = length(rel);
+          float tr = exp(-atmOD(cameraPosition, rel / max(dist, 1.0), dist));
+          gl_FragColor = vec4(vec3(1.0, 0.56, 0.26) * g * uGain * outside * (0.35 + 0.65 * tr), 1.0);
+        }`,
+    });
+    const m = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), mat);
+    m.scale.set(rx, ry, rz); m.position.set(cx, cy, cz);
+    m.frustumCulled = false; m.renderOrder = 4; m.name = 'glow-dome';
+    ctx.scene.add(m); domes.push(m);
+  };
+  mk(0, -40, 0, 1500, 520, 1300, 0.045);
+  mk(-6800, -190, 2900, 2600, 420, 2200, 0.022);
+  return domes;
+}

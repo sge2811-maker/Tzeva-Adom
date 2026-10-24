@@ -6,13 +6,14 @@ import { ATM_GLSL, ATM } from './atmosphere.js';
 export const MOON_DIR = new THREE.Vector3(-0.83, 0.26, 0.18).normalize();
 
 export function createSky(ctx) {
-  const flashes = Array.from({ length: 4 }, () => ({ dir: new THREE.Vector3(0, 1, 0), i: 0, c: new THREE.Color(1, 0.8, 0.6), decay: 3 }));
+  const flashes = Array.from({ length: 4 }, () => ({ dir: new THREE.Vector3(0, 1, 0), i: 0, c: new THREE.Color(1, 0.8, 0.6), decay: 3, k: 1 }));
   const uniforms = {
     uTime: { value: 0 },
     uMoon: { value: MOON_DIR },
     uFlashDir: { value: flashes.map((f) => f.dir) },
     uFlashI: { value: [0, 0, 0, 0] },
     uFlashC: { value: flashes.map((f) => f.c) },
+    uFlashK: { value: [1, 1, 1, 1] },
     uGlobalFlash: { value: 0 },
     uFogC: { value: ATM.fog },
   };
@@ -28,7 +29,7 @@ export function createSky(ctx) {
     fragmentShader: /* glsl */`
       varying vec3 vDir;
       uniform float uTime; uniform vec3 uMoon;
-      uniform vec3 uFlashDir[4]; uniform float uFlashI[4]; uniform vec3 uFlashC[4]; uniform float uGlobalFlash;
+      uniform vec3 uFlashDir[4]; uniform float uFlashI[4]; uniform vec3 uFlashC[4]; uniform float uFlashK[4]; uniform float uGlobalFlash;
       float h3(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
       float n2(vec2 p) { vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
         float a = fract(sin(dot(i, vec2(127.1, 311.7))) * 43758.5453), b = fract(sin(dot(i + vec2(1, 0), vec2(127.1, 311.7))) * 43758.5453);
@@ -84,7 +85,8 @@ export function createSky(ctx) {
         // intercept flashes light the sky around them
         for (int i = 0; i < 4; i++) {
           float a = max(dot(d, uFlashDir[i]), 0.0);
-          col += uFlashC[i] * uFlashI[i] * (pow(a, 400.0) * 3.0 + pow(a, 24.0) * 0.25 + pow(a, 3.0) * 0.03);
+          float K = uFlashK[i]; // farther flashes subtend a smaller glow
+          col += uFlashC[i] * uFlashI[i] * (pow(a, 400.0 * K) * 3.0 + pow(a, 24.0 * K) * 0.25 + pow(a, 3.0 * K) * 0.03 / K);
         }
         col += vec3(0.05, 0.045, 0.05) * uGlobalFlash * (0.4 + 0.6 * smoothstep(-0.1, 0.4, y));
         // the same haze that fogs the terrain, integrated to the horizon: the land melts into it
@@ -106,7 +108,9 @@ export function createSky(ctx) {
     // add a flash seen from the camera's position at world point p
     flash(p, intensity = 1, color = [1, 0.8, 0.6], decay = 3) {
       let f = flashes.reduce((a, b) => (a.i < b.i ? a : b));
-      tmp.set(p.x, p.y, p.z).sub(ctx.camera.position).normalize();
+      tmp.set(p.x, p.y, p.z).sub(ctx.camera.position);
+      const fi = flashes.indexOf(f); uniforms.uFlashK.value[fi] = Math.min(30, Math.max(1, tmp.length() / 2500));
+      tmp.normalize();
       f.dir.copy(tmp); f.i = intensity; f.c.setRGB(color[0], color[1], color[2]); f.decay = decay;
       uniforms.uGlobalFlash.value = Math.min(1.5, uniforms.uGlobalFlash.value + intensity * 0.12);
     },

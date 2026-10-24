@@ -12,7 +12,7 @@ import { createDistant } from './distant.js';
 import { createBatteries } from './batteries.js';
 import { createCrowd } from './crowd.js';
 import { GradeEffect, LookEffect } from './grade.js';
-import { installAtmosphere, ATM } from './atmosphere.js';
+import { installAtmosphere, ATM, createGlowDomes } from './atmosphere.js';
 
 export function create(ctx) {
   const { scene, renderer, camera, quality } = ctx;
@@ -62,6 +62,7 @@ export function create(ctx) {
   createAirbase(ctx);
   createDistant(ctx);
   const batteries = createBatteries(ctx);
+  createGlowDomes(ctx);
   const crowd = createCrowd(ctx);
 
   // ---------------------------------------------------------------- post-processing
