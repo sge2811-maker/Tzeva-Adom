@@ -1,4 +1,8 @@
-# Tzeva Adom: Seven Fronts — v46 responsive interface
+# Tzeva Adom: Seven Fronts — v47 phone landscape
+
+Phone landscape now keeps the battlefield across the available width. **Commands** opens a scrollable drawer for Build, Train, Orders and Diplomacy; Hide or a map tap dismisses it. Statistics open above the battlefield without reducing its height. The HUD stays in one row, Pause stays first, and controls clear the notch and home indicator. Rotation preserves unit size and the running battle. Focused Chromium and WebKit checks include short visible heights, touch production and orders, and campaign briefing/deployment. Physical iPhone Safari remains a device check. See [verification details](RESPONSIVE.md).
+
+## Prior v46 responsive interface
 
 The full game now adapts to narrow phones, tablets, landscape displays, desktops and TVs. Collapsible commands/statistics, explicit Pan/Select touch tools, viewport-aware canvas sizing, safe-area spacing and large-display controls address the reported iPhone layout/control problem. The campaign engine, save format and isolated 3D diagnostic export remain unchanged. See [focused verification and device limitations](RESPONSIVE.md).
 

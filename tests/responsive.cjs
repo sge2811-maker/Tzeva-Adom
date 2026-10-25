@@ -41,6 +41,7 @@ async function layoutCases(browser,engine) {
     assert(await page.locator('#startBtn').isVisible(),'Deploy unreachable');
     await gameStart(page,touch);
     fits(await geometry(page));
+    if(await page.locator('#commandsBtn').isVisible()) await tap(page,'commandsBtn',touch);
     for(const id of ['tab-build','tab-train','tab-diplo']) {
       await tap(page,id,touch); await page.waitForTimeout(60); fits(await geometry(page));
       assert(await page.locator('#body-'+id.slice(4)).isVisible(),id+' body unreachable');
@@ -61,6 +62,72 @@ async function layoutCases(browser,engine) {
     results.push({engine,size:[width,height],...(await geometry(page)),errors});
     console.log('PASS',engine,width+'x'+height);
     await context.close();
+  }
+}
+async function landscapeCases(browser,engine) {
+  // Short visible heights represent browser chrome, not just the phone's full screen.
+  for(const [width,height,safe] of [[932,430,59],[932,300,59],[852,300,59],[667,280,0],[568,280,0]]) {
+    const context=await browser.newContext({viewport:{width,height},hasTouch:true,isMobile:true,deviceScaleFactor:3});
+    const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+    await page.goto(base);
+    // Only CSS environment inputs are simulated; game state is never modified.
+    await page.addStyleTag({content:`:root{--safe-left:${safe}px;--safe-right:${safe}px;--safe-bottom:21px;}`});
+    await page.locator('#startBtn').scrollIntoViewIfNeeded();await gameStart(page,true);
+    await tap(page,'pauseBtn',true);
+    const closed=await geometry(page);fits(closed);
+    assert.equal(closed.layout,'landscape');
+    assert.equal(await page.locator('#panel').isVisible(),false,'drawer should start closed');
+    assert(closed.stage.w>=width-2*safe-1,'sidebar still steals landscape width');
+    assert(closed.stage.h>=height*.54,'landscape HUD and controls crowd the map');
+    for(const id of ['commandsBtn','panTool','selectTool','zoomIn','zoomOut','zoomHome','fitMap','controlsHelp']) {
+      const b=await page.locator('#'+id).boundingBox();
+      assert(b.width>=44&&b.height>=44,id+' touch target too small');
+      assert(b.x>=safe-1&&b.x+b.width<=width-safe+1,id+' outside safe area');
+      assert(b.y+b.height<=height-20,id+' behind home indicator');
+    }
+    await tap(page,'sArmy',true);
+    const identity=await page.evaluate(()=>__mra().ents.map(e=>e.id));
+    const orders=()=>page.evaluate(()=>JSON.stringify(__mra().ents.filter(e=>e.side==='israel'&&e.kind==='unit').map(e=>e.order)));
+    const priorOrders=await orders();
+    await tap(page,'commandsBtn',true);
+    for(const tab of ['build','train','diplo']) {
+      await tap(page,'tab-'+tab,true);assert(await page.locator('#body-'+tab).isVisible());
+      const g=await geometry(page);fits(g);assert.equal(g.stage.w,closed.stage.w);assert.equal(g.stage.h,closed.stage.h);
+      assert(g.panel.x>=safe&&g.panel.r<=width-safe,'drawer under notch');
+      assert(g.panel.y>=g.hud.b&&g.panel.b<=g.tools.y,'drawer clips HUD or map tools: '+JSON.stringify(g));
+    }
+    // A real production tap in a scrollable short drawer must reach the engine.
+    await tap(page,'tab-build',true);
+    const credits=await page.evaluate(()=>__mra().sides.israel.credits);
+    await page.locator('#gridBuild button').filter({hasText:'Iron Dome Battery'}).tap();
+    assert((await page.evaluate(()=>__mra().sides.israel.credits))<credits,'landscape production failed');
+    // First map tap dismisses commands without accidentally moving the selected army.
+    await page.touchscreen.tap(closed.stage.x+35,closed.stage.y+closed.stage.h*.45);
+    assert.equal(await page.locator('#panel').isVisible(),false);
+    assert.equal(await orders(),priorOrders,'drawer dismissal also issued an order');
+    await tap(page,'statsBtn',true);assert(await page.locator('#meters').isVisible());
+    assert.equal((await geometry(page)).stage.h,closed.stage.h,'stats shrink short battlefield');
+    await tap(page,'statsBtn',true);
+    // Rotation keeps physical unit size, not a fraction of a much shorter screen.
+    await tap(page,'zoomHome',true);
+    const separation=()=>page.evaluate(()=>{const u=__mra().ents.filter(e=>e.side==='israel'&&e.kind==='unit');const a=__scr(u[0]),b=__scr(u[1]);return Math.hypot(b.x-a.x,b.y-a.y);});
+    const distance=await separation();
+    await page.setViewportSize({width:430,height:932});await page.waitForTimeout(180);
+    await page.setViewportSize({width,height});await page.waitForTimeout(180);
+    assert(Math.abs(await separation()-distance)<.2,'rotation changed unit size');
+    assert.deepEqual(await page.evaluate(()=>__mra().ents.map(e=>e.id)),identity,'rotation recreated mission');
+    assert(await page.locator('#sClear').isVisible(),'rotation lost army selection');
+    // A second tap after drawer dismissal must still select/order normally.
+    const b=await page.locator('#cv').boundingBox();
+    await page.touchscreen.tap(b.x+b.width*.36,b.y+b.height*.48);
+    assert.notEqual(await orders(),priorOrders,'map input stuck after drawer dismissal');
+    if(process.env.RESPONSIVE_SHOTS) {
+      await page.screenshot({path:path.join(process.env.RESPONSIVE_SHOTS,`landscape-v47-${engine}-${width}x${height}.png`)});
+      await tap(page,'commandsBtn',true);await tap(page,'tab-build',true);
+      await page.screenshot({path:path.join(process.env.RESPONSIVE_SHOTS,`landscape-v47-${engine}-${width}x${height}-drawer.png`)});
+    }
+    assert.deepEqual(errors,[]);results.push({engine,landscape:[width,height],safe,stage:closed.stage,errors});
+    console.log('PASS landscape',engine,`${width}x${height}`,`safe=${safe}`);await context.close();
   }
 }
 async function interactions(browser,engine) {
@@ -126,12 +193,16 @@ async function interactions(browser,engine) {
   assert.deepEqual(errors,[]);
   // Follow the actual campaign menu -> briefing -> battle path in a fresh profile.
   const campaign=await context.newPage();campaign.on('pageerror',e=>errors.push(e.message));
+  await campaign.setViewportSize({width:852,height:300});
   await campaign.goto(base);await tap(campaign,'msnCoal',true);await tap(campaign,'mStart',true);
   assert(await campaign.locator('#cut').isVisible(),'mission briefing did not open');
   await tap(campaign,'cutSkip',true);await tap(campaign,'cutDeploy',true);
   await campaign.waitForTimeout(350);fits(await geometry(campaign));
   assert.equal(await campaign.locator('#missions').isVisible(),false);
   assert.equal(await campaign.evaluate(()=>__mra().mission.def.n),1);
+  await tap(campaign,'commandsBtn',true);await tap(campaign,'tab-orders',true);
+  assert(await campaign.locator('#body-orders').isVisible(),'landscape mission objectives unreachable');
+  await tap(campaign,'panelToggle',true);assert.equal(await campaign.locator('#panel').isVisible(),false);
   assert.deepEqual(errors,[]);
   results.push({engine,interactions:'selection, order, movement, pan, zoom, rotation, production, campaign briefing',errors});
   await context.close();
@@ -142,7 +213,13 @@ let base;
  for(const [engine,type] of Object.entries({chromium,webkit})) {
   if(process.argv.includes('--webkit')&&engine!=='webkit')continue;
   const browser=await type.launch({headless:true});
-  try {if(!process.argv.includes('--interactions'))await layoutCases(browser,engine);if(!process.argv.includes('--layout-only'))await interactions(browser,engine);} finally {await browser.close();}
+  try {
+    if(process.argv.includes('--landscape-only'))await landscapeCases(browser,engine);
+    else {
+      if(!process.argv.includes('--interactions'))await layoutCases(browser,engine);
+      if(!process.argv.includes('--layout-only')) {await interactions(browser,engine);if(!process.argv.includes('--skip-landscape'))await landscapeCases(browser,engine);}
+    }
+  } finally {await browser.close();}
  }
  console.log(JSON.stringify(results,null,2));console.log('RESPONSIVE_UI_PASS');
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(()=>server.close());
