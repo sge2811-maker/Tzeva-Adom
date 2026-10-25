@@ -17,13 +17,24 @@ Then open **http://localhost:8765/?speed=8**. Turn Sound on after opening. No bu
 - Click or drag a box to select; right-click to move or attack on desktop.
 - Keys **1–4** select **1× / 2× / 4× / 8×**; **Space** pauses; **Escape** cancels placement.
 - On touch devices, tap to select/order, pinch to zoom and use two fingers to pan.
+- **Pan** enables one-finger/mouse dragging; **Select** enables drag-box selection. **Fit** shows the whole battlefield.
+- On narrow screens, tap Build/Train/Orders/Diplomacy to open the command panel; tap the active tab again or Hide to collapse it. **Stats** expands the meters. **?** opens the controls guide and pauses play while reading.
+- Focus the map and use **arrow keys / WASD** to pan with a keyboard.
 - Army, fleet, engineer, artillery and MCV selection controls are separate.
 
 ## Saves and sound
 
 Progress is stored in your browser for the current origin. Keep using the same browser and localhost port; use the game's native operation export/import controls for backups or transfers. The approved 52-clip English/Hebrew voice starter pack and fonts are embedded. Unrecorded English/Hebrew narration retains captions rather than inventing spoken lines.
 
-## Release and QA
+## Responsive interface (v46)
+
+The interface follows the visible browser viewport and automatically switches between a collapsible bottom panel and a landscape/desktop sidebar. Touch controls, safe-area padding, rotation without restarting, and larger controls on large displays are included. Gameplay rules, the campaign, and save formats are unchanged. The separate `mission2-3d-review` export is unchanged.
+
+Focused layout and interaction checks run in Chromium and WebKit from 320×568 to 3840×2160. This is browser emulation, not certification of a physical iPhone or a TV browser. See [responsive QA and limitations](docs/RESPONSIVE.md).
+
+To run only these focused checks: install Node.js, run `npm install`, `npx playwright install chromium webkit`, then `npm run test:responsive`. No build step is needed to play.
+
+## Prior release and QA
 
 Version **v45**, 15 October 2026. The final HTML SHA-256 is:
 
