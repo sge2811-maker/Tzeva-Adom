@@ -1,4 +1,8 @@
-# Tzeva Adom: Seven Fronts — v47 phone landscape
+# Tzeva Adom: Seven Fronts — v48 mobile audio
+
+The audio startup and recovery path now handles suspended or closed browser audio contexts. Sound starts from the Deploy gesture unless previously muted, the Sound button reports a retry state instead of claiming a suspended context is running, and supported platforms receive an explicit playback-session request. Music/Voice controls can enable sound. Help includes **Restart / test sound** for the reported “Sound on but silent” case. Chromium signal checks pass; this Windows WebKit build lacks Web Audio, so physical iPhone Chrome/Safari output remains unverified. See [audio verification](AUDIO.md).
+
+## Prior v47 phone landscape
 
 Phone landscape now keeps the battlefield across the available width. **Commands** opens a scrollable drawer for Build, Train, Orders and Diplomacy; Hide or a map tap dismisses it. Statistics open above the battlefield without reducing its height. The HUD stays in one row, Pause stays first, and controls clear the notch and home indicator. Rotation preserves unit size and the running battle. Focused Chromium and WebKit checks include short visible heights, touch production and orders, and campaign briefing/deployment. Physical iPhone Safari remains a device check. See [verification details](RESPONSIVE.md).
 

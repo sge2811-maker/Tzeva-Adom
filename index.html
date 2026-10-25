@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="game-version" content="47 · landscape controls · campaign through 2026-10-12">
+<meta name="game-version" content="48 · mobile audio · campaign through 2026-10-12">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Tzeva Adom: Seven Fronts</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%23151c19%22/%3E%3Cpath d=%22M5 23L16 5l11 18H5z%22 fill=%22%23ff4d6d%22/%3E%3C/svg%3E">
@@ -995,6 +995,9 @@ select, input, textarea { font-size: max(16px, 1em); max-width: 100%; }
     <li><b>Build / Train / Orders / Diplomacy</b> open the command panel. In phone landscape, tap Commands to open the drawer. Tap Hide, Commands again, or the map to close it. On a narrow upright screen, tap the active tab again or Hide. Stats shows the battle meters.</li>
     <li><b>Mouse and keyboard:</b> right-click to order; middle-drag to pan; wheel to zoom. Focus the map and use arrow keys or WASD to pan. Space pauses, Escape cancels, and 1–4 set speed.</li>
   </ul>
+  <p>Sound should start when you deploy. If it stops after switching apps, tap <b>Tap for sound</b>. If Sound on stays silent, restart it here and listen for two notes.</p>
+  <button class="go" id="audioTest" type="button">Restart / test sound</button>
+  <p id="audioStatus" role="status"></p>
   <form method="dialog"><button class="go">Back to game</button></form>
 </dialog>
 
@@ -8752,13 +8755,16 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
   }
 
   // ================= AUDIO: synthesized SFX, ambience, procedural score, radio voice =================
-  const SND = { ctx: null, on: false, last: {}, seen: new Set(), master: null, music: true, voice: true, voiceLang: 'native', intensity: 0.1, inten: 0.1, booms: 0 };
+  const SND = { ctx: null, on: false, unavailable: false, preference: null, last: {}, seen: new Set(), master: null, music: true, voice: true, voiceLang: 'native', intensity: 0.1, inten: 0.1, booms: 0 };
   function sndInit() {
-    if (SND.ctx) return true;
+    if (SND.ctx && SND.ctx.state !== 'closed') return true;
+    if (SND.ctx) resetAudioGraph();
     try {
       const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return false;
+      if (!AC) { SND.unavailable = true; return false; }
       const c = SND.ctx = new AC();
+      SND.unavailable = false;
+      c.onstatechange = syncSoundControls;
       const comp = c.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 5; comp.attack.value = 0.004; comp.release.value = 0.25;
       SND.out = c.createGain(); SND.out.gain.value = 0.9;
       SND.out.connect(comp); comp.connect(c.destination);
@@ -8774,7 +8780,7 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
       SND.ambBus = c.createGain(); SND.ambBus.gain.value = 0.0; SND.ambBus.connect(SND.out);
       buildAmbience(); buildBuzz();
       return true;
-    } catch (e) { return false; }
+    } catch (e) { resetAudioGraph(); SND.unavailable = true; return false; }
   }
   function noiseBuf() {
     if (SND.noise) return SND.noise;
@@ -9222,17 +9228,84 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
     // Named casualty events above handle losses; departures and withdrawals are not losses.
     ANN.units = n;
   }
+  function syncSoundControls() {
+    const ready = live(), label = SND.unavailable ? 'Sound unavailable' : !SND.on ? 'Sound off' : ready ? 'Sound on' : 'Tap for sound';
+    for (const id of ['soundBtn', 'cutSound', 'summitSound']) {
+      const button = $(id); if (!button) continue;
+      button.textContent = label; button.setAttribute('aria-pressed', String(ready));
+      button.title = ready ? 'Mute game audio. Help has Restart / test sound.' : 'Enable or resume game audio';
+    }
+  }
+  function audioSession(on) {
+    // Declare intentional media playback when the platform supports this API.
+    try { if (navigator.audioSession) navigator.audioSession.type = on ? 'playback' : 'auto'; } catch (_) { /* optional API */ }
+  }
+  function resetAudioGraph() {
+    stopRecordedVoice(); RVOICE.buffers.clear();
+    const old = SND.ctx;
+    SND.ctx = null; SND.noise = null; SND.master = null; SND.out = null;
+    SND.last = {}; MUS.next = 0; MUS.step = 0;
+    if (old) { old.onstatechange = null; if (old.state !== 'closed') old.close().catch(() => {}); }
+  }
+  function resumeSound(feedback) {
+    if (!SND.on || !sndInit()) { syncSoundControls(); return Promise.resolve(false); }
+    audioSession(true);
+    const c = SND.ctx;
+    let resumed;
+    // Resume in the input handler, before any asynchronous work.
+    try { resumed = c.state === 'running' ? Promise.resolve() : c.resume(); }
+    catch (_) { syncSoundControls(); return Promise.resolve(false); }
+    syncSoundControls();
+    return Promise.resolve(resumed).then(() => {
+      if (SND.ctx !== c) return false;
+      syncSoundControls();
+      if (live() && feedback) uiClick();
+      return live();
+    }).catch(() => { syncSoundControls(); return false; });
+  }
   function setSound(on) {
-    if (on && !sndInit()) { toast('Sound is not available in this browser', 'alert'); return; }
+    if (on) audioSession(true);
+    if (on && !sndInit()) { audioSession(false); toast('Sound is not available in this browser', 'alert'); syncSoundControls(); return Promise.resolve(false); }
     SND.on = on;
-    if (on && SND.ctx.state !== 'running') SND.ctx.resume().catch(() => {});
+    SND.preference = on ? '1' : '0';
     if (!on) stopRecordedVoice();
     if (!on && window.speechSynthesis) try { speechSynthesis.cancel(); } catch (e) { /* ignore */ }
-    if (SND.out) SND.out.gain.setTargetAtTime(on ? 0.9 : 0, SND.ctx.currentTime, 0.05);
-    $('soundBtn').textContent = on ? 'Sound on' : 'Sound off';
-    $('soundBtn').setAttribute('aria-pressed', on);
+    if (SND.out) {
+      const now = SND.ctx.currentTime, gain = SND.out.gain;
+      gain.cancelScheduledValues(now); gain.setValueAtTime(gain.value, now);
+      gain.linearRampToValueAtTime(on ? 0.9 : 0, now + 0.05);
+    }
+    if (!on) audioSession(false);
+    syncSoundControls();
     try { localStorage.setItem('mra-sound', on ? '1' : '0'); } catch (e) { /* ignore */ }
+    return on ? resumeSound(true) : Promise.resolve(false);
   }
+  function startAudio() { if (SND.preference !== '0') { if (SND.on) resumeSound(false); else setSound(true); } }
+  function toggleSound() { return setSound(!live()); }
+  function retryAudio(ev) {
+    // These controls handle their own audio request; do not resume before toggling.
+    if (ev && ev.target instanceof Element && ev.target.closest('#soundBtn, #cutSound, #summitSound, #musicBtn, #voiceBtn, #audioTest')) return;
+    if (SND.on && (!SND.ctx || SND.ctx.state !== 'running')) resumeSound(false);
+  }
+  // iOS can suspend audio again after an app switch; keep gesture retries installed.
+  document.addEventListener('click', retryAudio, true);
+  document.addEventListener('touchend', retryAudio, {capture: true, passive: true});
+  document.addEventListener('keydown', retryAudio, true);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) retryAudio(); });
+  window.addEventListener('pageshow', retryAudio);
+  $('audioTest').onclick = () => {
+    resetAudioGraph();
+    $('audioStatus').textContent = 'Starting audio…';
+    setSound(true).then(ready => {
+      if (!ready) { $('audioStatus').textContent = SND.unavailable ? 'Game audio is unavailable in this browser.' : 'Audio is paused by the browser. Tap Restart / test sound again.'; return; }
+      const c = SND.ctx, out = voiceOut(0.28, 0, 0);
+      for (const [delay, hz] of [[0.05, 660], [0.25, 880]]) {
+        const gn = c.createGain(); gn.connect(out); env(gn, c.currentTime + delay, 0.01, 0.7, 0.16);
+        osc(gn, c.currentTime + delay, 0.17, 'sine', hz);
+      }
+      $('audioStatus').textContent = 'Listen for two test notes. If silent, check media volume and the current speaker or Bluetooth output.';
+    });
+  };
 
   // ================= HUD: radar minimap, alerts, off-screen indicators, mission intro and finale =================
   const HUD = { mm: null, mmT: 0, thumb: null, thumbT: -99, pings: [], intro: null, finale: null, lastHit: new Map() };
@@ -10117,7 +10190,7 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
     $('app').classList.remove('ops-film');
     if (decisionSpeed != null) setSpeed(decisionSpeed);
     $('toasts').innerHTML = ''; // no stale messages from the previous battle
-    try { if (localStorage.getItem('mra-sound') === '1' && !SND.on) setSound(true); } catch (e) { /* ignore */ }
+    startAudio();
     cfg = cfg && (cfg.scenario || cfg.mission) ? cfg : null;
     // skirmish uses the setup-screen picks; campaign battles and missions bring their own (never leak one into the other)
     if (cfg) { scenario = cfg.scenario || scenario; player = cfg.player || player; } else { campBattle = null; scenario = skScen; player = skSide; if (!SCENARIOS[scenario].sides.includes(player)) player = SCENARIOS[scenario].sides[0]; }
@@ -10294,11 +10367,12 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
   $('startBtn').onclick = () => startGame();
   $('againBtn').onclick = () => { if (scenario && !curMission && !campBattle) { skScen = scenario; skSide = player; } startGame(); };
   $('switchBtn').onclick = () => { $('end').hidden = true; $('start').hidden = false; syncStart(); };
-  $('soundBtn').onclick = () => setSound(!SND.on);
+  $('soundBtn').onclick = toggleSound;
   const audioPrefs = () => { try { localStorage.setItem('mra-audio', JSON.stringify({ music: SND.music, voice: SND.voice, voiceLang: SND.voiceLang })); } catch (e) { /* ignore */ } };
   try { const ap = JSON.parse(localStorage.getItem('mra-audio') || '{}'); if (ap.music === false) SND.music = false; if (ap.voice === false) SND.voice = false; if (ap.voiceLang === 'en') SND.voiceLang = 'en'; } catch (e) { /* ignore */ }
-  $('musicBtn').setAttribute('aria-pressed', SND.music); $('voiceBtn').setAttribute('aria-pressed', SND.voice);
-  $('musicBtn').onclick = () => { SND.music = !SND.music; $('musicBtn').setAttribute('aria-pressed', SND.music); audioPrefs(); };
+  const musicLabel = () => { $('musicBtn').textContent = SND.music ? 'Music on' : 'Music off'; $('musicBtn').setAttribute('aria-pressed', SND.music); };
+  musicLabel(); $('voiceBtn').setAttribute('aria-pressed', SND.voice);
+  $('musicBtn').onclick = () => { SND.music = !SND.music; if (SND.music) setSound(true); musicLabel(); audioPrefs(); };
   // voices: native languages (Hebrew / Persian / Arabic / English) → English only → off
   const voiceLabel = () => { $('voiceBtn').textContent = !SND.voice ? 'Voice off' : SND.voiceLang === 'en' ? 'Voice EN' : 'Voice'; $('voiceBtn').setAttribute('aria-pressed', SND.voice); $('voiceBtn').title = 'Unit voices: native languages with English subtitles → English only → off'; };
   voiceLabel();
@@ -10306,9 +10380,9 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
     if (SND.voice && SND.voiceLang !== 'en') SND.voiceLang = 'en';
     else if (SND.voice) SND.voice = false;
     else { SND.voice = true; SND.voiceLang = 'native'; }
-    voiceLabel(); stopRecordedVoice(); if (!SND.voice && window.speechSynthesis) speechSynthesis.cancel(); audioPrefs();
+    voiceLabel(); stopRecordedVoice(); if (SND.voice) setSound(true); if (!SND.voice && window.speechSynthesis) speechSynthesis.cancel(); audioPrefs();
   };
-  try { if (localStorage.getItem('mra-sound') === '1') $('soundBtn').textContent = 'Sound off'; } catch (e) { /* ignore */ }
+  try { SND.preference = localStorage.getItem('mra-sound'); } catch (e) { /* unavailable storage uses first-play audio */ }
   $('pauseBtn').onclick = () => { if (HUD.intro) { endIntro(true); return; } paused = !paused; $('pauseBtn').textContent = paused ? 'Resume' : 'Pause'; $('pauseBtn').setAttribute('aria-pressed', paused); };
   // game speed: 1× → 2× → 4× → 8× (a ?speed=N URL parameter sets the start speed, up to 16×, handy for test runs)
   const SPEEDS = [1, 2, 4, 8];
@@ -11291,7 +11365,7 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
   }
   function summitOpen(){
     if(g)cancelMode();g=null;paused=true;CUT.on=false;HUD.intro=null;HUD.finale=null;
-    try { if (localStorage.getItem('mra-sound') === '1' && !SND.on) setSound(true); } catch(e) { /* storage may be unavailable */ }
+    startAudio();
     ['start','missions','end','cut'].forEach(id=>{if($(id))$(id).hidden=true;});$('app').classList.remove('ops-film');
     let el=$('summit');if(!el){el=document.createElement('section');el.id='summit';el.setAttribute('aria-label','Mission 31 summit command room');document.body.appendChild(el);}el.hidden=false;summitCeremony=false;summitRender();el.focus();
   }
@@ -11319,7 +11393,8 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
     const scroll=el.scrollTop;
     el.innerHTML=`<header class="summit-top"><div><div class="kicker">TZEVA ADOM · MISSION 31 · FICTIONAL JANUARY 2029</div><h1>The Last Signature</h1><p>PRESIDENT DONALD TRUMP · US SUMMIT CHAIR</p></div><div class="summit-tools"><button id="summitSound">Sound ${SND.on?'on':'off'}</button><button id="summitSave">Save summit</button><button id="summitExport">Export summit</button><button id="summitMenu">Mission list</button></div></header><div class="summit-status"><span><small>OPENING ${s.variant} · ${s.provenance==='earned'?'EARNED CAMPAIGN':'STANDALONE SIMULATION'}</small><b>${summitTitles[s.variant]}</b></span><span><small>AGENDA USED</small><b>${s.round} / ${s.roundLimit}</b></span><span><small>FUNDING COMMITTED / AVAILABLE ($B)</small><b>${a.cost} / ${a.budget}</b></span><span><small>GUARANTEES / US BACKING</small><b>${a.backingCost} / ${a.backing}</b></span><span><small>APPROVALS · DRAFT ${s.draftVersion}</small><b>${signed} / 8</b></span></div><nav class="summit-acts" aria-label="Summit acts">${(M.Summit.phaseTitles||['Attendance','The linked package','The crisis','The last signature']).map((t,i)=>`<span aria-current="${s.phase===i+1?'step':'false'}"><b>0${i+1}</b> ${summitEsc(t)}</span>`).join('')}</nav><p class="summit-notice" role="status">${summitEsc(summitNotice||'Reading and planning cost no time. Every action saves automatically.')}${a.cost>a.budget?' UNFUNDED DRAFT: $'+(a.cost-a.budget)+'B above budget. Delegations cannot approve until you revise it.':''}${a.backingCost>a.backing?' UNSUPPORTED GUARANTEES: '+(a.backingCost-a.backing)+' backing points over the available support. Revise before requesting approval.':''}</p>${s.result?summitEnding(a):`<p class="summit-capacity">Civilian capacity <b>${s.civilian}</b> · Settlement credibility <b>${s.credibility}</b> · Summit trust <b>${s.trust}</b></p><div class="summit-layout"><aside><div class="summit-mapbox">${summitMap(a)}<p>Eight delegations. One shared document.</p></div><div class="summit-instruction"><div class="kicker">NEXT AT THE TABLE</div><h3>${['Hear every mandate','Build the reciprocal package','Keep the talks alive','Secure the same eight signatures'][s.phase-1]}</h3><p>${['Meet all eight delegations before adopting the agenda. Each meeting costs one slot.','Edit the articles. Each delegation shows what it needs. Compare the shared draft with available funding and guarantees.','Handle the crisis before ratification. An investigation can reveal a safer response. You can revise an unaffordable draft before choosing a remedy.','Obtain individual approvals, then sign as US guarantor. Reserve one agenda slot for the final US signature. Changing an article cancels earlier approvals.'][s.phase-1]}</p>${s.phase<4?`<button class="go wide" id="summitAdvance">${s.phase===1?'Adopt the agenda':s.phase===2?'Table package & open Act III':'Open ratification'}</button>`:'<button class="go wide" id="summitSign">Sign as US guarantor</button>'}<button id="summitAdjourn">Adjourn summit</button><p class="hint">Agenda slots advance only through decisions. RTS speed keys do not shorten negotiations.</p></div></aside><main><nav class="summit-tabs" aria-label="Summit dossiers">${[['delegations','Delegations'],['treaty','Treaty draft'],['crisis','Crisis desk'],['record','Ledger & transcript']].map(([k,t])=>`<button data-summit-tab="${k}" aria-pressed="${summitTab===k}">${t}</button>`).join('')}</nav>${summitTab==='delegations'?summitDelegations(a):summitTab==='treaty'?summitTreaty(a):summitTab==='crisis'?summitCrisis():summitRecord(a)}</main></div>`}<footer class="summit-footer">FICTIONAL FUTURE · Every delegation is a fictional negotiating position, not a statement by a present-day leader. Agreement requires implementation beyond the signing.</footer>`;
     el.scrollTop=scroll;
-    $('summitSound').onclick=()=>{setSound(!SND.on);summitRender();};$('summitSave').onclick=()=>{if(summitSave())summitNotice='Summit saved. Draft, approvals, resources and agenda position preserved.';summitRender();};$('summitExport').onclick=summitExport;$('summitMenu').onclick=summitLeave;
+    syncSoundControls();
+    $('summitSound').onclick=()=>{toggleSound();summitRender();syncSoundControls();};$('summitSave').onclick=()=>{if(summitSave())summitNotice='Summit saved. Draft, approvals, resources and agenda position preserved.';summitRender();};$('summitExport').onclick=summitExport;$('summitMenu').onclick=summitLeave;
     el.querySelectorAll('[data-summit-tab]').forEach(b=>b.onclick=()=>{summitTab=b.dataset.summitTab;summitRender();});
     el.querySelectorAll('[data-delegate]').forEach(b=>b.onclick=()=>{summitDelegate=b.dataset.delegate;summitRender();});
     el.querySelectorAll('[data-meet]').forEach(b=>b.onclick=()=>summitAction({kind:'meet',delegate:b.dataset.meet}));
@@ -11358,7 +11433,7 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
     else { f.type = 'highpass'; f.frequency.value = 3200; g0.gain.setValueAtTime(0.035, now); g0.gain.exponentialRampToValueAtTime(0.0001, now + 0.025); src.start(now, Math.random()); src.stop(now + 0.03); }
     src.connect(f); f.connect(g0);
   }
-  function cutSoundBtn() { $('cutSound').textContent = SND.on ? 'Sound on' : 'Sound off'; $('cutSound').setAttribute('aria-pressed', SND.on); }
+  function cutSoundBtn() { syncSoundControls(); }
   function cutPlay(m, done) {
     const b = M.BRIEFINGS && M.BRIEFINGS[m.id];
     if (!b) { done(); return; }
@@ -11369,7 +11444,7 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
     $('cutKicker').textContent = `Mission ${m.n} · ${m.date} · ${m.place}`; $('cutTitle').textContent = m.title;
     $('cutText').textContent = ''; $('cutText').classList.remove('done');
     Object.assign(CUT, { on: true, m, b, done, i: -1, phase: 'intro', t0: performance.now(), cam: { c: [43, 29], s: 16 }, move: null, text: '', typed: 0, doneAt: 0, beatAt: 0, marksAt: 0, lastTick: 0 });
-    try { if (localStorage.getItem('mra-sound') === '1' && !SND.on) setSound(true); } catch (e) { /* ignore */ }
+    startAudio();
     cutSoundBtn(); cutSnd('static');
     $('cut').scrollTop = 0;
     requestAnimationFrame(cutFrame);
@@ -11626,7 +11701,7 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
   $('cutNext').onclick = cutNext;
   $('cutBack').onclick = () => { if (CUT.phase === 'beat' && CUT.i > 0) cutGo(CUT.i - 1); };
   $('cutSkip').onclick = () => { if (CUT.phase === 'orders') cutEnd(); else cutOrders(); };
-  $('cutSound').onclick = () => { setSound(!SND.on); cutSoundBtn(); };
+  $('cutSound').onclick = toggleSound;
   window.addEventListener('keydown', (e) => {
     if(document.querySelector('.ops-dialog') || $('controlsDialog').open)return;
     if (!CUT.on) return;

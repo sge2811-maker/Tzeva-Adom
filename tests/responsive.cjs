@@ -53,7 +53,7 @@ async function layoutCases(browser,engine) {
     }
     await tap(page,'controlsHelp',touch);
     assert(await page.locator('#controlsDialog').isVisible(),'help inaccessible');
-    await page.locator('#controlsDialog button')[touch?'tap':'click']();
+    await page.locator('#controlsDialog form button')[touch?'tap':'click']();
     assert.equal(await page.locator('#controlsDialog').isVisible(),false);
     // The clock must continue through layout and panel changes.
     const time=await page.evaluate(()=>__mra().t); await page.waitForTimeout(180);
