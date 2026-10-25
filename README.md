@@ -26,9 +26,9 @@ Then open **http://localhost:8765/?speed=8**. Turn Sound on after opening. No bu
 
 Progress is stored in your browser for the current origin. Keep using the same browser and localhost port; use the game's native operation export/import controls for backups or transfers. The approved 52-clip English/Hebrew voice starter pack and fonts are embedded. Unrecorded English/Hebrew narration retains captions rather than inventing spoken lines.
 
-## Responsive interface (v46)
+## Responsive interface (v47)
 
-The interface follows the visible browser viewport and automatically switches between a collapsible bottom panel and a landscape/desktop sidebar. Touch controls, safe-area padding, rotation without restarting, and larger controls on large displays are included. Gameplay rules, the campaign, and save formats are unchanged. The separate `mission2-3d-review` export is unchanged.
+The interface follows the visible browser viewport. Upright phones have a collapsible bottom panel; phone landscape uses a full-width battlefield with an on-demand **Commands** drawer; large displays use a sidebar. Touch controls, safe-area padding, rotation without restarting or shrinking units, and larger controls on large displays are included. Gameplay rules, the campaign, and save formats are unchanged. The separate `mission2-3d-review` export is unchanged.
 
 Focused layout and interaction checks run in Chromium and WebKit from 320×568 to 3840×2160. This is browser emulation, not certification of a physical iPhone or a TV browser. See [responsive QA and limitations](docs/RESPONSIVE.md).
 
