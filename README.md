@@ -34,6 +34,10 @@ Focused layout and interaction checks run in Chromium and WebKit from 320×568 t
 
 To run only these focused checks: install Node.js, run `npm install`, `npx playwright install chromium webkit`, then `npm run test:responsive`. No build step is needed to play.
 
+## Mobile audio (v48)
+
+Sound starts on Deploy unless you previously muted it. The Sound button shows **Tap for sound** when the browser suspends audio. **? → Restart / test sound** rebuilds the audio connection and plays two notes. Music and Voice controls can enable audio, and mute preferences persist. See [audio checks and iPhone/Safari limitations](docs/AUDIO.md). Run only the audio checks with `npm run test:audio`.
+
 ## Prior release and QA
 
 Version **v45**, 15 October 2026. The final HTML SHA-256 is:
