@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="game-version" content="31 · campaign through 2026-10-12">
+<meta name="game-version" content="46 · responsive screens · campaign through 2026-10-12">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Tzeva Adom: Seven Fronts</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%23151c19%22/%3E%3Cpath d=%22M5 23L16 5l11 18H5z%22 fill=%22%23ff4d6d%22/%3E%3C/svg%3E">
@@ -839,6 +839,84 @@ details.fnotes .notes li { font-size: 13px; }
 .msn-back { display:none; justify-self:start; } @media(max-width:760px) { .msn-back { display:inline-flex; } }
 </style>
 
+<style>
+/* v46: one adaptive game surface, from a narrow phone to a large display. */
+:root { --viewport-height: 100vh; --ui-scale: 1; }
+@supports (height: 100dvh) { :root { --viewport-height: 100dvh; } }
+*, *::before, *::after { box-sizing: border-box; }
+html, body { width: 100%; height: var(--viewport-height); }
+body { font-size: calc(15px * var(--ui-scale)); }
+#app { width: 100%; height: var(--viewport-height); grid-template-rows: auto minmax(0, 1fr) auto auto; grid-template-columns: minmax(0, 1fr); }
+#hud { padding: max(8px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) 8px max(12px, env(safe-area-inset-left, 0px)); }
+#hud .brand { font-family: var(--f-body); font-weight: 700; font-size: calc(20px * var(--ui-scale)); }
+#hud .stat, .chip { font-size: calc(12px * var(--ui-scale)); }
+#hud .meter label { font-size: calc(11px * var(--ui-scale)); }
+#panel { padding: 0 max(0px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(0px, env(safe-area-inset-left, 0px)); }
+.tabs { flex: none; }
+.tabs button { font-family: var(--f-body); font-weight: 600; min-height: calc(44px * var(--ui-scale)); font-size: calc(15px * var(--ui-scale)); overflow-wrap: anywhere; }
+.tabbody { flex: 1 1 auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.card { min-height: calc(64px * var(--ui-scale)); }
+.card .nm { font-size: calc(15px * var(--ui-scale)); }
+.card .meta, .card .badge { font-size: calc(12px * var(--ui-scale)); }
+.grid { grid-template-columns: repeat(auto-fit, minmax(min(132px, 100%), 1fr)); }
+.overlay { height: var(--viewport-height); bottom: auto; padding: max(20px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(20px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.sheet, .camp, .msn-grid > *, .camp-grid > *, .cut-frame { min-width: 0; max-width: 100%; }
+.scen, .sides, .howto { grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr)); }
+button, select, summary { overflow-wrap: anywhere; }
+select, input, textarea { font-size: max(16px, 1em); max-width: 100%; }
+#mapTools { display: flex; align-items: center; gap: 6px; min-width: 0; overflow-x: auto; overscroll-behavior: contain; padding: 4px max(8px, env(safe-area-inset-right, 0px)) 4px max(8px, env(safe-area-inset-left, 0px)); background: var(--panel); border-top: 1px solid var(--line); }
+#mapTools > button, #zoomBtns button { flex: none; min-width: calc(44px * var(--ui-scale)); height: calc(44px * var(--ui-scale)); padding: 6px 10px; font-size: calc(13px * var(--ui-scale)); background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; white-space: nowrap; }
+#mapTools > button[aria-pressed="true"] { border-color: var(--side); color: var(--ink); box-shadow: inset 0 -2px var(--side); }
+#mapTools #zoomBtns { position: static; display: flex; flex-direction: row; gap: 6px; margin-left: auto; }
+#mapTools #zoomBtns button { width: auto !important; height: calc(44px * var(--ui-scale)) !important; font-size: calc(18px * var(--ui-scale)) !important; }
+#cv:focus-visible { outline: 2px solid var(--ink); outline-offset: -3px; }
+#stage { margin-left: env(safe-area-inset-left, 0px); margin-right: env(safe-area-inset-right, 0px); }
+.sheet { width: min(calc(720px * var(--ui-scale)), 100%); }
+.camp { width: min(calc(980px * var(--ui-scale)), 100%); }
+.sheet h1 { font-size: clamp(44px, 11vw, calc(84px * var(--ui-scale))); }
+.camp-title { font-size: clamp(34px, 8vw, calc(56px * var(--ui-scale))) !important; }
+.msn-list .t, .objlist, .dip, .fcard p { font-size: calc(14px * var(--ui-scale)); }
+#selbar { max-width: calc(100% - 20px); max-height: min(28%, 110px); overflow-y: auto; overscroll-behavior: contain; }
+#selbar button { min-height: 44px; }
+#selbar .info { font-size: calc(12px * var(--ui-scale)); overflow-wrap: anywhere; }
+#selbar .info.nextstep { flex: 1 1 100%; }
+#radio { max-width: calc(100% - 20px); max-height: 25%; overflow-y: auto; }
+#controlsDialog { color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 20px; width: min(560px, calc(100% - 32px)); max-height: calc(var(--viewport-height) - 32px); overflow-y: auto; }
+#controlsDialog::backdrop { background: #040706d9; }
+#controlsDialog h2 { margin-top: 0; }
+#controlsDialog li { margin: 10px 0; line-height: 1.4; }
+#controlsDialog button { min-height: 44px; }
+#statsBtn, #panelToggle { display: none; }
+#app[data-layout="wide"], #app[data-layout="landscape"] { grid-template-columns: minmax(0, 1fr) clamp(250px, 25vw, 520px); grid-template-rows: auto minmax(0, 1fr) auto; }
+#app[data-layout="wide"] #hud, #app[data-layout="landscape"] #hud { grid-column: 1 / -1; }
+#app[data-layout="wide"] #panel, #app[data-layout="landscape"] #panel { grid-row: 2 / 4; grid-column: 2; height: auto !important; max-height: none !important; border-left: 1px solid var(--line); border-top: 0; }
+#app[data-layout="wide"] #mapTools, #app[data-layout="landscape"] #mapTools { grid-row: 3; grid-column: 1; }
+#app[data-layout="wide"] #mapTools, #app[data-layout="landscape"] #mapTools { padding-bottom: max(4px, env(safe-area-inset-bottom, 0px)); }
+#app[data-layout="stack"] #stage { grid-row: 2; grid-column: 1; }
+#app[data-layout="stack"] #mapTools { grid-row: 3; grid-column: 1; }
+#app[data-layout="stack"] #panel { grid-row: 4; grid-column: 1; height: clamp(150px, calc(var(--viewport-height) * .32), 320px) !important; max-height: none !important; }
+#app[data-layout="stack"] #panel[data-collapsed="true"] { height: auto !important; }
+#app[data-layout="stack"] #panel[data-collapsed="true"] .tabbody { display: none !important; }
+#app[data-layout="stack"] #panelToggle { display: block; flex: 0 0 52px; font-size: 13px; }
+#app[data-compact="true"] #hud { gap: 5px 10px; padding-top: max(5px, env(safe-area-inset-top, 0px)); padding-bottom: 5px; max-height: calc(var(--viewport-height) * .4); overflow-y: auto; }
+#app[data-compact="true"] #hud .brand { font-size: 19px; }
+#app[data-compact="true"] .clockstat { margin-left: auto; }
+#app[data-compact="true"] .hud-btns { order: 4; flex: 1 1 100%; margin: 0; flex-wrap: wrap; }
+#app[data-compact="true"] .chip { min-height: 44px; padding: 6px 10px; font-size: 12px; }
+#app[data-compact="true"] #statsBtn { display: block; margin-left: auto; }
+#app[data-compact="true"] .meters { order: 5; flex: 1 1 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 10px; }
+#app[data-compact="true"][data-stats-open="false"] #meters { display: none; }
+#app[data-compact="true"] #hud .meter label { font-size: 11px; letter-spacing: 0; }
+#app[data-compact="true"] #hud .meter label > span { white-space: normal; overflow: visible; }
+#app[data-compact="true"] .chip.wide { display: none; }
+#app[data-compact="true"][data-stats-open="true"] .chip.wide { display: block; }
+#app[data-layout="landscape"] .hud-btns { flex: 0 1 auto; margin-left: auto; }
+#app[data-layout="landscape"] #panel .tabs button { font-size: 13px; letter-spacing: 0; }
+#app[data-layout="landscape"] #selbar .info.nextstep { display: none; }
+#app.ops-film #mapTools { visibility: hidden; }
+@media (pointer: coarse) { .act, .go, .opts button, .cut-top button, .cut-ctrl button, .dip button, .opsbox button, .summit-tabs button, .summit-tools button { min-height: 44px; } }
+@media (max-height: 500px) { .overlay.cut .cut-frame { grid-template-rows: auto minmax(140px, 1fr) auto; } .cut-stage { min-height: 140px; } .cut-title h1 { font-size: clamp(26px, 5vw, 48px); } .cut-orders { padding: 12px; } }
+</style>
 <div id="app" style="--side: var(--idf)">
   <header id="hud">
     <div class="brand"><i></i><span id="hudSide">Israel</span></div>
@@ -854,19 +932,27 @@ details.fnotes .notes li { font-size: 13px; }
       <button class="chip" id="viewBtn" aria-pressed="true" title="Camera: 2.5D isometric or classic top-down (key V)">2.5D</button>
       <button class="chip" id="speedBtn" aria-pressed="false">1×</button>
       <button class="chip" id="pauseBtn" aria-pressed="false">Pause</button>
+      <button class="chip" id="statsBtn" aria-expanded="false" aria-controls="meters" title="Show or hide battle statistics">Stats</button>
     </div>
   </header>
 
   <main id="stage">
-    <canvas id="cv" aria-label="Battle map"></canvas>
+    <canvas id="cv" tabindex="0" aria-label="Battle map. Tap a unit to select, then tap to move or attack. Use Pan or Select for dragging. Arrow keys pan when focused."></canvas>
     <canvas id="minimap" aria-label="Radar map: tap to move the camera"></canvas>
     <div id="toasts" aria-live="polite"></div>
     <div id="radio" hidden aria-live="polite"></div>
     <div id="banner" hidden></div>
     <div id="ceasefireTag" hidden>CEASEFIRE</div>
     <div id="selbar"></div>
-    <div id="zoomBtns"><button id="zoomIn" aria-label="Zoom in">+</button><button id="zoomOut" aria-label="Zoom out">−</button><button id="zoomHome" aria-label="Center on base">◎</button></div>
   </main>
+
+  <nav id="mapTools" aria-label="Battlefield controls">
+    <button id="panTool" aria-pressed="false" title="Drag with one finger or mouse to pan the map">Pan</button>
+    <button id="selectTool" aria-pressed="true" title="Drag a box to select units; tap to select or order">Select</button>
+    <div id="zoomBtns"><button id="zoomIn" aria-label="Zoom in">+</button><button id="zoomOut" aria-label="Zoom out">−</button><button id="zoomHome" aria-label="Center on base">◎</button></div>
+    <button id="fitMap" title="Show the whole battlefield">Fit</button>
+    <button id="controlsHelp" aria-label="Game controls and help">?</button>
+  </nav>
 
   <section id="panel">
     <div class="tabs" role="tablist">
@@ -874,6 +960,7 @@ details.fnotes .notes li { font-size: 13px; }
       <button role="tab" id="tab-build" aria-selected="true">Build</button>
       <button role="tab" id="tab-train" aria-selected="false">Train</button>
       <button role="tab" id="tab-diplo" aria-selected="false">Diplomacy<span class="dot" id="diploDot" hidden></span></button>
+      <button id="panelToggle" aria-expanded="false" aria-controls="panel" aria-label="Expand command panel">Show</button>
     </div>
     <div class="tabbody" id="body-orders" hidden><div id="orders"></div></div>
     <div class="tabbody" id="body-build"><div class="grid" id="gridBuild"></div></div>
@@ -881,6 +968,18 @@ details.fnotes .notes li { font-size: 13px; }
     <div class="tabbody" id="body-diplo" hidden><div class="dip" id="dip"></div></div>
   </section>
 </div>
+
+<dialog id="controlsDialog" aria-labelledby="controlsTitle">
+  <h2 id="controlsTitle">Battlefield controls</h2>
+  <ul>
+    <li><b>Tap or click</b> a unit to select it. Tap the ground to move, or an enemy to attack. Select army chooses your combat troops.</li>
+    <li><b>Pan</b> lets you drag the map with one finger or mouse. <b>Select</b> lets you drag a box around units. Two fingers always pan and pinch to zoom.</li>
+    <li><b>+ / −</b> zoom, <b>◎</b> returns to your base, and <b>Fit</b> shows the whole map. Tap the radar to move the camera.</li>
+    <li><b>Build / Train / Orders / Diplomacy</b> open the command panel. On a narrow screen, tap the active tab again or Hide to return space to the map. Stats shows the battle meters.</li>
+    <li><b>Mouse and keyboard:</b> right-click to order; middle-drag to pan; wheel to zoom. Focus the map and use arrow keys or WASD to pan. Space pauses, Escape cancels, and 1–4 set speed.</li>
+  </ul>
+  <form method="dialog"><button class="go">Back to game</button></form>
+</dialog>
 
 <div class="overlay" id="start">
   <div class="sheet">
@@ -7333,6 +7432,9 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
   let pings = [], dpr = 1, cw = 0, ch = 0, terrain = null;
   const shown = new WeakSet();
   let tab = 'build', lastTap = { t: 0, type: null, id: null };
+  let stackedPanelOpen = false;
+  let dragTool = matchMedia('(pointer: coarse)').matches ? 'pan' : 'select';
+  let lastPointerType = 'mouse';
   document.addEventListener('pointerdown', e => { if (e.target !== cv) lastTap = { t: 0, type: null, id: null }; }, true);
   const mine = (e) => e.side === player && !e.def.civil;
   const foe = (e) => BLOC[e.side] !== pb;
@@ -7383,22 +7485,49 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
     centerOn(hq.x + (W / 2 - hq.x) * 0.35, hq.y + (hq.y > H / 2 ? -170 : 170));
   }
   function resize() {
+    // Keep the world point at the centre, and relative zoom, through rotation
+    // and panel changes. CSS pixels and canvas pixels must share one origin.
+    const centre = cw > 0 && ch > 0 && cam.s > 0 ? w2(cw / 2, ch / 2) : null;
+    const relativeZoom = cam.fit > 0 ? cam.s / cam.fit : 1;
     dpr = Math.min(2, window.devicePixelRatio || 1);
     const r = stage.getBoundingClientRect();
     cw = r.width; ch = r.height;
+    if (cw <= 0 || ch <= 0) return;
     cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
     camBasis();
     cam.fit = Math.min(cw / cam.bw, ch / cam.bh) * 0.98;
-    if (cam.s < cam.fit) cam.s = cam.fit;
-    clampCam();
+    cam.s = Math.max(cam.fit, Math.min(3.2, cam.fit * relativeZoom));
+    if (centre) centerOn(centre.x, centre.y); else clampCam();
   }
-  window.addEventListener('resize', resize);
+  function setPanelExpanded(open) {
+    stackedPanelOpen = open;
+    const stack = $('app').dataset.layout === 'stack';
+    $('panel').dataset.collapsed = String(stack && !open);
+    $('panelToggle').textContent = open ? 'Hide' : 'Show';
+    $('panelToggle').setAttribute('aria-expanded', String(open));
+    $('panelToggle').setAttribute('aria-label', (open ? 'Collapse' : 'Expand') + ' command panel');
+  }
+  function syncViewport() {
+    const v = window.visualViewport;
+    const width = v ? v.width : window.innerWidth;
+    const height = v ? v.height : window.innerHeight;
+    // Browser page zoom is an accessibility choice; do not fight its scale.
+    if (!v || Math.abs(v.scale - 1) < .01) document.documentElement.style.setProperty('--viewport-height', height + 'px');
+    document.documentElement.style.setProperty('--ui-scale', Math.max(1, Math.min(1.6, width / 1600, height / 900)));
+    const app = $('app');
+    app.dataset.layout = width >= 1000 && height >= 600 ? 'wide' : width >= 640 && width / height >= 1.35 ? 'landscape' : 'stack';
+    app.dataset.compact = String(width < 1000 || height < 600);
+    setPanelExpanded(stackedPanelOpen);
+    requestAnimationFrame(resize);
+  }
+  window.addEventListener('resize', syncViewport);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', syncViewport);
   // the stage can change size without a window resize (panel content, URL bar, rotation) — keep the canvas in sync
   if (window.ResizeObserver) {
     let roT = 0;
     new ResizeObserver(() => { cancelAnimationFrame(roT); roT = requestAnimationFrame(() => { const r = stage.getBoundingClientRect(); if (Math.abs(r.width - cw) > 0.5 || Math.abs(r.height - ch) > 0.5) resize(); }); }).observe(stage);
   }
-  window.addEventListener('orientationchange', () => setTimeout(resize, 250));
+  window.addEventListener('orientationchange', () => setTimeout(syncViewport, 250));
 
   // ---------- terrain ----------
   function buildTerrain() {
@@ -9311,6 +9440,9 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
   cv.addEventListener('contextmenu', (e) => e.preventDefault());
   cv.addEventListener('pointerdown', (ev) => {
     if (!g || !g.player) return;
+    lastPointerType = ev.pointerType;
+    if (ev.pointerType !== 'mouse') ev.preventDefault();
+    cv.focus({ preventScroll: true });
     cv.setPointerCapture(ev.pointerId);
     const p = local(ev);
     pointers.set(ev.pointerId, p);
@@ -9319,7 +9451,7 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
       pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2, s: cam.s, ox: cam.ox, oy: cam.oy };
       drag = null;
     } else if (pointers.size === 1) {
-      drag = { x0: p.x, y0: p.y, x1: p.x, y1: p.y, mode: ev.button === 1 ? 'pan' : 'tap', button: ev.button, ox: cam.ox, oy: cam.oy };
+      drag = { x0: p.x, y0: p.y, x1: p.x, y1: p.y, mode: ev.button === 1 ? 'pan' : 'tap', tool: dragTool, button: ev.button, ox: cam.ox, oy: cam.oy };
     }
   });
   cv.addEventListener('pointermove', (ev) => {
@@ -9332,12 +9464,12 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
       const [a, b] = [...pointers.values()];
       const d = Math.hypot(a.x - b.x, a.y - b.y), cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2;
       cam.s = pinch.s; cam.ox = pinch.ox + (cx - pinch.cx); cam.oy = pinch.oy + (cy - pinch.cy);
-      zoomAt(cx, cy, pinch.s * (d / pinch.d));
+      zoomAt(cx, cy, pinch.s * (d / Math.max(1, pinch.d)));
       return;
     }
     if (!drag) return;
     drag.x1 = p.x; drag.y1 = p.y;
-    if (drag.mode === 'tap' && Math.hypot(p.x - drag.x0, p.y - drag.y0) > 9) drag.mode = mode || drag.button === 2 ? 'pan' : 'box';
+    if (drag.mode === 'tap' && Math.hypot(p.x - drag.x0, p.y - drag.y0) > 9) drag.mode = mode || drag.button === 2 || drag.tool === 'pan' ? 'pan' : 'box';
     if (drag.mode === 'pan') { cam.ox = drag.ox + (p.x - drag.x0); cam.oy = drag.oy + (p.y - drag.y0); clampCam(); }
   });
   cv.addEventListener('pointerup', (ev) => {
@@ -9349,14 +9481,48 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
     if (d.mode === 'tap') { const p = w2(d.x0, d.y0); if (d.button === 2) { cancelMode(); command(p); } else tap(p); }
     else if (d.mode === 'box') boxSelect(d);
   });
-  cv.addEventListener('pointercancel', (ev) => { pointers.delete(ev.pointerId); drag = null; pinch = null; });
+  function resetMapInput() { pointers.clear(); drag = null; pinch = null; }
+  cv.addEventListener('pointercancel', resetMapInput);
+  cv.addEventListener('lostpointercapture', (ev) => { if (pointers.has(ev.pointerId)) resetMapInput(); });
+  window.addEventListener('blur', resetMapInput);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) resetMapInput(); });
+  window.addEventListener('orientationchange', resetMapInput);
+  function setDragTool(tool) {
+    dragTool = tool; resetMapInput();
+    $('panTool').setAttribute('aria-pressed', String(tool === 'pan'));
+    $('selectTool').setAttribute('aria-pressed', String(tool === 'select'));
+  }
+  $('panTool').onclick = () => setDragTool('pan');
+  $('selectTool').onclick = () => setDragTool('select');
+  setDragTool(dragTool);
+  $('fitMap').onclick = () => { cam.s = cam.fit; centerOn(W / 2, H / 2); };
+  $('statsBtn').onclick = () => {
+    const open = $('app').dataset.statsOpen !== 'true';
+    $('app').dataset.statsOpen = String(open);
+    $('statsBtn').setAttribute('aria-expanded', String(open));
+  };
+  $('app').dataset.statsOpen = 'false';
+  $('panelToggle').onclick = () => setPanelExpanded(!stackedPanelOpen);
+  let helpWasPaused = true;
+  $('controlsHelp').onclick = () => {
+    helpWasPaused = HUD.intro ? false : paused;
+    if (HUD.intro) endIntro(true);
+    if (!paused) $('pauseBtn').click();
+    resetMapInput(); $('controlsDialog').showModal();
+  };
+  $('controlsDialog').addEventListener('close', () => { if (!helpWasPaused && paused) $('pauseBtn').click(); });
+  window.addEventListener('keydown', (e) => {
+    if (document.activeElement !== cv || e.ctrlKey || e.altKey || e.metaKey || !g || !g.player || CUT.on || !$('start').hidden || !$('end').hidden) return;
+    const d = { ArrowLeft: [1, 0], a: [1, 0], ArrowRight: [-1, 0], d: [-1, 0], ArrowUp: [0, 1], w: [0, 1], ArrowDown: [0, -1], s: [0, -1] }[e.key];
+    if (d) { e.preventDefault(); cam.ox += d[0] * 40; cam.oy += d[1] * 40; clampCam(); }
+  });
   cv.addEventListener('wheel', (ev) => { ev.preventDefault(); const p = local(ev); zoomAt(p.x, p.y, cam.s * (ev.deltaY < 0 ? 1.12 : 1 / 1.12)); }, { passive: false });
   $('zoomIn').onclick = () => zoomAt(cw / 2, ch / 2, cam.s * 1.25);
   $('zoomOut').onclick = () => zoomAt(cw / 2, ch / 2, cam.s / 1.25);
   $('zoomHome').onclick = () => homeView();
 
   function hit(p) {
-    const tol = 10 / cam.s;
+    const tol = (lastPointerType === 'touch' ? 18 : 10) / cam.s;
     let best = null, bd = Infinity;
     for (const e of g.ents) {
       if (!seen(e)) continue;
@@ -9853,7 +10019,11 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
     if (t === 'diplo') refreshDiplo();
     if (t === 'orders') refreshOrders();
   }
-  $('tab-orders').onclick = () => setTab('orders');
+  function openPanelTab(t) {
+    const close = $('app').dataset.layout === 'stack' && stackedPanelOpen && tab === t;
+    setTab(t); setPanelExpanded(!close);
+  }
+  $('tab-orders').onclick = () => openPanelTab('orders');
   // tapping a target objective pans the camera to the nearest remaining target (cycles on repeat taps)
   let gotoIdx = 0;
   $('body-orders').addEventListener('pointerdown', (ev) => {
@@ -9863,9 +10033,9 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
     const list = g.ents.filter((e) => !e.dead && e.tag === li.dataset.goto); if (!list.length) return;
     const e = list[gotoIdx++ % list.length]; if(g.future)cam.s=Math.max(cam.s,Math.min(1.2,cam.fit*2)); centerOn(e.x, e.y); toast('Target marked: ' + ((g.mission.def.targets || []).find((t) => t.tag === li.dataset.goto) || {}).label, 'info');
   });
-  $('tab-build').onclick = () => setTab('build');
-  $('tab-train').onclick = () => setTab('train');
-  $('tab-diplo').onclick = () => setTab('diplo');
+  $('tab-build').onclick = () => openPanelTab('build');
+  $('tab-train').onclick = () => openPanelTab('train');
+  $('tab-diplo').onclick = () => openPanelTab('diplo');
 
   function refreshHud() {
     const s = g.sides[player];
@@ -10125,7 +10295,7 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
   $('speedBtn').onclick = () => setSpeed(SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length] || 1);
   try { const q = +new URLSearchParams(location.search).get('speed'); if (q >= 1 && q <= 16) setSpeed(q); } catch (e) { /* ignore */ }
   window.addEventListener('keydown', (e) => {
-    if(document.querySelector('.ops-dialog'))return;
+    if(document.querySelector('.ops-dialog') || $('controlsDialog').open)return;
     if(g?.future&&!$('end').hidden&&e.key===' '){e.preventDefault();e.stopImmediatePropagation();return;}
     if (CUT.on || !g || !g.player || !$('start').hidden || !$('end').hidden) return;
     if (e.key === 'Escape' && mode) { e.preventDefault(); e.stopImmediatePropagation(); cancelMode(); refreshSel(); return; }
@@ -11000,7 +11170,7 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
     futureSlot.checkpoint=futureSlot.safeCheckpoint=futureSlot.sectorStart=null;futureSlot.milestones=[];futureSlot.pinned=null;futureWrite(futureSlot);
   }
   function futureDialog(title,message,action,fn){
-    if(document.querySelector('.ops-dialog'))return;
+    if(document.querySelector('.ops-dialog') || $('controlsDialog').open)return;
     const originalGame=g,wasPaused=paused;paused=true;$('pauseBtn').textContent='Resume';$('pauseBtn').setAttribute('aria-pressed','true');
     const dialog=document.createElement('dialog');dialog.className='ops-dialog';dialog.innerHTML=`<h3>${futureEsc(title)}</h3><p>${futureEsc(message)}</p><div class="row"><button data-confirm>${futureEsc(action)}</button><button data-cancel>Cancel</button></div>`;document.body.appendChild(dialog);
     const close=apply=>{dialog.close();dialog.remove();if(apply)fn();if(g===originalGame&&!g.over){paused=wasPaused;$('pauseBtn').textContent=paused?'Resume':'Pause';$('pauseBtn').setAttribute('aria-pressed',String(paused));}lastOrdersHtml='';refreshOrders();};
@@ -11415,7 +11585,7 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
   $('cutSkip').onclick = () => { if (CUT.phase === 'orders') cutEnd(); else cutOrders(); };
   $('cutSound').onclick = () => { setSound(!SND.on); cutSoundBtn(); };
   window.addEventListener('keydown', (e) => {
-    if(document.querySelector('.ops-dialog'))return;
+    if(document.querySelector('.ops-dialog') || $('controlsDialog').open)return;
     if (!CUT.on) return;
     e.stopPropagation();
     if (e.key === 'Escape') { e.preventDefault(); $('cutSkip').click(); }
@@ -11424,6 +11594,7 @@ M.MISSIONS.push({id:'c31',n:31,campaign:'coalition',title:'The Last Signature',d
     else if (e.key === 'ArrowLeft') { e.preventDefault(); $('cutBack').click(); }
   }, true);
 
+  syncViewport();
   syncStart();
   $('campCont').hidden = !loadCamp();
   bootDemo();

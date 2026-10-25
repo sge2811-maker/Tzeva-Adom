@@ -1,4 +1,8 @@
-# Tzeva Adom: Seven Fronts — v45
+# Tzeva Adom: Seven Fronts — v46 responsive interface
+
+The full game now adapts to narrow phones, tablets, landscape displays, desktops and TVs. Collapsible commands/statistics, explicit Pan/Select touch tools, viewport-aware canvas sizing, safe-area spacing and large-display controls address the reported iPhone layout/control problem. The campaign engine, save format and isolated 3D diagnostic export remain unchanged. See [focused verification and device limitations](RESPONSIVE.md).
+
+## Prior v45 release
 
 Release build: `5086625a8055b0cd55d0d164e9b508a3a1673958a3ad53873584c17c54772fc3`.
 

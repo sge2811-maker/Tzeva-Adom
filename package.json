@@ -1,0 +1,6 @@
+{
+  "name": "tzeva-adom-seven-fronts",
+  "private": true,
+  "scripts": { "test:responsive": "node tests/responsive.cjs" },
+  "devDependencies": { "playwright": "1.62.1" }
+}
