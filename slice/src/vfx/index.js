@@ -163,10 +163,10 @@ export function create(ctx) {
     for (let i = 0; i < nsm; i++) {
       const d = randDir(), off = R(0, 0.7) * Rf, sp = R(0.1, 0.3) * Rf;
       smoke.add(x + d.x * off, y + d.y * off * 0.7, z + d.z * off, vx * 0.04 + d.x * sp, vy * 0.04 + d.y * sp * 0.6, vz * 0.04 + d.z * sp,
-        smokeAlb, smokeAlb * 0.97, smokeAlb * 0.94, Rf * R(0.5, 0.8), Rf * R(1.9, 3.0), R(0.5, 0.7), R(16, 30), -1, 0.5, 1.1, T_SMOKE, R(1.4, 2.4), R(0.12, 0.45), 1);
+        smokeAlb, smokeAlb * 0.97, smokeAlb * 0.94, Rf * R(0.4, 0.7), Rf * R(1.4, 2.4), R(0.35, 0.5), R(12, 22), -1, 0.5, 1.1, T_SMOKE, R(1.4, 2.4), R(0.12, 0.45), 1);
     }
     addLight(x, y, z, 1 * lightI, 0.72 * lightI, 0.45 * lightI, Rf * 8, 1.8, 0);
-    if (opts.smudge) { const vl = Math.hypot(vx, vy, vz) || 1; for (let i = 0; i < 8; i++) { const d = randDir(), a = R(-1.5, 1.5) * Rf, off = R(0, 0.35) * Rf; smoke.add(x + vx / vl * a + d.x * off, y + vy / vl * a + d.y * off, z + vz / vl * a + d.z * off, vx * 0.02 + d.x * 6, vy * 0.02, vz * 0.02 + d.z * 6, 0.3, 0.29, 0.28, Rf * R(0.3, 0.6), Rf * R(0.6, 2.4), 0.22, R(30, 45), 0.2, 0.3, 1.5, T_SMOKE, 0.4, R(0.4, 1.0), 1); } }
+    if (opts.smudge) { const vl = Math.hypot(vx, vy, vz) || 1; for (let i = 0; i < 12; i++) { const d = randDir(), a = R(-3, 3) * Rf, off = R(0, 0.4) * Rf; smoke.add(x + vx / vl * a + d.x * off, y + vy / vl * a + d.y * off, z + vz / vl * a + d.z * off, vx * 0.02 + d.x * 6, vy * 0.02, vz * 0.02 + d.z * 6, 0.3, 0.29, 0.28, Rf * R(0.2, 0.4), Rf * R(0.4, 1.6), 0.18, R(25, 40), 0.2, 0.3, 1.5, T_SMOKE, 0.4, R(0.4, 1.0), 1); } }
   }
 
   // ---------------------------------------------------------------- debris
@@ -256,9 +256,9 @@ export function create(ctx) {
       const nd = Math.round((e.kill ? 20 : 8) * mul);
       for (let i = 0; i < nd; i++) {
         const q = randDir(), sp = R(60, 420);
-        fire.add(e.x, e.y, e.z, q.x * sp + e.vx * 0.3, q.y * sp + e.vy * 0.3, q.z * sp + e.vz * 0.3, 4, 2.4, 1.2, R(30, 60), 20, 0.8, R(1.5, 3), 4, 0.15, 0.25);
+        fire.add(e.x, e.y, e.z, q.x * sp + e.vx * 0.3, q.y * sp + e.vy * 0.3, q.z * sp + e.vz * 0.3, 2.2, 1.3, 0.7, R(25, 45), 15, 0.7, R(0.7, 1.4), 4, 0.15, 1.0);
       }
-      if (e.kill) for (let i = 0; i < 4; i++) { const f = i * 0.4; smoke.add(e.x + e.vx * f * 0.4 + R(-120, 120), e.y + e.vy * f * 0.4, e.z + e.vz * f * 0.4 + R(-120, 120), e.vx * 0.15, e.vy * 0.15, e.vz * 0.15, 0.75, 0.75, 0.8, 300, R(900, 1600), R(0.12, 0.18), R(14, 22), 0, 0.05, 0.9, T_SMOKE, 0.4); }
+      if (e.kill) for (let i = 0; i < 7; i++) { const f = i * 0.3; smoke.add(e.x + e.vx * f * 0.4 + R(-250, 250), e.y + e.vy * f * 0.4 + R(-150, 150), e.z + e.vz * f * 0.4 + R(-250, 250), e.vx * 0.12, e.vy * 0.12, e.vz * 0.12, 0.85, 0.85, 0.9, 600, R(1800, 3200), R(0.16, 0.22), R(16, 24), 0, 0.05, 0.9, T_SMOKE, 0.5); }
       addLight(e.x, e.y, e.z, 9 * k, 8 * k, 7.5 * k, 1800, 1.0, 0);
       envFlash(e.x, e.y, e.z, [0.95, 0.9, 1], e.kill ? 0.8e5 : 0.4e5, 1, 0.4);
       ctx.fx.flash = Math.min(2.5, ctx.fx.flash + (e.kill ? 0.12 : 0.04));
@@ -296,7 +296,7 @@ export function create(ctx) {
   for (let i = 0; i < CMAX; i++) columns.push({ on: false, x: 0, y: 0, z: 0, s: 1, t: 0, life: 0, acc: 0, eacc: 0, fire: 0 });
   bus.on('impact', (e) => {
     const mul = MUL();
-    const s = e.type === 'ballistic' ? 1.3 : e.type === 'cruise' ? 0.7 : 0.42;
+    const s = (e.type === 'ballistic' ? 1.3 : e.type === 'cruise' ? 0.7 : 0.42) * R(0.8, 1.25);
     const y = groundAt(e.x, e.z);
     // blast visuals grow with camera distance so impacts read from the 4-5 km RTS camera
     const d0 = camDist(e.x, y, e.z), sv = s * Math.min(2.2, Math.max(1, Math.sqrt(d0 / 2500)));
@@ -322,7 +322,7 @@ export function create(ctx) {
     // the cloud above the blast, lit by the fireball, then the persistent column
     for (let i = 0; i < 10 * mul + 3; i++) { const q = randDir(); smoke.add(e.x + q.x * 30 * s, y + R(30, 90) * s, e.z + q.z * 30 * s, q.x * 18 * s, R(20, 45) * s, q.z * 18 * s, 0.2, 0.19, 0.18, 50 * s, R(180, 300) * s, 0.75, R(24, 36), -1, 0.6, 1.4, T_SMOKE, R(1.0, 1.6), R(0.1, 0.4), 1); }
     let c = null;
-    const nCol = e.type === 'ballistic' ? 1 + (rng.chance(0.5) ? 2 : 1) : 1; // main column + smouldering satellites
+    const nCol = e.type === 'ballistic' ? 1 + (rng.chance(0.5) ? 2 : 1) : e.type === 'drone' && e.kind === 'open' && rng.chance(0.5) ? 0 : 1; // main column + smouldering satellites
     for (let n = 0; n < nCol; n++) {
       let cc = null; for (let i = 0; i < CMAX; i++) if (!columns[i].on) { cc = columns[i]; break; }
       if (!cc) break;
@@ -334,7 +334,7 @@ export function create(ctx) {
     addLight(e.x, y + 40 * s, e.z, 20 * s, 12 * s, 6 * s, 450 * s, 2.2, 0);
     if (c) addLight(e.x, y + 20 * s, e.z, 4.5 * s, 2.0 * s, 0.6 * s, 200 * s, c.fire, 1);
     scorch.add(e.x, e.z, 48 * s, rng.next(), shared.uTime.value, e.kind === 'open' ? 0.5 : 1);
-    envFlash(e.x, y + 60, e.z, [1, 0.62, 0.32], 3e7 * s, 9000, 0.9);
+    envFlash(e.x, y + 60, e.z, [1, 0.62, 0.32], 3e7 * s * Math.min(1, Math.max(0.25, d0 / 5000)), 9000, 0.9);
     const d = camDist(e.x, y, e.z);
     ctx.fx.flash = Math.min(2.5, ctx.fx.flash + 0.6 * s * Math.min(1, 4000 / (d + 600)));
     shake(1.2 * s, d, 12000, 0.9, 'impact', e.t);
@@ -380,8 +380,10 @@ export function create(ctx) {
           const h = th.heat;
           // meteor-like plasma head: white-hot core, orange sheath that grows with heating
           glow(p.x, p.y, p.z, 5 + 26 * h, 3 + 13 * h, 1.6 + 4 * h, 40 + 110 * h, 1);
-          if (h > 0.04) glow(p.x, p.y, p.z, 2.4 * h, 0.9 * h, 0.3 * h, 260 + 380 * h, 0.55);
-          if (h > 0.03) hotTr.push(key, p.x, p.y, p.z, t, Math.min(1, h * 1.6));
+          if (h > 0.04) glow(p.x, p.y, p.z, 2.4 * h, 0.9 * h, 0.3 * h, 260 + 380 * h, 0.55 * (0.2 + 0.8 * near));
+          const dcb = camDist(p.x, p.y, p.z), near = Math.min(1, Math.max(0, (dcb - 1200) / 1800));
+          const steep = vl.y < -0.8 * Math.hypot(vl.x, vl.y, vl.z);
+          if (h > 0.03 && !(steep && dcb < 1500)) hotTr.push(key, p.x, p.y, p.z, t, Math.min(1, h * 1.6) * (0.15 + 0.85 * near));
           if (p.y < 26000) smokeTr.push(key, p.x, p.y, p.z, t, Math.min(1, 0.3 + h));
         }
       }
@@ -484,8 +486,9 @@ export function create(ctx) {
           const hot = c.t < c.fire;
           const lo = rngF.next() < 0.35; // low, fire-lit puffs vs the dark column aloft
           const ab = lo ? 0.26 : 0.24;
-          smoke.add(c.x + RF(-12, 12) * s, c.y + RF(4, 18) * s, c.z + RF(-12, 12) * s, RF(-4, 4), (lo ? RF(8, 16) : RF(40, 70)) * s, RF(-4, 4),
-            ab, ab * 0.93, ab * 0.88, RF(18, 28) * s, (lo ? RF(120, 200) : RF(600, 900)) * s, 0.85 * Math.min(1, k * 1.5), lo ? RF(8, 14) : RF(45, 60), lo ? 0 : -0.5, lo ? 0.3 : 0.04, 1.0, lo ? T_SMOKE : T_COLUMN, hot && lo ? RF(1.4, 2.2) : 0, 0, 0);
+          const hh = lo ? 0 : RF(0, 380) * s; // spawn along a spine that leans downwind with height
+          smoke.add(c.x + RF(-12, 12) * s + hh * 0.35, c.y + RF(4, 18) * s + hh, c.z + RF(-12, 12) * s, RF(-4, 4), (lo ? RF(8, 16) : RF(30, 55)) * s, RF(-4, 4),
+            ab, ab * 0.93, ab * 0.88, RF(18, 28) * s, (lo ? RF(120, 200) : RF(380, 750)) * s, (lo ? 0.85 : 0.6) * Math.min(1, k * 1.5), lo ? RF(8, 14) : RF(45, 60), lo ? 0 : -0.5, lo ? 0.3 : 0.04, 1.0, lo ? T_SMOKE : T_COLUMN, hot && lo ? RF(1.4, 2.2) : 0, 0, 0);
           if (!lo) smoke.v[(smoke.n - 1) * 3] += RF(4, 10); // shear: the top drifts downwind
         }
         if (c.t < c.fire) {

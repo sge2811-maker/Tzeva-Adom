@@ -24,9 +24,9 @@ const VERT = (lit) => /* glsl */`
     float px = aSize * uScale / dz;
     int ty = int(aAux.x + 0.5);
     // star flashes keep a fixed minimum on-screen size (lens flare), fireballs keep more energy
-    float mpx = ${lit ? '(ty == 2 ? 30.0 : uMinPx)' : '(ty == 2 ? 64.0 : uMinPx)'};
+    float mpx = ${lit ? '(ty == 2 ? 18.0 : uMinPx)' : '(ty == 2 ? 64.0 : uMinPx)'};
     float k = min(1.0, px / mpx);
-    vA = aAlpha * ${lit ? '(ty == 2 ? 1.0 : k)' : '(ty == 2 ? 1.0 : ty == 1 ? k : k * k)'};
+    vA = aAlpha * ${lit ? 'k' : '(ty == 2 ? 1.0 : ty == 1 ? k : k * k)'};
     vPx = max(px, mpx);
     gl_PointSize = clamp(px, mpx, uMaxPx);
     vec4 cp = projectionMatrix * mv;
@@ -90,7 +90,8 @@ const FRAG_SMOKE = /* glsl */`
     float cs = cos(ang), sn = sin(ang); vec2 q = vec2(cs * uv.x - sn * uv.y, sn * uv.x + cs * uv.y);
     float n = fbm3(q * 1.5 + vSeed * 23.0 + vec2(vAux.z * 0.04, -vAux.z * 0.06));
     float n2 = vn(q * 4.2 - vSeed * 11.0 + vec2(0.0, vAux.z * 0.1));
-    float edge = r + (n - 0.5) * mix(1.6, 1.05, smoothstep(20.0, 80.0, vPx)) + (n2 - 0.5) * 0.25;
+    float nl = vn(q * 0.9 + vSeed * 5.0);
+    float edge = r + (n - 0.5) * mix(1.7, 1.05, smoothstep(20.0, 80.0, vPx)) + (n2 - 0.5) * 0.25 + (nl - 0.5) * 0.6;
     float dens = smoothstep(1.0, 0.15, edge) * (0.45 + 0.75 * n) * (0.7 + 0.5 * n2);
     vec3 N = normalize(vec3(uv.x, -uv.y, sqrt(max(0.0, 1.0 - r * r)) + 0.25) + vec3(n - 0.5) * 0.9);
     float moon = 0.3 + 0.7 * max(dot(N, uMoonV), 0.0);
