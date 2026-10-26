@@ -10,7 +10,7 @@
       "id": "env",
       "name": "Environment & lighting",
       "scope": "Skyline, atmosphere, fog, tone mapping, bloom, SSAO, colour grade",
-      "state": "critique",
+      "state": "building",
       "round": 3,
       "scores": [
         {
@@ -22,44 +22,41 @@
           "round": 2,
           "score": 5,
           "when": "2026-10-23T05:43:58.949Z"
+        },
+        {
+          "round": 3,
+          "score": 5,
+          "when": "2026-10-26T01:28:45.808Z"
         }
       ],
       "best": 5,
-      "noImprove": 1,
-      "shot": "status/shots/env-dev6/noui/S7-aftermath.png",
+      "noImprove": 2,
+      "shot": "status/shots/env-r3/S5-street.jpg",
       "issues": [
         {
           "severity": "blocker",
-          "text": "From the default RTS camera (S2), Arad is still a near-octagon of identical square blocks framed by glowing orange perimeter lines, dropped onto a blank plain. The 'outskirts' are scattered single red and white specks with thin pale scratch lines, which look like debug markers rather than an urban fringe. In S6 the whole town reads as silver-white glitter with flat grey facades. Next to an Age of Empires IV high camera or a Cities: Skylines II night overview, this is the first-glance 'procedural' tell."
+          "text": "At the default tactical camera, Arad is still an octagon of equal square blocks with glowing tan outlines on a blank plain. The new 'villa quarter' to the east is a perfect ellipse of red-roofed houses around a loop lane, with a straight spur in. From above it reads as a racetrack or a stadium, which is the most procedural-looking object in the frame. The west lobe is a thin Y of sheds, and the walled compounds are lone square tiles. In S6 the town is still a band of silver-white boxes, not warm windows on dark massing. Next to Age of Empires IV and CS2 overviews, this is a first-glance prototype tell."
         },
         {
           "severity": "major",
-          "text": "The Moab layers are vertical flat curtains with uniform navy fill. From the S7 height they read as stacked paper strips with a hard horizontal top and bottom. The farther ridges are darker than the nearer Moab face, which reverses atmospheric perspective. In S6 the ridge crest is visibly stair-stepped, and in S3 and S6 the plateau edge cuts the rift as a ruler-straight horizontal line, so the escarpment never shows."
+          "text": "Three of the seven canonical frames are about 60% empty flat beige plane. S1's foreground is a uniform featureless surface, with nothing between the camera and the town. In S3 the plateau to the horizon is a single flat tone with no rocks, wadis, scrub or relief. In S7 the bottom two-thirds is an even grey-brown sheet. The claimed shrubs and desert-pavement mottling are invisible at these distances. Iron Harvest and CoH3 never leave half the screen as a flat albedo, and TW:WH3 foregrounds always carry rock, relief or vegetation."
         },
         {
           "severity": "major",
-          "text": "A huge intercept flash fills the top of S5, yet every facade is pure black apart from its windows. Only the terrain receives the new flash hemisphere term. Against WARNO and CoH3, where overhead bursts visibly paint roofs and walls, the 'lighting interplay' is missing at the most cinematic moment."
+          "text": "The regional roads render as blue-black tubes that look raised above the ground. In S7 the Route 31 line and the long diagonal look like cables lying on the desert. In S1 a dark navy rope curves in from the left. The town.js comment says far asphalt should read as a pale grey line, but in the shots it is the darkest value in the scene, and it is cold blue against the warm ground."
         },
         {
           "severity": "major",
-          "text": "The near desert in S1 and in the lower half of S7 is smeared with large dark, soft streaks that read as cloud shadows or soot on snow, and peppered with blue-black 'ink spot' shrub blobs. In S3 the opposite happens: the plateau is a completely featureless beige plane with no micro-relief or material variety for kilometres. Neither reads as Negev hamada next to CoH3 or Iron Harvest ground."
-        },
-        {
-          "severity": "major",
-          "text": "In the lookout shot the battery apron reads as a navy-blue swimming pool with a hard dark rim, and the boxy launchers sit in it. The Masada road has saturated orange-tan shoulders as wide as the carriageway, so it looks like masking tape on a tabletop."
+          "text": "The plateau still ends in a ruler-straight horizontal line against the far ridge in S3 and S6. There is no visible drop, rift haze or cliff band, so the mid-ground layer (escarpment and Dead Sea) is missing from both frames, and the composition goes straight from flat ground to the ridge. In S6 the far ridge is a flat uniform band, and above it is a huge empty black sky."
         },
         {
           "severity": "minor",
-          "text": "At tactical zoom the block interiors are large flat beige lots, evenly lit almost like dusk. The new decals are square green or yellow patches that read as placed tiles. The sodium pools exist, but the ground between them isn't dark enough for them to pop the way CoH3 night maps and CS2 do."
-        },
-        {
-          "severity": "minor",
-          "text": "Roofs are uniform flat grey slabs with one box and a red dot. In S5 the slabs have balconies, but at S4 zoom the roofs dominate and read as untextured. Rooftop clutter (solar heaters, tanks, parapets) isn't visible at tactical zoom."
+          "text": "Roofs are still flat grey slabs with a single box and a red dot, repeated across buildings. The rooftop clutter claimed to be bigger is not readable at S4 zoom. The block interiors are flat brown, and the scrub decals are square yellow-green tiles with hard edges. The battery vehicles in S3 are simple box clusters."
         }
       ],
-      "note": "Round 3 built: neighbourhood lobes, glow domes, deep hazy Moab ridges, flashes light facades, warm near ground. Critic reviewing.",
+      "note": "Critic R3: 5/10 (2 rounds without improvement; round 4 is the last before flagging). S4/S5 near 6–7; wide frames (S1, S2, S3, S6, S7) still read as generated: octagon core and racetrack villa loop, empty beige foreground, cable-like far roads, straight plateau rim.",
       "commit": null,
-      "updated": "2026-10-26T01:21:47.585Z"
+      "updated": "2026-10-26T01:28:45.808Z"
     },
     "vfx": {
       "id": "vfx",
@@ -223,6 +220,10 @@
   },
   "log": [
     {
+      "when": "2026-10-26T01:28:45.808Z",
+      "text": "Env critic R3 scored 5/10 again. Round 4 is the final round before the stream is flagged."
+    },
+    {
       "when": "2026-10-26T01:24:10.894Z",
       "text": "Camera round 1 finished (input-test 24/24). Audio builder resumed."
     },
@@ -291,5 +292,5 @@
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-26T01:24:12.305Z"
+  "updated": "2026-10-26T01:28:45.808Z"
 }
