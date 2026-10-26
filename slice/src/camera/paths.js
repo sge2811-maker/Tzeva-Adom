@@ -13,8 +13,13 @@ function tangent(keys, i, f) {
   if (f === 'l' && k.lv) return k.lv;
   const a = keys[Math.max(0, i - 1)], b = keys[Math.min(keys.length - 1, i + 1)];
   if (a === b) return [0, 0, 0];
-  // ends: ease in/out to rest unless a velocity is given
-  if (i === 0 || i === keys.length - 1) return [0, 0, 0];
+  // ends: ease in/out to rest unless a velocity is given, or keep the chord velocity (keys.linear:
+  // the camera is still moving at a cut, like a dolly that runs through the edit)
+  if (i === 0 || i === keys.length - 1) {
+    if (!keys.linear) return [0, 0, 0];
+    const A = keys[0], B = keys[keys.length - 1];
+    return [0, 1, 2].map((j) => (B[f][j] - A[f][j]) / (B.t - A.t));
+  }
   const dt = b.t - a.t;
   return [0, 1, 2].map((j) => (b[f][j] - a[f][j]) / dt);
 }
@@ -58,21 +63,28 @@ export function rigPose(r, ty = groundAt(r.tx, r.tz)) {
 
 // ---------------------------------------------------------------- intro flyover
 // Authored at a 24 s length and scaled to pacing.introLen. Beats (HUD cards are fractions of
-// introLen): 0–8 s low over the Dead Sea and up the wadi; ~9.6 s crest the rim and Arad's lights
-// rise into frame as the IRON WALL title lands (u 0.36–0.68); 13–24 s rise and orbit north of the
-// town, easing to rest exactly on the gameplay camera (same pose, zero velocity: no pop).
+// introLen; the title card is u 0.36-0.68):
+//   0-8.8 s  skim the Dead Sea shore, then fly the wadi floor 18-30 m above the ground so its
+//            walls and the slope fill the frame;
+//   9.8 s    crest the rim 2-3 km from Arad: the town's lights rise over the ridge on the title;
+//   10-14 s  push in until the town fills ~60% of the width;
+//   14-20 s  low orbit (230-300 m) past the towers, north to west;
+//   20.4-24  one rising ease into the gameplay camera (same pose, zero velocity: no pop).
 export function introKeys(introLen = 24) {
   const k = introLen / 24;
   const home = rigPose(TACTICAL_HOME);
   const K = [
-    { t: 0.0, p: [10900, -332, -640], l: [6800, -262, -1180], fov: 36, v: [-640, 0, -120], lv: [-560, 10, 0] },
-    { t: 3.2, p: [8650, -326, -1060], l: [5300, -170, -1240], fov: 37, roll: -0.02 },
-    { t: 6.2, p: [6450, -218, -1080], l: [3600, -40, -1180], fov: 39, roll: 0.025 },
-    { t: 8.4, p: [4700, -64, -1240], l: [1900, 30, -700], fov: 42, roll: -0.015 },
-    { t: 10.0, p: [3560, 70, -1260], l: [200, 24, -120], fov: 44 },            // crest: the town appears
-    { t: 13.2, p: [2350, 290, -1560], l: [60, 14, -40], fov: 45, roll: 0.03 },
-    { t: 16.8, p: [880, 560, -2260], l: [80, 6, -20], fov: 46, roll: 0.045 },
-    { t: 20.2, p: [-880, 980, -1980], l: [190, 2, -6], fov: 48, roll: 0.03 },
+    { t: 0.0, p: [8300, 28, -1650], l: [5000, -175, -1640], fov: 40, agl: true, v: [-560, 0, -40], lv: [-540, 20, 0] },
+    { t: 2.6, p: [7000, 22, -1820], l: [4200, -70, -1520], fov: 40, agl: true, roll: -0.025 },
+    { t: 5.0, p: [5900, 20, -1850], l: [3500, -15, -1480], fov: 41, agl: true, roll: 0.03 },
+    { t: 7.2, p: [4800, 20, -1580], l: [2500, 25, -1150], fov: 42, agl: true, roll: -0.02 },
+    { t: 8.8, p: [3900, 24, -1520], l: [1600, 35, -900], fov: 42, agl: true },
+    { t: 9.8, p: [3250, 34, -1470], l: [300, 30, -320], fov: 44, agl: true },          // crest
+    { t: 12.0, p: [2300, 70, -1150], l: [140, 22, -150], fov: 46, agl: true, roll: 0.02 },
+    { t: 14.2, p: [1450, 130, -1000], l: [0, 15, -40], fov: 47, agl: true, roll: 0.035 },
+    { t: 16.6, p: [520, 230, -1380], l: [-60, 28, -90], fov: 47, agl: true, roll: 0.04 },
+    { t: 19.0, p: [-650, 300, -1250], l: [60, 12, -60], fov: 48, agl: true, roll: 0.03 },
+    { t: 20.4, p: [-1150, 420, -1080], l: [150, 6, -20], fov: 48, agl: true },
     { t: 24.0, p: home.p, l: home.l, fov: 50 },
   ];
   for (const key of K) {
@@ -84,48 +96,69 @@ export function introKeys(introLen = 24) {
 }
 
 // ---------------------------------------------------------------- trailer (seed 1, good autopilot)
-// Shots keyed to SIM time, so they stay locked to the events (and slow down with slow motion).
-// Recommended window: --t 229 --len 30 (Arrow kills overhead 231–232, impacts south and at Nevatim
-// 234–239, David's Sling ripple from Arad North 244–250, Sling kills and debris over the town
-// 250–257, Arrow 3 star-flashes over the Dead Sea from 258.6). Shot Z covers t 190–229 so the
-// suggested 200–232 window also works.
+// Recommended: --t 238 --len 30 --ui 0. Shots are keyed to SIM time (they stay locked to the events
+// and slow down with slow motion). Subjects (s) and anchors (a) are the logged positions of seed-1
+// events (Node sim == browser): each frame the look is solved so the subject sits in the upper part
+// of the frame and the anchor (town, impact site) in the lower third, tilt limited; keys run at
+// constant velocity through the cuts (linear) so the camera never stops before an edit.
+//   238.0 warheads inbound over the skyline  244.4 Sling ripple from Arad North (launches 244.8-248.2)
+//   250.0 Sling kills over the south of town (250.4-253.9)  254.0 Nevatim impact (254.6), close & low
+//   257.6 Arrow 3 kills over the Dead Sea (258.8-261.0)  262.0 smoke and debris drifting over Arad
+const shot = (name, keys) => { keys.linear = true; return { name, keys }; };
 export const TRAILER = [
-  { name: 'Z-skyline-east', keys: [
-    { t: 190, p: [-1900, 96, 520], l: [9000, 3500, 300], fov: 62 },
-    { t: 229.2, p: [-1560, 112, 470], l: [9000, 4300, 300], fov: 64 },
-  ] },
-  { name: 'A-tilt-up-arrow-overhead', keys: [
-    { t: 229.2, p: [-1720, 70, 600], l: [9000, 3700, 300], fov: 62 },
-    { t: 231.0, p: [-1600, 82, 540], l: [7000, 4600, 1400], fov: 70 },
-    { t: 233.6, p: [-1450, 96, 480], l: [7000, 4900, 1600], fov: 72 },
-  ] },
-  { name: 'B1-impacts-south', keys: [
-    { t: 233.6, p: [-260, 150, 420], l: [1250, 40, 5600], fov: 54 },
-    { t: 236.1, p: [-330, 160, 520], l: [1100, 60, 5400], fov: 52 },
-  ] },
-  { name: 'B2-nevatim-plain', keys: [
-    { t: 236.1, p: [-2500, 620, 240], l: [-6400, -140, 2950], fov: 50 },
-    { t: 241.2, p: [-2950, 560, 620], l: [-6500, -150, 3050], fov: 48 },
-  ] },
-  { name: 'C-sling-ripple-over-skyline', keys: [
-    { t: 241.2, p: [160, 78, 700], l: [-120, 260, -1080], fov: 56 },
-    { t: 244.4, p: [140, 82, 640], l: [-120, 420, -1080], fov: 58 },
-    { t: 247.6, p: [110, 88, 580], l: [-140, 620, -900], fov: 64 },
-    { t: 249.4, p: [90, 92, 540], l: [-200, 760, -800], fov: 66 },
-  ] },
-  { name: 'D-sling-over-town', keys: [
-    { t: 249.4, p: [310, 88, -1520], l: [-1500, 1900, 2400], fov: 68 },
-    { t: 256.4, p: [160, 112, -1450], l: [-1800, 2300, 2600], fov: 70 },
-  ] },
-  { name: 'E-finale-arrow-dead-sea', keys: [
-    { t: 256.4, p: [-1900, 110, 420], l: [9000, 5400, 650], fov: 58 },
-    { t: 264.0, p: [-1600, 150, 380], l: [9000, 6000, 800], fov: 61 },
-  ] },
+  shot('A-warheads-inbound', [
+    { t: 236.0, p: [-1650, 70, 420], s: [14000, 9500, 1500], a: [300, 20, 0], fov: 56 },
+    { t: 244.4, p: [-1250, 95, 330], s: [12000, 8500, 2000], a: [350, 20, 0], fov: 56 },
+  ]),
+  shot('B-sling-ripple', [
+    { t: 244.4, p: [170, 62, 620], s: [-120, 380, -1080], a: [-120, 0, -1080], fov: 56 },
+    { t: 247.0, p: [150, 70, 500], s: [-200, 1400, -600], a: [-120, 0, -1080], fov: 58 },
+    { t: 250.0, p: [120, 80, 360], s: [-500, 2600, 600], a: [-60, 0, -700], fov: 60 },
+  ]),
+  shot('C-kills-over-town', [
+    { t: 250.0, p: [-700, 140, -3000], s: [-900, 6900, 2700], a: [0, 30, 0], fov: 60 },
+    { t: 254.0, p: [-620, 150, -2600], s: [-1400, 6400, 3000], a: [0, 30, 0], fov: 60 },
+  ]),
+  shot('D-nevatim-impact', [
+    { t: 254.0, p: [-6150, 55, 1420], s: [-6797, -40, 2100], a: [-6797, -150, 2100], fov: 50, agl: true },
+    { t: 257.6, p: [-6260, 70, 1560], s: [-6797, 40, 2100], a: [-6797, -150, 2100], fov: 50, agl: true },
+  ]),
+  shot('E-arrow-dead-sea', [
+    { t: 257.6, p: [-3600, 120, 1500], s: [16200, 19700, 2800], a: [0, 30, 0], fov: 60 },
+    { t: 262.0, p: [-3350, 140, 1450], s: [16000, 19400, 2800], a: [0, 30, 0], fov: 60 },
+  ]),
+  shot('F-aftermath-drift', [
+    { t: 262.0, p: [-650, 45, 1050], s: [-1300, 4200, 3000], a: [-100, 20, 200], fov: 58, agl: true },
+    { t: 270.0, p: [-560, 130, 900], s: [-1100, 3600, 3000], a: [-100, 20, 200], fov: 58, agl: true },
+  ]),
 ];
-export function trailerAt(t, out) {
-  let s = TRAILER[0];
-  for (const sh of TRAILER) if (t >= sh.keys[0].t) s = sh;
-  out = evalKeys(s.keys, clamp(t, s.keys[0].t, s.keys[s.keys.length - 1].t), out);
-  out.shot = s.name;
+const _sa = { p: [0, 0, 0], l: [0, 0, 0] }, _sb = { p: [0, 0, 0], l: [0, 0, 0] };
+// look solve: subject above, anchor in the lower third, yaw biased toward the subject
+function frameLook(p, s, a, fov0, out) {
+  const ys = Math.atan2(s[2] - p[2], s[0] - p[0]), ya = Math.atan2(a[2] - p[2], a[0] - p[0]);
+  let dy = ys - ya; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+  const yaw = ya + dy * 0.62;
+  const es = Math.atan2(s[1] - p[1], Math.hypot(s[0] - p[0], s[2] - p[2]));
+  const ea = Math.atan2(a[1] - p[1], Math.hypot(a[0] - p[0], a[2] - p[2]));
+  const D = Math.PI / 180;
+  const fov = clamp(Math.max(fov0, ((es - ea) / D) / 0.66), 40, 68) * D;
+  let c = ea + 0.3 * fov;                       // anchor on the lower-third line
+  if (es > c + 0.36 * fov) c = es - 0.36 * fov;  // never lose the subject off the top
+  c = Math.min(c, 26 * D);                       // tilt limit: keep the world in the frame
+  out.l[0] = p[0] + Math.cos(yaw) * Math.cos(c) * 1000; out.l[1] = p[1] + Math.sin(c) * 1000; out.l[2] = p[2] + Math.sin(yaw) * Math.cos(c) * 1000;
+  out.fov = fov / D;
+  return out;
+}
+export function trailerAt(t, out = { p: [0, 0, 0], l: [0, 0, 0], fov: 50 }) {
+  let sh = TRAILER[0];
+  for (const x of TRAILER) if (t >= x.keys[0].t) sh = x;
+  const K = sh.keys, tt = clamp(t, K[0].t, K[K.length - 1].t);
+  // reuse the Hermite evaluator: p as p, subject as l; then the anchor
+  const ks = K.map((k) => ({ t: k.t, p: k.p, l: k.s, fov: k.fov, agl: k.agl })); ks.linear = true;
+  const ka = K.map((k) => ({ t: k.t, p: k.a, l: k.a, fov: k.fov })); ka.linear = true;
+  evalKeys(ks, tt, _sa); evalKeys(ka, tt, _sb);
+  out.p[0] = _sa.p[0]; out.p[1] = _sa.p[1]; out.p[2] = _sa.p[2];
+  frameLook(out.p, _sa.l, _sb.p, _sa.fov, out);
+  out.shot = sh.name; out.roll = 0;
   return out;
 }

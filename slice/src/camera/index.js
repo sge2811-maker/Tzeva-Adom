@@ -215,7 +215,7 @@ export function create(ctx) {
       const b = pendingBeats.shift();
       if (sim.t - b.t > 0.6 || scriptName) continue; // stale (fast-forward / seek): never re-frame a seeked shot
       if (b.kind === 'siren') {
-        shake.trauma = Math.min(1, shake.trauma + 0.22);
+        shake.trauma = Math.min(1, shake.trauma + 0.38);
         if (mode === 'cine') { cine.siren(); logFeel('beat', { beat: 'siren', mode }); continue; }
       }
       if (mode !== 'tactical' || idleT < (b.kind === 'siren' ? 0.5 : 2.5) || drag) { logFeel('beat-skipped', { beat: b.kind, idle: +idleT.toFixed(1) }); continue; }
@@ -225,15 +225,15 @@ export function create(ctx) {
       else if (b.kind === 'siren') {
         // a short, readable push toward the town (<= 1.3 s; any input takes control back at once)
         const dT = Math.hypot(goal.tx, goal.tz);
-        if (dT < goal.dist * 1.6) { to.tx += (0 - goal.tx) * 0.3; to.tz += (0 - goal.tz) * 0.3; to.dist *= 0.84; } else to.dist *= 0.9;
-        dur = 1.3;
+        if (dT < goal.dist * 1.6) { to.tx += (0 - goal.tx) * 0.4; to.tz += (0 - goal.tz) * 0.4; to.dist *= 0.78; } else to.dist *= 0.85;
+        dur = 1.2;
       } else { to.dist *= 1.12; to.pitchOff -= 0.035; dur = 3.6; } // all-clear: a slow exhale
-      startTravel(to, dur, 0);
+      startTravel(to, dur, 0, b.kind === 'siren' ? 'expo' : 'ease');
       logFeel('beat', { beat: b.kind, dur });
     }
   }
-  function startTravel(to, dur, hop) {
-    travel = { from: { tx: rig.tx, tz: rig.tz, dist: rig.dist, yaw: rig.yaw, pitchOff: rig.pitchOff }, to, t: 0, dur, hop };
+  function startTravel(to, dur, hop, ease = 'ease') {
+    travel = { from: { tx: rig.tx, tz: rig.tz, dist: rig.dist, yaw: rig.yaw, pitchOff: rig.pitchOff }, to, t: 0, dur, hop, ease };
     Object.assign(goal, to); clampGoal(); lastGoal.x = goal.tx; lastGoal.z = goal.tz; vel.x = vel.z = 0;
   }
 
@@ -252,19 +252,15 @@ export function create(ctx) {
       slowDone = true; clock.slowMo(1.25, 0.32, 0.12, 0.5); lastStopReal = realT;
       logFeel('slowmo', { dur: 1.25, scale: 0.32, d: Math.round(d) }); return;
     }
-    // trailer only: a beat of slow motion on the first David's Sling kill over the town
-    if (!slingSlow && scriptName && e.kind === 'sling' && vis) {
-      slingSlow = true; clock.slowMo(1.4, 0.3, 0.1, 0.55); lastStopReal = realT;
-      logFeel('slowmo', { dur: 1.4, scale: 0.3, d: Math.round(d), kind: 'sling' }); return;
-    }
+
     // hit-stop: big kills near the camera and in view, at most one per 1.1 s, <= 80 ms
-    if (e.big && vis && d < 9000 && realT - lastStopReal > 1.1) {
+    if (e.big && ((vis && d < 9000) || scriptName === 'trailer') && realT - lastStopReal > 1.1) {
       const dur = d < 4000 ? 0.075 : 0.055;
       clock.hitStop(dur, 0.05); lastStopReal = realT;
       logFeel('hitstop', { dur, scale: 0.05, d: Math.round(d) });
     }
   });
-  const shakeEuler = new THREE.Euler();
+  const shakeEuler = new THREE.Euler(), shakeQ = new THREE.Quaternion();
   function applyShake(dt) {
     shake.t += dt;
     if (shake.trauma < 0.002) return;
@@ -272,7 +268,7 @@ export function create(ctx) {
     // angular shake (distance independent), smooth multi-sine noise; never nauseating (<= 0.8 deg)
     const n = (a, b, c) => Math.sin(t * a + c) * 0.6 + Math.sin(t * b + c * 1.7) * 0.4;
     shakeEuler.set(n(31.3, 17.9, 0.3) * 0.010 * tr, n(27.1, 13.3, 1.9) * 0.012 * tr, n(23.7, 11.1, 4.1) * 0.014 * tr);
-    camera.quaternion.multiply(new THREE.Quaternion().setFromEuler(shakeEuler));
+    camera.quaternion.multiply(shakeQ.setFromEuler(shakeEuler));
     shake.trauma = Math.max(0, shake.trauma - dt * 1.5);
   }
 
@@ -328,6 +324,9 @@ export function create(ctx) {
         fov = o.fov; bank = o.bank;
       } else if (mode === 'script') {
         scriptT += simDt;
+        // trailer feel is keyed to script time (not to what happens to be on screen):
+        // a beat of slow motion as the first David's Sling kill lands over the town
+        if (!slingSlow && scriptT >= 250.72) { slingSlow = true; clock.slowMo(1.5, 0.3, 0.12, 0.6); lastStopReal = realT; logFeel('slowmo', { dur: 1.5, scale: 0.3, kind: 'sling', script: true }); }
         const o = trailerAt(scriptT, ev);
         camera.position.set(o.p[0], o.p[1], o.p[2]); camera.lookAt(o.l[0], o.l[1], o.l[2]); fov = o.fov;
       } else if (mode === 'tactical') {
@@ -377,7 +376,7 @@ export function create(ctx) {
     }
     if (travel) {
       travel.t += dt;
-      const u = Math.min(1, travel.t / travel.dur), e = ease3(u), F = travel.from, T = travel.to;
+      const u = Math.min(1, travel.t / travel.dur), e = travel.ease === 'expo' ? (u >= 1 ? 1 : (1 - Math.pow(2, -9 * u)) / (1 - Math.pow(2, -9))) : ease3(u), F = travel.from, T = travel.to;
       rig.tx = F.tx + (T.tx - F.tx) * e; rig.tz = F.tz + (T.tz - F.tz) * e;
       rig.dist = Math.exp(Math.log(F.dist) + (Math.log(T.dist) - Math.log(F.dist)) * e) * (1 + travel.hop * Math.sin(Math.PI * e));
       rig.yaw = F.yaw + wrap(T.yaw - F.yaw) * e; rig.pitchOff = F.pitchOff + (T.pitchOff - F.pitchOff) * e;
