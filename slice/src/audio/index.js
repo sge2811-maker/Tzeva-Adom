@@ -31,6 +31,7 @@ export function create(ctx) {
     const ac = A.ac;
     A.E = createEngine(ac, { seed: params.seed, live: true });
     A.amb = A.E.ambience(ac.currentTime);
+    A.E.lis = () => camera.position; // live: moving one-shots follow from the current listener
     A.movers = { drone: [], cruise: [], jet: [] };
     const N = { drone: 4, cruise: 2, jet: 2 };
     for (const k in N) for (let i = 0; i < N[k]; i++) A.movers[k].push(A.E.mover(k, makeRng(params.seed, `live:${k}:${i}`), ac.currentTime));
@@ -55,7 +56,8 @@ export function create(ctx) {
   for (const type of ['alert:early', 'alert:start', 'alert:impactWindow', 'alert:end', 'allclear']) bus.on(type, () => { if (A.ac) A.E.beat(A.amb, type, A.ac.currentTime); });
   bus.on('allclear', (e) => { dogs = dogPlan(params.seed, ctx.pacing.alertAt, e.t); dogI = 0; while (dogI < dogs.length && dogs[dogI].t <= sim.t) dogI++; });
   // the siren stops cleanly if the sim moves on early (e.g. at 4x speed)
-  bus.on('phase', ({ to }) => { if (A.ac && (to === 'hold' || to === 'aftermath')) { for (const s of A.sirens) if (s && s.tOff > A.ac.currentTime) s.stop(A.ac.currentTime); A.sirens.length = 0; } });
+  bus.on('phase', ({ to }) => { if (A.ac && (to === 'barrage' || to === 'hold' || to === 'aftermath')) { for (const s of A.sirens) if (s && s.tOff > A.ac.currentTime) s.stop(A.ac.currentTime); A.sirens.length = 0; } });
+  const fired = new Set(); // ballistic ids whose re-entry roar has been triggered
 
   // ---------------------------------------------------------------- UI (subtle, consistent)
   function ui(kind) {
@@ -115,10 +117,19 @@ export function create(ctx) {
           for (const [pr, base] of v.rates) pr.setTargetAtTime(base * rate, tt, 0.1);
         }
       }
-      // ambience levels follow the listener (4 Hz), dogs, pause duck
+      // incoming ballistics: re-entry shock + roar, timed to end on the ground blast's arrival
+      for (const th of sim.threats) {
+        if (!th.alive || th.type !== 'ballistic' || fired.has(th.id)) continue;
+        const tti = sim.timeToImpact(th); if (tti > 3) continue;
+        fired.add(th.id); if (fired.size > 400) fired.clear();
+        const tg = th.target, top = { x: tg.x, y: tg.y + 3500, z: tg.z }, d = camD(top);
+        if (d <= MAXD.blast) A.E.reentry(top, tt + 0.03 + tti - 3 + camD(tg) / C, d, evRng(params.seed, { type: 'reentry', id: th.id, t: th.born }), 3);
+      }
+      // ambience levels and siren distance follow the listener (4 Hz), dogs, pause duck
       ambAcc += dt;
       if (ambAcc > 0.25) {
         ambAcc = 0; const lv = A.E.ambLevels(L);
+        for (const s of A.sirens) if (s && s.tOff > tt) s.track(L, tt + 0.25, false);
         A.amb.windL.gain.setTargetAtTime(lv.wind, tt, 0.3); A.amb.insL.gain.setTargetAtTime(lv.ins, tt, 0.3); A.amb.townL.gain.setTargetAtTime(lv.town, tt, 0.3);
         A.E.out.gain.setTargetAtTime(ctx.clock.paused ? 0.25 : 0.85, tt, 0.2);
       }
