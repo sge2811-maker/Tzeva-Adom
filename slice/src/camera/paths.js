@@ -107,8 +107,8 @@ export function introKeys(introLen = 24) {
 const shot = (name, keys) => { keys.linear = true; return { name, keys }; };
 export const TRAILER = [
   shot('A-rooftops-to-battery', [
-    { t: 238.0, p: [330, 125, 1650], s: [-120, 420, -1080], a: [-60, 20, -300], fov: 54 },
-    { t: 244.4, p: [175, 66, 640], s: [-120, 380, -1080], a: [-120, 0, -1080], fov: 56 },
+    { t: 238.0, p: [330, 125, 1650], s: [-120, 140, -1080], a: [-60, 20, -300], fov: 50 },
+    { t: 244.4, p: [175, 66, 640], s: [-120, 200, -1080], a: [-120, 0, -1080], fov: 54 },
   ]),
   shot('B-sling-ripple', [
     { t: 244.4, p: [170, 62, 620], s: [-120, 380, -1080], a: [-120, 0, -1080], fov: 56 },
