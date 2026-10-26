@@ -44,7 +44,16 @@ function genBuffers(ac, seed) {
     }
     normalize(d, 0.95);
   }
-  return { sr, white, pink, brown, crackle, engine: shahedLoop(mk, sr, R), cricketsA: crickets(mk, sr, R, 7.31), cricketsB: crickets(mk, sr, R, 11.07), wind: wind(mk, sr, R, 19.7), ir: impulse(mk, sr, R, 3.2) };
+  // N-wave: the pressure signature of a shock (sharp rise, linear fall through zero, sharp
+  // recovery), with a weaker ground-reflected copy 1.1 ms later. 8 ms at rate 1.
+  const nwave = mk(1, 0.03); {
+    const d = nwave.getChannelData(0), T = Math.round(0.008 * sr), rt = Math.max(2, Math.round(0.00015 * sr));
+    const put = (i0, a) => { for (let k = 0; k < T + 2 * rt; k++) { let v; if (k < rt) v = k / rt; else if (k < rt + T) v = 1 - 2 * (k - rt) / T; else v = -1 + (k - rt - T) / rt; d[i0 + k] += a * v; } };
+    put(4, 1); put(4 + Math.round(0.0011 * sr), 0.55);
+    let lp = 0; for (let i = 0; i < d.length; i++) { lp += 0.6 * (d[i] - lp); d[i] = lp; } // slight rounding (finite rise time)
+    normalize(d, 0.95);
+  }
+  return { sr, white, pink, brown, crackle, nwave, engine: shahedLoop(mk, sr, R), cricketsA: crickets(mk, sr, R, 7.31), cricketsB: crickets(mk, sr, R, 11.07), cricketsC: crickets(mk, sr, R, 13.73), wind: wind(mk, sr, R, 19.7), ir: impulse(mk, sr, R, 3.2) };
 }
 
 function normalize(d, peak) { let m = 1e-9; for (let i = 0; i < d.length; i++) m = Math.max(m, Math.abs(d[i])); const k = peak / m; for (let i = 0; i < d.length; i++) d[i] *= k; }
@@ -128,7 +137,7 @@ function wind(mk, sr, R, sec) {
   for (let c = 0; c < 2; c++) {
     const d = buf.getChannelData(c), o = out[c];
     for (let i = 0; i < N; i++) d[i] = o[i];
-    for (let i = 0; i < X; i++) { const u = i / X; d[i] = o[i] * u + o[N + i] * (1 - u); } // seam
+    for (let i = 0; i < X; i++) { const u = i / X; d[i] = o[i] * Math.sin(u * Math.PI / 2) + o[N + i] * Math.cos(u * Math.PI / 2); } // equal-power seam
   }
   let m = 1e-9; for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c); for (let i = 0; i < N; i++) m = Math.max(m, Math.abs(d[i])); }
   for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c); for (let i = 0; i < N; i++) d[i] *= 0.9 / m; }
