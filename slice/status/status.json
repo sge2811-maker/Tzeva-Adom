@@ -134,7 +134,7 @@
       "issues": [],
       "note": "",
       "commit": null,
-      "updated": "2026-10-22T06:59:28.950Z"
+      "updated": "2026-10-26T01:24:12.305Z"
     },
     "hud": {
       "id": "hud",
@@ -194,16 +194,16 @@
       "id": "camera",
       "name": "Camera & game feel",
       "scope": "Intro flyover, input response, hit-stop, alert → shelter → aftermath pacing",
-      "state": "building",
+      "state": "critique",
       "round": 1,
       "scores": [],
       "best": null,
       "noImprove": 0,
-      "shot": null,
+      "shot": "status/shots/camera-dev1/S1-intro.png",
       "issues": [],
-      "note": "",
+      "note": "Round 1 built: authored intro flyover, grab-pan rig (input-test 24/24), beats, hit-stop, cine camera, trailer script (framing still rough). Critic queued.",
       "commit": null,
-      "updated": "2026-10-23T05:47:03.773Z"
+      "updated": "2026-10-26T01:24:10.894Z"
     },
     "perf": {
       "id": "perf",
@@ -222,6 +222,10 @@
     }
   },
   "log": [
+    {
+      "when": "2026-10-26T01:24:10.894Z",
+      "text": "Camera round 1 finished (input-test 24/24). Audio builder resumed."
+    },
     {
       "when": "2026-10-26T01:21:47.585Z",
       "text": "Env round 3 finished; critic launched."
@@ -287,5 +291,5 @@
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-26T01:21:47.585Z"
+  "updated": "2026-10-26T01:24:12.305Z"
 }
