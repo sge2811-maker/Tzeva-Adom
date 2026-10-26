@@ -326,7 +326,7 @@ export function create(ctx) {
         scriptT += simDt;
         // trailer feel is keyed to script time (not to what happens to be on screen):
         // a beat of slow motion as the first David's Sling kill lands over the town
-        if (!slingSlow && scriptT >= 250.72) { slingSlow = true; clock.slowMo(1.5, 0.3, 0.12, 0.6); lastStopReal = realT; logFeel('slowmo', { dur: 1.5, scale: 0.3, kind: 'sling', script: true }); }
+        if (!slingSlow && scriptT >= 250.72) { slingSlow = true; clock.slowMo(1.5, 0.3, 0.12, 0.6); lastStopReal = realT; logFeel('slowmo', { dur: 1.5, scale: 0.3, layer: 'sling', script: true }); }
         const o = trailerAt(scriptT, ev);
         camera.position.set(o.p[0], o.p[1], o.p[2]); camera.lookAt(o.l[0], o.l[1], o.l[2]); fov = o.fov;
       } else if (mode === 'tactical') {

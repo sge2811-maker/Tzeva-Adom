@@ -550,11 +550,11 @@ export function create(ctx) {
       const a = Math.atan2(dy, dx) * 180 / Math.PI;
       const txt = m.kind === 'shelter' ? shortName(m.s) : m.n;
       const icon = m.kind === 'shelter' ? 'lock' : 'people';
-      if (txt !== e.txt) { e.txt = txt; e.b.textContent = txt; e.a = 999; }
+      if (txt !== e.txt) { e.txt = txt; e.b.textContent = txt; e.a = 999; e.hw = (2 + 18 + 5 + textW(String(txt).toUpperCase(), '600 11px "IW Mono"', 0.44) + 8) / 2; }
       if (icon !== e.icon) { e.icon = icon; e.ico.innerHTML = ic(icon); }
       if (Math.abs(x - e.x) > 0.5 || Math.abs(y - e.y) > 0.5) { e.x = x; e.y = y; e.el.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) translate(-50%,-50%)`; }
       if (Math.abs(a - e.a) > 1.5) {
-        e.a = a; const ca = Math.cos(a * Math.PI / 180), sa = Math.sin(a * Math.PI / 180), hw = e.el.offsetWidth / 2 || 30;
+        e.a = a; const ca = Math.cos(a * Math.PI / 180), sa = Math.sin(a * Math.PI / 180), hw = e.hw || 30;
         const r = Math.min(Math.abs(ca) > 1e-3 ? (hw + 9) / Math.abs(ca) : 1e9, Math.abs(sa) > 1e-3 ? 20 / Math.abs(sa) : 1e9);
         e.arw.style.transform = `translate(${(ca * r).toFixed(1)}px,${(sa * r).toFixed(1)}px) rotate(${a.toFixed(0)}deg)`;
       }

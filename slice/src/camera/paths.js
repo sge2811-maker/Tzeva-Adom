@@ -77,14 +77,14 @@ export function introKeys(introLen = 24) {
     { t: 0.0, p: [8300, 28, -1650], l: [5000, -175, -1640], fov: 40, agl: true, v: [-560, 0, -40], lv: [-540, 20, 0] },
     { t: 2.6, p: [7000, 22, -1820], l: [4200, -70, -1520], fov: 40, agl: true, roll: -0.025 },
     { t: 5.0, p: [5900, 20, -1850], l: [3500, -15, -1480], fov: 41, agl: true, roll: 0.03 },
-    { t: 7.2, p: [4800, 20, -1580], l: [2500, 25, -1150], fov: 42, agl: true, roll: -0.02 },
-    { t: 8.8, p: [3900, 24, -1520], l: [1600, 35, -900], fov: 42, agl: true },
-    { t: 9.8, p: [3250, 34, -1470], l: [300, 30, -320], fov: 44, agl: true },          // crest
-    { t: 12.0, p: [2300, 70, -1150], l: [140, 22, -150], fov: 46, agl: true, roll: 0.02 },
-    { t: 14.2, p: [1450, 130, -1000], l: [0, 15, -40], fov: 47, agl: true, roll: 0.035 },
-    { t: 16.6, p: [520, 230, -1380], l: [-60, 28, -90], fov: 47, agl: true, roll: 0.04 },
-    { t: 19.0, p: [-650, 300, -1250], l: [60, 12, -60], fov: 48, agl: true, roll: 0.03 },
-    { t: 20.4, p: [-1150, 420, -1080], l: [150, 6, -20], fov: 48, agl: true },
+    { t: 7.0, p: [4850, 20, -1580], l: [2500, 25, -1150], fov: 42, agl: true, roll: -0.02 },
+    { t: 8.2, p: [4050, 24, -1500], l: [1700, 35, -900], fov: 42, agl: true },
+    { t: 9.2, p: [3350, 50, -1440], l: [400, 10, -300], fov: 44, agl: true },          // crest
+    { t: 11.0, p: [2350, 165, -1150], l: [200, -10, -150], fov: 46, agl: true, roll: 0.015 },
+    { t: 13.2, p: [1500, 150, -950], l: [0, 0, -60], fov: 47, agl: true, roll: 0.03 },
+    { t: 15.6, p: [700, 120, -900], l: [-100, 25, -60], fov: 47, agl: true, roll: 0.04 },
+    { t: 18.0, p: [-350, 135, -880], l: [-75, 35, 120], fov: 48, agl: true, roll: 0.035 },
+    { t: 20.3, p: [-1100, 250, -900], l: [150, 6, -20], fov: 48, agl: true },
     { t: 24.0, p: home.p, l: home.l, fov: 50 },
   ];
   for (const key of K) {
@@ -96,7 +96,7 @@ export function introKeys(introLen = 24) {
 }
 
 // ---------------------------------------------------------------- trailer (seed 1, good autopilot)
-// Recommended: --t 238 --len 30 --ui 0. Shots are keyed to SIM time (they stay locked to the events
+// Recommended: --t 240 --len 30 --ui 0 (238-272 is covered). Shots are keyed to SIM time (they stay locked to the events
 // and slow down with slow motion). Subjects (s) and anchors (a) are the logged positions of seed-1
 // events (Node sim == browser): each frame the look is solved so the subject sits in the upper part
 // of the frame and the anchor (town, impact site) in the lower third, tilt limited; keys run at
@@ -106,9 +106,9 @@ export function introKeys(introLen = 24) {
 //   257.6 Arrow 3 kills over the Dead Sea (258.8-261.0)  262.0 smoke and debris drifting over Arad
 const shot = (name, keys) => { keys.linear = true; return { name, keys }; };
 export const TRAILER = [
-  shot('A-warheads-inbound', [
-    { t: 236.0, p: [-1650, 70, 420], s: [14000, 9500, 1500], a: [300, 20, 0], fov: 56 },
-    { t: 244.4, p: [-1250, 95, 330], s: [12000, 8500, 2000], a: [350, 20, 0], fov: 56 },
+  shot('A-rooftops-to-battery', [
+    { t: 238.0, p: [330, 125, 1650], s: [-120, 420, -1080], a: [-60, 20, -300], fov: 54 },
+    { t: 244.4, p: [175, 66, 640], s: [-120, 380, -1080], a: [-120, 0, -1080], fov: 56 },
   ]),
   shot('B-sling-ripple', [
     { t: 244.4, p: [170, 62, 620], s: [-120, 380, -1080], a: [-120, 0, -1080], fov: 56 },
@@ -127,9 +127,9 @@ export const TRAILER = [
     { t: 257.6, p: [-3600, 120, 1500], s: [16200, 19700, 2800], a: [0, 30, 0], fov: 60 },
     { t: 262.0, p: [-3350, 140, 1450], s: [16000, 19400, 2800], a: [0, 30, 0], fov: 60 },
   ]),
-  shot('F-aftermath-drift', [
-    { t: 262.0, p: [-650, 45, 1050], s: [-1300, 4200, 3000], a: [-100, 20, 200], fov: 58, agl: true },
-    { t: 270.0, p: [-560, 130, 900], s: [-1100, 3600, 3000], a: [-100, 20, 200], fov: 58, agl: true },
+  shot('F-fires-at-nevatim', [
+    { t: 262.0, p: [-250, 80, 350], s: [-6700, 700, 2400], a: [-900, 10, 600], fov: 52, agl: true },
+    { t: 272.0, p: [-650, 95, 520], s: [-6700, 900, 2400], a: [-1300, 10, 750], fov: 52, agl: true },
   ]),
 ];
 const _sa = { p: [0, 0, 0], l: [0, 0, 0] }, _sb = { p: [0, 0, 0], l: [0, 0, 0] };
