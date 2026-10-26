@@ -150,9 +150,8 @@ export function createTerrain(ctx) {
         // large-scale hamada/loess variation, gentle
         col *= 0.93 + 0.14 * m1;
         // view-scale hamada: dark flint-gravel sheets against pale loess (300-800 m patches)
-        float hm = 1.0 - abs(gN(vWP.xz * 0.0019 + 5.0) * 2.0 - 1.0);
-        hm = smoothstep(0.55, 0.85, hm * (0.6 + 0.6 * gN(vWP.xz * 0.0007 + 1.0)));
-        col = mix(col, vec3(0.20, 0.17, 0.135), hm * 0.45 * (1.0 - rockK));
+        float hm = smoothstep(0.45, 0.75, gN(vWP.xz * 0.0016 + 5.0) * 0.65 + gN(vWP.xz * 0.0045 + 2.0) * 0.35);
+        col = mix(col, vec3(0.21, 0.18, 0.14), hm * 0.3 * (1.0 - rockK));
         col = mix(col, vec3(0.42, 0.37, 0.29), smoothstep(0.62, 0.8, gN(vWP.xz * 0.0013 + 8.0)) * 0.3 * (1.0 - hm));
         col *= 0.96 + 0.08 * m2 * (1.0 - rockK);
         // close-up grain, faded so it never shimmers

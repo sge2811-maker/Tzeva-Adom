@@ -38,7 +38,8 @@ export function createEngine(ac, { seed = 1, live = false } = {}) {
   const out = ac.createGain(); out.gain.value = 0.85;
   const lim = ac.createDynamicsCompressor(); // safety limiter: fast, hard knee
   lim.threshold.value = -2.5; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.0015; lim.release.value = 0.12;
-  out.connect(lim).connect(ac.destination);
+  const trim = ac.createGain(); trim.gain.value = 0.84; // keeps true peak under about -1 dBTP after limiter overshoot
+  out.connect(lim).connect(trim).connect(ac.destination);
   const glue = ac.createDynamicsCompressor(); // weapons bus glue: big booms push the rest down a little
   glue.threshold.value = -22; glue.knee.value = 8; glue.ratio.value = 2.6; glue.attack.value = 0.005; glue.release.value = 0.4;
   glue.connect(out);
@@ -222,11 +223,13 @@ export function createEngine(ac, { seed = 1, live = false } = {}) {
     fp.push([tOff, fLo * 0.38, 'exp']);
     const now = live ? ac.currentTime : 0;
     if (tOff <= now) return null;
-    const mk = (type, mul) => { const x = ac.createOscillator(); x.type = type; applyEnv(x.frequency, fp.map(([a, v, m]) => [a, v * mul, m]), now); x.start(Math.max(now, t0)); x.stop(tOff + 0.05); return x; };
-    const o1 = mk('square', 1), o2 = mk('triangle', 2.003);
-    const g2 = ac.createGain(); g2.gain.value = 0.3;
-    const sh = ac.createWaveShaper(); const curve = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; curve[i] = Math.tanh(2.2 * x) / Math.tanh(2.2); } sh.curve = curve;
-    const pre = ac.createGain(); pre.gain.value = 0.55;
+    // band-limited driven-horn spectrum (no aliasing): strong odd harmonics, weaker even ones,
+    // rolled off above the 11th; a second, slightly detuned voice gives the multi-driver chorus
+    const mk = (mul) => { const x = ac.createOscillator(); x.setPeriodicWave(hornWave()); applyEnv(x.frequency, fp.map(([a, v, m]) => [a, v * mul, m]), now); x.start(Math.max(now, t0)); x.stop(tOff + 0.05); return x; };
+    const o1 = mk(1), o2 = mk(1.0045);
+    const g2 = ac.createGain(); g2.gain.value = 0.6;
+    const sh = ac.createGain(); sh.gain.value = 1;
+    const pre = ac.createGain(); pre.gain.value = 0.5;
     const hp = bq('highpass', 280, 0.7), pk1 = bq('peaking', 1150, 1.4, null, 6), pk2 = bq('peaking', 2500, 2, null, 3), lp = bq('lowpass', 5200, 0.6);
     const env = ac.createGain(); env.gain.value = 0;
     applyEnv(env.gain, [[t0, 0, 'set'], [t0 + 0.5, 1, 'lin'], [tEnd, 1, 'lin'], [tOff, 0.0001, 'exp']], now);
@@ -246,6 +249,14 @@ export function createEngine(ac, { seed = 1, live = false } = {}) {
     o1.onended = () => { stats.reserved--; for (const n of nodes) n.disconnect(); };
     return { t0, tEnd, tOff, fLo, fHi, period: rise + fall, contour: fp, stop(at) { env.gain.cancelScheduledValues(at); env.gain.setTargetAtTime(0, at, 0.8); o1.stop(at + 4); o2.stop(at + 4); } };
   };
+
+  let horn = null;
+  function hornWave() {
+    if (horn) return horn;
+    const N = 14, re = new Float32Array(N + 1), im = new Float32Array(N + 1);
+    for (let k = 1; k <= N; k++) im[k] = (k % 2 ? 1 : 0.35) / Math.pow(k, 1.05) * (k > 9 ? Math.exp(-(k - 9) * 0.5) : 1);
+    return (horn = ac.createPeriodicWave(re, im));
+  }
 
   // ---------------------------------------------------------------- ambience + tension bed
   // Non-positional beds with listener-dependent levels: wind (more with altitude), insects (near

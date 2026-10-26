@@ -119,7 +119,7 @@ export function createGlowDomes(ctx) {
     m.frustumCulled = false; m.renderOrder = 4; m.name = 'glow-dome';
     ctx.scene.add(m); domes.push(m);
   };
-  mk(0, -40, 0, 1500, 520, 1300, 0.08);
+  mk(0, -40, 0, 1500, 520, 1300, 0.05);
   mk(-6800, -190, 2900, 2600, 420, 2200, 0.035);
   return domes;
 }

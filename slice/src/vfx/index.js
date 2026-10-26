@@ -37,7 +37,7 @@ const ST = {
   },
   ballistic: {
     smoke: { life: 12, w0: 24, w1: 170, col: [0.55, 0.5, 0.48], alpha: 0.32, minSeg: 220, turb: 25, rise: 0, warm: 0, noiseLen: 160, fadePow: 1.2, wkVar: 1.0, breakup: 0.6 },
-    hot: { life: 1.4, w0: 80, w1: 10, col: [11, 4.2, 1.4], alpha: 1, minSeg: 70, fadePow: 1.6 },
+    hot: { life: 1.4, w0: 50, w1: 8, col: [11, 4.2, 1.4], alpha: 1, minSeg: 70, fadePow: 1.6 },
   },
   drone: { hot: { life: 0.15, w0: 1.2, w1: 0.4, col: [2.5, 1.1, 0.4], alpha: 0.5, minSeg: 20 } },
   cruise: {
@@ -378,7 +378,7 @@ export function create(ctx) {
         } else {
           if (bi < MAXI) placeInst(ballistics, bi++, p, vl, 4);
           const h = th.heat;
-          const dcb = camDist(p.x, p.y, p.z), near = Math.min(1, Math.max(0, (dcb - 1200) / 1800));
+          const dcb = camDist(p.x, p.y, p.z), near = Math.min(1, Math.max(0, (dcb - 2000) / 6000));
           // meteor-like plasma head: white-hot core, orange sheath that grows with heating
           glow(p.x, p.y, p.z, 5 + 26 * h, 3 + 13 * h, 1.6 + 4 * h, 40 + 110 * h, 1);
           if (h > 0.04) glow(p.x, p.y, p.z, 2.4 * h, 0.9 * h, 0.3 * h, 260 + 380 * h, 0.55 * (0.2 + 0.8 * near));

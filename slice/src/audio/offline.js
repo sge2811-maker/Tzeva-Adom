@@ -14,11 +14,11 @@ export const PRE = 12; // pre-roll seconds (tails of earlier sounds, limiter set
 // Siren poles: three in Arad (relay offsets and slightly different horns, so they phase against
 // each other like real poles), plus the Nevatim and Dimona sirens heard from afar.
 export const POLES = [
-  { name: 'Arad centre', pos: { x: 0, y: 28, z: 0 }, dt: 0, fLo: 330, fHi: 720, rise: 2.3, fall: 2.3, ref: 160, slap: true },
-  { name: 'Arad north', pos: { x: -380, y: 28, z: -300 }, dt: 0.35, fLo: 338, fHi: 736, rise: 2.25, fall: 2.4, ref: 140, slap: true },
-  { name: 'Arad south-east', pos: { x: 430, y: 28, z: 340 }, dt: 0.8, fLo: 322, fHi: 706, rise: 2.4, fall: 2.2, ref: 140, slap: true },
-  { name: 'Nevatim', pos: { x: -6800, y: 40, z: 2900 }, dt: 1.2, fLo: 300, fHi: 660, rise: 2.6, fall: 2.6, ref: 700, cycles: 12 },
-  { name: 'Dimona', pos: { x: -3600, y: 40, z: 13800 }, dt: 2.0, fLo: 345, fHi: 760, rise: 2.2, fall: 2.5, ref: 1100, cycles: 11 },
+  { name: 'Arad centre', pos: { x: 0, y: 28, z: 0 }, dt: 0, fLo: 330, fHi: 720, rise: 2.3, fall: 2.3, ref: 160, power: 0.26, slap: true },
+  { name: 'Arad north', pos: { x: -380, y: 28, z: -300 }, dt: 0.35, fLo: 338, fHi: 736, rise: 2.25, fall: 2.4, ref: 140, power: 0.26, slap: true },
+  { name: 'Arad south-east', pos: { x: 430, y: 28, z: 340 }, dt: 0.8, fLo: 322, fHi: 706, rise: 2.4, fall: 2.2, ref: 140, power: 0.26, slap: true },
+  { name: 'Nevatim', pos: { x: -6800, y: 40, z: 2900 }, dt: 1.2, fLo: 300, fHi: 660, rise: 2.6, fall: 2.6, ref: 700, power: 0.4, cycles: 12 },
+  { name: 'Dimona', pos: { x: -3600, y: 40, z: 13800 }, dt: 2.0, fLo: 345, fHi: 760, rise: 2.2, fall: 2.5, ref: 1100, power: 0.4, cycles: 11 },
 ];
 export function sirenCycles(P, countdown) { return P.cycles ?? Math.max(4, Math.round((countdown - P.rise * 1.4 - 3.6) / (P.rise + P.fall))); }
 
