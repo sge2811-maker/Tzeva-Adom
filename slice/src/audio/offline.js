@@ -84,7 +84,7 @@ export async function renderOffline(ctx, rec, t0, t1, opts = {}) {
   const jobs = [];
   const add = (type, e, pos, te, extra = {}) => {
     const { ta, d } = arrive(L, te, pos), c = toCtx(ta);
-    const m = { type, kind: e.kind || e.type, threatType: e.threatType, te: +te.toFixed(3), ta: +ta.toFixed(3), outT: +(c - PRE).toFixed(3), d: Math.round(d), delay: +(ta - te).toFixed(3), alt: Math.round(pos.y) };
+    const m = { type, kind: e.kind || e.type, threatType: e.threatType ?? (type === 'impact' ? e.type : undefined), te: +te.toFixed(3), ta: +ta.toFixed(3), outT: +(c - PRE).toFixed(3), d: Math.round(d), delay: +(ta - te).toFixed(3), alt: Math.round(pos.y) };
     if (c < 0.05 || c >= total) return;
     jobs.push({ c, type, e, pos, d, m, ...extra });
   };
