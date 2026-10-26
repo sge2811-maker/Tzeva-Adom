@@ -102,13 +102,18 @@ await withRenderLock(async () => {
     }
     // 3. wheel zoom toward the cursor (3 notches), pitch eases with zoom
     {
-      const Q = { x: Math.round(P.x - w * 0.14), y: Math.round(P.y - h * 0.04) };
+      const Q = await page.evaluate(([W, H, px, py]) => {
+        const c = document.getElementById('gl');
+        for (const [dx, dy] of [[-0.14, -0.04], [0.12, -0.06], [-0.1, 0.08], [0.15, 0.05], [0, -0.1]]) { const x = Math.round(px + W * dx), y = Math.round(py + H * dy); if (document.elementFromPoint(x, y) === c) return { x, y }; }
+        return { x: px, y: py };
+      }, [w, h, P.x, P.y]);
       await page.mouse.move(Q.x, Q.y); await step(2);
       const g0 = await page.evaluate(([x, y]) => window.__slice.ctx.systems.camera.pickGround(x, y), [Q.x, Q.y]);
       const m0 = await mark(), b0 = (await slice(m0 - 1))[0];
-      await page.mouse.wheel(0, -120); await step(1);
+      // page.mouse.wheel dispatch is asynchronous: give Chromium ~25 ms to deliver each notch
+      await page.mouse.wheel(0, -120); await sleep(25); await step(1);
       const first = (await slice(m0))[0];
-      for (let i = 0; i < 2; i++) { await step(2); await page.mouse.wheel(0, -120); }
+      for (let i = 0; i < 2; i++) { await step(2); await page.mouse.wheel(0, -120); await sleep(25); }
       const mLast = await mark(); await step(60);
       const log = await slice(m0), after = await slice(mLast), fin = log[log.length - 1];
       const g1 = await page.evaluate(([x, y]) => window.__slice.ctx.systems.camera.pickGround(x, y), [Q.x, Q.y]);
@@ -120,7 +125,7 @@ await withRenderLock(async () => {
       check('zoom: cursor anchor drift', drift <= fin.dist * 0.03, `${drift.toFixed(1)}m`, `<= ${(fin.dist * 0.03).toFixed(0)} m (3% of dist)`);
       check('zoom: pitch eases with zoom', fin.pitch < b0.pitch - 0.02, `${(b0.pitch * 57.3).toFixed(1)}->${(fin.pitch * 57.3).toFixed(1)}deg`, 'shallower when nearer');
       // zoom back out
-      for (let i = 0; i < 3; i++) { await page.mouse.wheel(0, 120); await step(2); } await step(40);
+      for (let i = 0; i < 3; i++) { await page.mouse.wheel(0, 120); await sleep(25); await step(2); } await step(40);
     }
     // 4. right-drag rotate around the screen centre
     {
@@ -178,7 +183,7 @@ await withRenderLock(async () => {
       await page.keyboard.down('e'); await step(80); await page.keyboard.up('e'); await step(10);
       await page.evaluate(() => window.__slice.ctx.systems.camera.focus(5200, -900, 160, 3.3, 0.15)); await step(90);
       await page.keyboard.down('q'); await step(90); await page.keyboard.up('q'); await step(20);
-      await page.mouse.move(P.x, P.y); for (let i = 0; i < 8; i++) { await page.mouse.wheel(0, 400); await step(3); } await step(40);
+      await page.mouse.move(P.x, P.y); for (let i = 0; i < 8; i++) { await page.mouse.wheel(0, 400); await sleep(25); await step(3); } await step(40);
       const log = await slice(m0), minClr = Math.min(...log.map((f) => f.clr));
       check('clearance: never clips terrain/roofs', minClr >= 3, `${minClr.toFixed(1)}m`, '>= 3 m', `${log.length} frames: 150 m over towers, below the rim, extreme zoom-out`);
     }

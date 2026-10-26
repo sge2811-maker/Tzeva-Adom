@@ -358,7 +358,7 @@ export function create(ctx) {
     if (keys.has('d') || keys.has('arrowright')) fz += 1; if (keys.has('a') || keys.has('arrowleft')) fz -= 1;
     if (keys.has('q')) ry -= 1; if (keys.has('e')) ry += 1;
     if (keys.has('z') || keys.has('=') || keys.has('+') || keys.has('pageup')) zm -= 1; if (keys.has('x') || keys.has('-') || keys.has('pagedown')) zm += 1;
-    const ka = 1 - Math.exp(-dt * (fx || fz ? 16 : 22)), kr = 1 - Math.exp(-dt * (ry ? 14 : 22)), kz = 1 - Math.exp(-dt * (zm ? 12 : 20));
+    const ka = 1 - Math.exp(-dt * (fx || fz ? 18 : 26)), kr = 1 - Math.exp(-dt * (ry ? 14 : 24)), kz = 1 - Math.exp(-dt * (zm ? 12 : 22));
     const sp = goal.dist * 1.05, c = Math.cos(goal.yaw), s = Math.sin(goal.yaw);
     kv.x += ((c * fx - s * fz) * sp - kv.x) * ka; kv.z += ((s * fx + c * fz) * sp - kv.z) * ka;
     kv.r += (ry * 1.5 - kv.r) * kr; kv.zm += (zm * 1.4 - kv.zm) * kz;
@@ -384,7 +384,8 @@ export function create(ctx) {
       if (u >= 1) travel = null;
     } else {
       // critically damped-style exponential follow (no overshoot); 1:1 while grabbing the ground
-      const kp = 1 - Math.exp(-dt * (drag && !drag.rot ? 40 : 13)), kd = 1 - Math.exp(-dt * 12), ky = 1 - Math.exp(-dt * 14);
+      // keyboard and grab-panning already shape the motion: track the goal tightly then
+      const kp = 1 - Math.exp(-dt * ((drag && !drag.rot) || kv.x || kv.z ? 40 : 13)), kd = 1 - Math.exp(-dt * 12), ky = 1 - Math.exp(-dt * 14);
       rig.tx += (goal.tx - rig.tx) * kp; rig.tz += (goal.tz - rig.tz) * kp;
       rig.dist = Math.exp(Math.log(rig.dist) + (Math.log(goal.dist) - Math.log(rig.dist)) * kd);
       rig.yaw += wrap(goal.yaw - rig.yaw) * ky; rig.pitchOff += (goal.pitchOff - rig.pitchOff) * kd;

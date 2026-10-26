@@ -1,15 +1,15 @@
 {
-  "when": "2026-10-24T14:12:39.819Z",
+  "when": "2026-10-24T14:18:49.629Z",
   "viewport": [
     480,
     270
   ],
-  "fps": 4.423604352826956,
+  "method": "capture=1, fixed 60 Hz stepping between real browser input events",
   "results": [
     {
       "name": "drag: latency to first movement",
-      "ok": false,
-      "value": "719ms/2f",
+      "ok": true,
+      "value": "1 frame",
       "limit": "<= 1 frame",
       "extra": ""
     },
@@ -18,26 +18,26 @@
       "ok": true,
       "value": "0ms",
       "limit": "<= 350 ms",
-      "extra": ""
+      "extra": "held still before release: no glide"
     },
     {
       "name": "drag: overshoot",
       "ok": true,
       "value": "0.00%",
       "limit": "<= 1%",
-      "extra": "moved 905 m"
+      "extra": "moved 1039 m"
     },
     {
       "name": "fling: glides after release",
-      "ok": false,
-      "value": "1m",
+      "ok": true,
+      "value": "893m",
       "limit": "> 3% of dist",
       "extra": ""
     },
     {
       "name": "fling: stops by itself",
       "ok": true,
-      "value": "1200ms",
+      "value": "783ms",
       "limit": "<= 1400 ms",
       "extra": ""
     },
@@ -50,17 +50,17 @@
     },
     {
       "name": "zoom: latency to first movement",
-      "ok": false,
-      "value": "none",
+      "ok": true,
+      "value": "1 frame",
       "limit": "<= 1 frame",
       "extra": ""
     },
     {
-      "name": "zoom: settle",
+      "name": "zoom: settle after last notch",
       "ok": true,
-      "value": "0ms",
+      "value": "267ms",
       "limit": "<= 450 ms",
-      "extra": "2600 -> 2600 m"
+      "extra": "2600 -> 1688 m"
     },
     {
       "name": "zoom: overshoot",
@@ -72,30 +72,30 @@
     {
       "name": "zoom: cursor anchor drift",
       "ok": true,
-      "value": "0.0m",
-      "limit": "<= 78 m (3%)",
+      "value": "14.1m",
+      "limit": "<= 51 m (3% of dist)",
       "extra": ""
     },
     {
       "name": "zoom: pitch eases with zoom",
-      "ok": false,
-      "value": "35.5->35.5deg",
+      "ok": true,
+      "value": "35.5->31.1deg",
       "limit": "shallower when nearer",
       "extra": ""
     },
     {
       "name": "rotate: latency to first movement",
-      "ok": false,
-      "value": "none",
+      "ok": true,
+      "value": "1 frame",
       "limit": "<= 1 frame",
       "extra": ""
     },
     {
-      "name": "rotate: settle",
+      "name": "rotate: settle after release",
       "ok": true,
-      "value": "0ms",
+      "value": "250ms",
       "limit": "<= 350 ms",
-      "extra": "0.0 deg"
+      "extra": "30.3 deg"
     },
     {
       "name": "rotate: overshoot",
@@ -105,53 +105,67 @@
       "extra": ""
     },
     {
-      "name": "keys: latency to first movement",
-      "ok": false,
-      "value": "1425ms/2f",
-      "limit": "<= 1 frame",
+      "name": "rotate: pivots on screen centre",
+      "ok": true,
+      "value": "0.00m",
+      "limit": "target fixed",
       "extra": ""
+    },
+    {
+      "name": "keys: latency to first movement",
+      "ok": true,
+      "value": "1 frame",
+      "limit": "<= 1 frame",
+      "extra": "90% speed after 167 ms"
     },
     {
       "name": "keys: stop after key-up",
       "ok": true,
-      "value": "244ms",
+      "value": "117ms",
       "limit": "<= 250 ms",
       "extra": ""
     },
     {
       "name": "keys: pan jitter (speed CV)",
-      "ok": false,
-      "value": "0.000",
+      "ok": true,
+      "value": "0.0030",
       "limit": "<= 0.12",
-      "extra": "1 frames, frame dt varies on SwiftShader"
+      "extra": "1770 m/s at 1688 m"
     },
     {
-      "name": "keys: Z zooms in",
-      "ok": false,
-      "value": "2600->2600m",
-      "limit": "closer",
+      "name": "keys: Z zooms in, Q rotates",
+      "ok": true,
+      "value": "1688->884m, -40deg",
+      "limit": "closer, rotated",
       "extra": ""
     },
     {
-      "name": "focus (F): arrives, no travel left",
-      "ok": false,
-      "value": "518m moved",
-      "limit": "arrive <= 1.25 s",
-      "extra": ""
+      "name": "focus (F): eased fly-to arrives",
+      "ok": true,
+      "value": "800ms",
+      "limit": "<= 1300 ms",
+      "extra": "moved 1506 m"
     },
     {
       "name": "clearance: never clips terrain/roofs",
       "ok": true,
-      "value": "48.0m",
+      "value": "6.0m",
       "limit": ">= 3 m",
-      "extra": "30 frames incl. 150 m zoom over towers and the escarpment"
+      "extra": "524 frames: 150 m over towers, below the rim, extreme zoom-out"
     },
     {
       "name": "bounds: target and zoom clamped",
       "ok": true,
-      "value": "807,746 d1022",
+      "value": "12000,9000 d12000",
       "limit": "x<=12000 z<=9000 d<=12000",
       "extra": ""
+    },
+    {
+      "name": "cpu: camera update",
+      "ok": true,
+      "value": "0.000ms",
+      "limit": "<= 0.3 ms median",
+      "extra": "p95 0.100 ms (performance.now() is coarsened to 0.1 ms)"
     },
     {
       "name": "console: no errors",
@@ -161,5 +175,5 @@
       "extra": ""
     }
   ],
-  "pass": false
+  "pass": true
 }

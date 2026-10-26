@@ -12,8 +12,8 @@ export function createBatteries(ctx) {
     olive: new THREE.MeshStandardMaterial({ color: 0x5a5c47, roughness: 0.75, metalness: 0.2 }),
     sand: new THREE.MeshStandardMaterial({ color: 0x9c8c6a, roughness: 0.8, metalness: 0.1 }),
     dark: new THREE.MeshStandardMaterial({ color: 0x2b2e31, roughness: 0.6, metalness: 0.4 }),
-    pad: new THREE.MeshStandardMaterial({ color: 0xa39d90, roughness: 0.95 }),
-    berm: new THREE.MeshStandardMaterial({ color: 0x8c7c64, roughness: 1.0 }),
+    pad: new THREE.MeshStandardMaterial({ color: 0xb4a68c, roughness: 0.95 }),
+    berm: new THREE.MeshStandardMaterial({ color: 0x9a8668, roughness: 1.0 }),
     panel: new THREE.MeshStandardMaterial({ color: 0x4d5a4c, roughness: 0.5, metalness: 0.3 }),
     glass: new THREE.MeshStandardMaterial({ color: 0x0b0e12, roughness: 0.2, metalness: 0.6 }),
     tyre: new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.9 }),
@@ -41,8 +41,16 @@ export function createBatteries(ctx) {
   group.add(makeGlowPoints(new Float32Array(LP), new Float32Array(LC), new Float32Array(LS), 1.4));
 
   // bake a group's meshes into ONE vertex-coloured mesh (one draw call per moving part)
-  const baked = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7, metalness: 0.25 });
-  const bake = (g) => {
+  const baked = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.75, metalness: 0.1 });
+  // ground pieces: matte, warm like the terrain, and lit by the shared flash term
+  const groundMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.97, metalness: 0 });
+  groundMat.onBeforeCompile = (sh) => {
+    sh.uniforms.uFlashSky = ctx.envFlash || { value: new THREE.Color() };
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uFlashSky;')
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * (vec3(0.05, 0.035, 0.02) + uFlashSky);');
+  };
+  groundMat.customProgramCacheKey = () => 'env-pad';
+  const bake = (g, mat = baked) => {
     g.updateMatrixWorld(true);
     const inv = new THREE.Matrix4().copy(g.matrixWorld).invert();
     const geos = [];
@@ -56,11 +64,11 @@ export function createBatteries(ctx) {
       geo.setAttribute('color', new THREE.BufferAttribute(arr, 3));
       geos.push(geo);
     });
-    const mesh = new THREE.Mesh(mergeGeometries(geos), baked);
+    const mesh = new THREE.Mesh(mergeGeometries(geos), mat);
     mesh.position.copy(g.position); mesh.rotation.copy(g.rotation);
     return mesh;
   };
-  group.add(bake(padRoot));
+  group.add(bake(padRoot, groundMat));
   const cyl = (r, h, m, x, y, z, rx = 0, rz = 0) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 10), m); o.position.set(x, y, z); o.rotation.set(rx, 0, rz); return o; };
   // generic 3-axle truck: chassis, wheels, cab with dark glazing, outriggers
   function truck(mat, len = 7.5) {

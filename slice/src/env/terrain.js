@@ -35,7 +35,7 @@ export function createTerrain(ctx) {
       const n = fbm(x * 0.002 + 3, z * 0.002, 3), n2 = fbm(x * 0.0003, z * 0.0003 + 7, 3);
       let r = 0.33 + 0.07 * n + 0.03 * n2, g = 0.26 + 0.05 * n + 0.02 * n2, b = 0.18 + 0.03 * n;
       const urb = Math.exp(-((x / 900) ** 2 + (z / 780) ** 2) * 1.6);
-      r = r * (1 - urb * 0.3) + 0.30 * urb * 0.3; g = g * (1 - urb * 0.3) + 0.27 * urb * 0.3; b = b * (1 - urb * 0.3) + 0.22 * urb * 0.3;
+      r = r * (1 - urb * 0.45); g = g * (1 - urb * 0.45); b = b * (1 - urb * 0.42); // town lots darker: the street pools carry the light
       const rock = smoothstep(2600, 6000, x) * (1 - smoothstep(15000, 17000, x)) + smoothstep(16500, 19000, x) * 0.6;
       r = r * (1 - rock * 0.3) + 0.27 * rock * 0.3 * (0.8 + 0.4 * n2); g = g * (1 - rock * 0.3) + 0.23 * rock * 0.3; b = b * (1 - rock * 0.3) + 0.18 * rock * 0.3;
       if (h < -390 && x > 7000) { r = 0.46; g = 0.44; b = 0.40; } // salt crust at the shore
@@ -151,7 +151,7 @@ export function createTerrain(ctx) {
           normal = normalize(normal + (viewMatrix * vec4(gW, 0.0)).xyz);
         }`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-        totalEmissiveRadiance += vec3(1.0, 0.55, 0.24) * vGlow * vGlow * 0.12 * diffuseColor.rgb;
+        totalEmissiveRadiance += vec3(1.0, 0.55, 0.24) * vGlow * vGlow * 0.05 * diffuseColor.rgb;
         totalEmissiveRadiance += uFlashSky * diffuseColor.rgb * (0.5 + 0.5 * normalize(vWN).y);`);
   };
   mat.customProgramCacheKey = () => 'env-terrain';

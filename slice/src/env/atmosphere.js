@@ -106,7 +106,7 @@ export function createGlowDomes(ctx) {
           float h = sqrt(disc);                       // half chord in unit-sphere space
           float t0 = max(-b - h, 0.0), t1 = -b + h;
           vec3 m = o + d * (t0 + t1) * 0.5;
-          float g = h * h * h * exp(-max(m.y, 0.0) * 1.2);
+          float g = h * h * h * h * exp(-max(m.y, 0.0) * 1.2);
           float camD = length((cameraPosition - uC).xz) / max(uR.x, uR.z);
           float outside = smoothstep(0.55, 1.4, camD);
           vec3 rel = uC - cameraPosition; float dist = length(rel);
@@ -119,7 +119,7 @@ export function createGlowDomes(ctx) {
     m.frustumCulled = false; m.renderOrder = 4; m.name = 'glow-dome';
     ctx.scene.add(m); domes.push(m);
   };
-  mk(0, -40, 0, 1500, 520, 1300, 0.045);
-  mk(-6800, -190, 2900, 2600, 420, 2200, 0.022);
+  mk(0, -40, 0, 1500, 520, 1300, 0.08);
+  mk(-6800, -190, 2900, 2600, 420, 2200, 0.035);
   return domes;
 }

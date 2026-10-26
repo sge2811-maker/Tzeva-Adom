@@ -29,16 +29,17 @@ export function createCity(ctx) {
     const panels = [], tanks = [];
     for (const b of B) {
       if (b.type === 'commercial' || b.type === 'shed' || b.type === 'wall') continue;
-      const n = b.type === 'house' ? 1 : b.type === 'tower' ? 2 : Math.max(2, Math.floor(b.w * b.d / 90));
+      const n = b.type === 'house' ? 1 + Math.floor(rng.next() * 2) : b.type === 'tower' ? 3 + Math.floor(rng.next() * 3) : Math.min(8, Math.max(3, Math.floor(b.w * b.d / 60)));
       for (let i = 0; i < n; i++) {
         const lx = (rng.next() - 0.5) * (b.w - 4), lz = (rng.next() - 0.5) * (b.d - 4);
-        panels.push([b.x + lx, b.y + b.h + 0.9, b.z + lz]);
-        tanks.push([b.x + lx, b.y + b.h + 1.6, b.z + lz - 1.2]);
+        const c = Math.cos(b.rot || 0), sn = Math.sin(b.rot || 0);
+        panels.push([b.x + lx * c - lz * sn, b.y + b.h + 1.0, b.z + lx * sn + lz * c]);
+        tanks.push([b.x + lx * c - (lz - 1.6) * sn, b.y + b.h + 1.9, b.z + lx * sn + (lz - 1.6) * c]);
       }
     }
-    const pg = new THREE.BoxGeometry(2.0, 0.08, 1.4); pg.rotateX(-0.55);
-    const tg = new THREE.CylinderGeometry(0.32, 0.32, 1.8, 8); tg.rotateZ(Math.PI / 2);
-    const pm = new THREE.InstancedMesh(pg, new THREE.MeshStandardMaterial({ color: 0x1b2433, roughness: 0.35, metalness: 0.6 }), panels.length);
+    const pg = new THREE.BoxGeometry(2.8, 0.1, 2.0); pg.rotateX(-0.55);
+    const tg = new THREE.CylinderGeometry(0.45, 0.45, 2.5, 8); tg.rotateZ(Math.PI / 2);
+    const pm = new THREE.InstancedMesh(pg, new THREE.MeshStandardMaterial({ color: 0x2a3446, roughness: 0.3, metalness: 0.5 }), panels.length);
     const tm = new THREE.InstancedMesh(tg, new THREE.MeshStandardMaterial({ color: 0xb8b6ae, roughness: 0.5, metalness: 0.3 }), tanks.length);
     const m4 = new THREE.Matrix4();
     panels.forEach((p, i) => { m4.makeTranslation(p[0], p[1], p[2]); pm.setMatrixAt(i, m4); });

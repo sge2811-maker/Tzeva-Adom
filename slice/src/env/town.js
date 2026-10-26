@@ -266,7 +266,8 @@ export function buildBuildings(ctx, group, extra = []) {
       }
     };
     // roof: slab, with a parapet; some houses get a hipped tile roof instead
-    const roofCol = (type === 4 ? [0.36, 0.36, 0.35] : [0.27, 0.25, 0.22]).map((v) => v * (0.85 + 0.3 * hs(5)));
+    const roofPal = [[0.27, 0.25, 0.22], [0.20, 0.19, 0.18], [0.34, 0.32, 0.28], [0.30, 0.26, 0.21], [0.42, 0.41, 0.38]];
+    const roofCol = (type === 4 ? [0.36, 0.36, 0.35] : roofPal[Math.floor(hs(11) * roofPal.length)]).map((v) => v * (0.85 + 0.3 * hs(5)));
     const tile = type === 2 && hs(6) < 0.38;
     if (tile) {
       const rh = Math.min(hw, hd) * 0.55, tc = [0.42, 0.17, 0.10].map((v) => v * (0.85 + 0.3 * hs(7)));

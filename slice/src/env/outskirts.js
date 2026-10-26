@@ -57,7 +57,7 @@ export function planOutskirts(ctx) {
       if (rng.chance(0.15)) continue;
       const b = make(); const off = g.w / 2 + setback + b.d / 2;
       const x = g.ax + ux * u + nx * off * sd, z = g.az + uz * u + nz * off * sd;
-      if (nearRoad(x, z, Math.max(b.w, b.d) / 2 + 2) || !clearOf(x, z, b.w + 3, b.d + 3, 2)) continue;
+      if (nearRoad(x, z, b.d / 2 + 0.5) || !clearOf(x, z, b.w + 3, b.d + 3, 2)) continue;
       b.x = x; b.z = z; b.rot = Math.atan2(uz, ux) + rng.range(-0.03, 0.03);
       addB(b);
       if (b.type === 'house' && rng.chance(0.5)) decals.push({ type: 1, x: x + nx * sd * (b.d / 2 + 4), z: z + nz * sd * (b.d / 2 + 4), w: b.w + 4, d: 7, rot: b.rot + Math.PI / 2 });
@@ -93,10 +93,10 @@ export function planOutskirts(ctx) {
     street(-1010, -300, -1500, -300, 12); street(-1010, 400, -1500, 400, 12);
     for (let a = 0; a < 2; a++) for (const [z0, z1] of [[-290, -40], [130, 390]]) {
       const x0 = xsI[a] - 8, x1 = xsI[a + 1] + 8; // cell between two side streets (x0 > x1)
-      for (let k = 0; k < 2; k++) {
-        const w = rng.range(26, 48), d = rng.range(18, 30);
-        const x = (x0 + x1) / 2 + rng.range(-40, 40), z = z0 + (k + 0.5) * (z1 - z0) / 2 + rng.range(-20, 20);
-        if (nearRoad(x, z, Math.max(w, d) / 2 + 14) || !clearOf(x, z, w + 20, d + 20, 3)) continue;
+      for (let k = 0; k < 9; k++) {
+        const w = rng.range(22, 44), d = rng.range(16, 28);
+        const x = (x0 + x1) / 2 + rng.range(-70, 70), z = z0 + rng.range(30, z1 - z0 - 30);
+        if (nearRoad(x, z, Math.max(w, d) / 2 + 6) || !clearOf(x, z, w + 20, d + 20, 3)) continue;
         addB({ type: 'shed', x, z, w, d, floors: 1 });
         const fw = w / 2 + 9, fd = d / 2 + 9;
         wall(x - fw, z - fd, x + fw, z - fd); wall(x - fw, z + fd, x + fw, z + fd); wall(x - fw, z - fd, x - fw, z + fd);
@@ -189,7 +189,7 @@ export function buildDecals(ctx, group, decals) {
         diffuseColor.rgb = col;`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
         float townK = exp(-dot(vDW.xz / vec2(820.0, 700.0), vDW.xz / vec2(820.0, 700.0)) * 1.4);
-        totalEmissiveRadiance += diffuseColor.rgb * vec3(1.0, 0.62, 0.32) * 0.6 * townK;`);
+        totalEmissiveRadiance += diffuseColor.rgb * vec3(1.0, 0.62, 0.32) * 0.3 * townK;`);
   };
   mat.customProgramCacheKey = () => 'env-decals';
   const im = new THREE.InstancedMesh(geo, mat, n);
