@@ -45,7 +45,7 @@ export function createEngine(ac, { seed = 1, live = false } = {}) {
   glue.connect(out);
   const bus = {};
   for (const b of ['sfx', 'siren', 'amb', 'bed', 'ui']) { bus[b] = ac.createGain(); bus[b].connect(b === 'sfx' ? glue : out); }
-  bus.amb.gain.value = 1; bus.bed.gain.value = 0.9; bus.ui.gain.value = 0.5;
+  bus.amb.gain.value = 1.35; bus.bed.gain.value = 0.3; bus.ui.gain.value = 0.5;
   const verb = ac.createConvolver(); verb.normalize = true; verb.buffer = B.ir;
   const verbOut = ac.createGain(); verbOut.gain.value = 0.55;
   verb.connect(verbOut).connect(out);
@@ -143,7 +143,7 @@ export function createEngine(ac, { seed = 1, live = false } = {}) {
   function blast(e, t, d, r, size, ground, double) {
     const near = clamp(1 - (d - 600) / 3800, 0, 1), far = clamp(d / 3000, 0.3, 1);
     const tail = clamp(2.2 + d / 1800, 2.6, 9) * (ground ? 1.15 : 1) * r.range(0.9, 1.1);
-    const V = voice(e, t, d, { ref: 240 * size, send: 0.45, dur: tail + 0.4, label: (ground ? 'impact:' : 'blast:') + (e.threatType || e.type) });
+    const V = voice(e, t, d, { ref: 520 * size, send: 0.45, dur: tail + 0.4, label: (ground ? 'impact:' : 'blast:') + (e.threatType || e.type) });
     if (!V) return null;
     if (near > 0) {
       crack(V, t, 1.25 * near * Math.sqrt(size), 1, r);
@@ -274,7 +274,7 @@ export function createEngine(ac, { seed = 1, live = false } = {}) {
     loop(B.cricketsA, 1, off * 1.3).connect(A.insects); const cb = loop(B.cricketsB, 0.97, off * 0.7); const cbg = lvl(0.6); cb.connect(cbg).connect(A.insects);
     // town: low hum (mains 50 Hz harmonics, very faint), distant traffic swells
     A.town = lvl(1); A.townL = lvl(0.12); A.town.connect(A.townL).connect(A.duck);
-    const hum = loop(B.brown, 1, off); hum.connect(bq('lowpass', 160, 0.7)).connect(lvl(0.7)).connect(A.town);
+    const hum = loop(B.brown, 1, off); hum.connect(bq('lowpass', 160, 0.7)).connect(bq('highpass', 45, 0.7)).connect(lvl(0.3)).connect(A.town);
     for (const [f, g] of [[50, 0.012], [100, 0.02], [150, 0.008]]) { const o = ac.createOscillator(); o.frequency.value = f; o.start(t0); o.connect(lvl(g)).connect(A.town); }
     A.traffic = lvl(1); const tr = loop(B.pink, 0.8, off * 1.7); tr.connect(bq('bandpass', 520, 0.9)).connect(A.traffic).connect(lvl(0.5)).connect(A.town);
     const swell = ac.createOscillator(); swell.frequency.value = 0.043; const sw = lvl(0.35); swell.connect(sw).connect(A.traffic.gain); swell.start(t0);

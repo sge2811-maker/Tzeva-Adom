@@ -182,7 +182,7 @@ export function create(ctx) {
     const lbl = el.querySelector('.lbl');
     const m = {
       kind, id, el, lbl, world, icon, stem: el.querySelector('.stem'), nEl: el.querySelector('.n'), eEl: el.querySelector('.e'), xEl: el.querySelector('.x'), icoEl: el.querySelector('.ico'),
-      n: '', e: '', x: '', wC: 40, wF: 60, prio: 10, mode: 'compact', dy: 0, sx: -1e4, sy: -1e4, on: true, want: 'compact', cls: '', d: 0,
+      n: '', e: '', x: '', wC: 40, wF: 60, prio: 10, mode: 'compact', dy: 0, side: 0, off: false, vis: false, px: 0, py: 0, sx: -1e4, sy: -1e4, on: true, want: 'compact', cls: '', d: 0,
     };
     if (onClick) {
       const h = (e) => { e.stopPropagation(); onClick(m, e); };
@@ -200,7 +200,7 @@ export function create(ctx) {
     const base = 5 + 14 + 5 + textW(n, F_N) + (e ? 5 + textW(e, F_E) : 0) + 9;
     m.wC = base; m.wF = base + (x ? 5 + textW(x.toUpperCase(), F_X, 0.69) : 0);
   }
-  function setCls(m, cls) { if (cls !== m.cls) { m.cls = cls; m.el.className = `mk mk-${m.kind} ${cls} m-${m.mode}`; } }
+  function setCls(m, cls) { if (cls !== m.cls) { m.cls = cls; m.el.className = `mk mk-${m.kind} ${cls} m-${m.mode} sd${m.side + 1}`; } }
 
   const padM = layout.pads.map((p) => { const m = mk('pad', 'pad-' + p.id, new THREE.Vector3(p.x, groundAt(p.x, p.z) + 4, p.z), 'hexplus', () => openPad(p, m)); m.pad = p; return m; });
   const shM = sim.shelters.map((s) => { const m = mk('shelter', s.id, new THREE.Vector3(s.door.x, s.y + 3, s.door.z), 'shelter', () => clickShelter(s)); m.s = s; return m; });
@@ -399,14 +399,14 @@ export function create(ctx) {
       if (sel && sel.status !== 'sheltered') {
         const eta = etaTo(sel.id, s.id), es = etaStatus(eta), free = freeAt(s.id, sel.id);
         e = sel.shelter === s.id ? `ETA ${secs(eta)}` : `${secs(eta)}`;
-        x = free < sel.n - sel.inside ? `${Math.max(0, free)} places left` : sel.shelter === s.id ? 'current' : `${free} free`;
+        x = free < sel.n - sel.inside ? `${Math.max(0, free)} places left` : `${free} free`;
         extra = ` pick e-${free < sel.n - sel.inside ? 'late' : es}`;
-        if (s.locked && s.opening <= 0) x = 'click: open + send';
-      } else if (s.locked && s.opening <= 0) x = 'click to open';
+      }
       setText(m, n, e, x, icon);
       setCls(m, st + extra + (sel && sel.shelter === s.id ? ' tgt' : '') + (hoverShelter === s.id ? ' hov' : '') + (s.locked || sel ? ' urg' : ''));
-      m.prio = (hoverShelter === s.id ? 200 : 0) + (s.locked ? 80 : 30) + (sel ? 40 : 0) + (sel && sel.shelter === s.id ? 20 : 0);
-      m.forceFull = !!sel || hoverShelter === s.id || (s.locked && s.opening <= 0 && sim.phase === 'alert');
+      const lockedNow = s.locked && s.opening <= 0 && (sim.phase === 'alert' || sim.phase === 'prep' && sim.t >= pacing.earlyWarning);
+      m.prio = hoverShelter === s.id ? 400 : sel && sel.shelter === s.id ? 320 : lockedNow ? 250 : (s.locked ? 80 : 30) + (sel ? 40 : 0);
+      m.forceFull = hoverShelter === s.id || (sel && sel.shelter === s.id) || (lockedNow && !sel);
     }
     for (const m of grM) {
       const g = infoById.get(m.g.id);
@@ -452,46 +452,59 @@ export function create(ctx) {
   function pushRect(x0, y0, x1, y1) { let r = placed[nPlaced]; if (!r) placed[nPlaced] = r = [0, 0, 0, 0]; r[0] = x0; r[1] = y0; r[2] = x1; r[3] = y1; nPlaced++; }
   function hits(x0, y0, x1, y1) { for (let i = 0; i < nPlaced; i++) { const r = placed[i]; if (x0 < r[2] && x1 > r[0] && y0 < r[3] && y1 > r[1]) return true; } return false; }
   let order = markers.slice();
-  const TRY_FULL = ['full', 0, 'full', 24, 'compact', 0], TRY_CMP = ['compact', 0];
-  function fits(m, md, d, sx, sy) {
-    const w = (md === 'full' ? m.wF : m.wC) * mkScale, y1 = sy - STEM - d, y0 = y1 - LBL_H * mkScale;
-    if (hits(sx - w / 2 - 2, y0 - 2, sx + w / 2 + 2, y1 + 2)) return false;
-    pushRect(sx - w / 2 - 2, y0 - 2, sx + w / 2 + 2, y1 + 2);
+  // placement candidates: [mode, side]; side 0 = above on the stem, 1 = right of the foot,
+  // -1 = left of the foot, 2 = lifted above (longer stem). Sideways is tried before lifting.
+  const TRY_FULL = ['full', 0, 'full', 1, 'full', -1, 'full', 2, 'compact', 0, 'compact', 1, 'compact', -1], TRY_CMP = ['compact', 0, 'compact', 1, 'compact', -1, 'compact', 2];
+  let vw = innerWidth, vh = innerHeight;
+  function fits(m, md, side, sx, sy) {
+    const w = (md === 'full' ? m.wF : m.wC) * mkScale, h = LBL_H * mkScale;
+    let x0, y0;
+    if (side === 1) { x0 = sx + 12; y0 = sy - h / 2; }
+    else if (side === -1) { x0 = sx - 12 - w; y0 = sy - h / 2; }
+    else { x0 = sx - w / 2; y0 = sy - STEM - (side === 2 ? 24 : 0) - h; }
+    const x1 = x0 + w, y1 = y0 + h;
+    if (x0 < 4 || x1 > vw - 4 || y0 < 4 || y1 > vh - 4) return false;
+    if (hits(x0 - 2, y0 - 2, x1 + 2, y1 + 2)) return false;
+    pushRect(x0 - 2, y0 - 2, x1 + 2, y1 + 2);
     return true;
   }
   function placeMarkers(townDist) {
-    const W = innerWidth, H = innerHeight;
+    const W = vw = innerWidth, H = vh = innerHeight;
     nPlaced = 0;
     for (const o of obstacles) pushRect(o[0], o[1], o[2], o[3]);
     const cluster = townDist > CLUSTER_DIST;
     const hideAll = sim.phase === 'debrief';
+    // feet first: every visible foot is reserved before any label, so labels never cover a foot
     for (const m of order) {
-      m.under = false;
+      m.off = false; m.vis = false;
       let on = !hideAll;
       if (on && (m.kind === 'group' || m.kind === 'shelter')) on = !cluster && !(m.kind === 'group' && m.done);
       if (on && m === aradM) on = cluster;
-      if (on) { v.copy(m.world).project(camera); on = v.z < 1 && v.z > -1 && Math.abs(v.x) < 1.02 && Math.abs(v.y) < 1.02; }
-      if (on) { m.d = camera.position.distanceTo(m.world); if (m.kind === 'pad' && m.d > 9000 && !m.pad.battery) on = false; }
-      if (!on) { if (m.mode !== 'hidden') { m.mode = 'hidden'; m.el.className = `mk mk-${m.kind} ${m.cls} m-hidden`; } continue; }
-      const sx = (v.x + 1) / 2 * W, sy = (1 - v.y) / 2 * H;
-      m.under = false;
-      for (const o of obstacles) if (sx > o[0] && sx < o[2] && sy > o[1] && sy < o[3]) { m.under = true; break; }
-      if (m.under) { if (m.mode !== 'hidden') { m.mode = 'hidden'; m.el.className = `mk mk-${m.kind} ${m.cls} m-hidden`; } continue; }
+      if (!on) continue;
+      v.copy(m.world).project(camera);
+      const inView = v.z < 1 && v.z > -1 && Math.abs(v.x) < 1.0 && Math.abs(v.y) < 1.0;
+      if (!inView) { m.off = true; continue; }
+      m.d = camera.position.distanceTo(m.world);
+      if (m.kind === 'pad' && m.d > 9000 && !m.pad.battery) continue;
+      m.px = (v.x + 1) / 2 * W; m.py = (1 - v.y) / 2 * H;
+      let under = false;
+      for (const o of obstacles) if (m.px > o[0] && m.px < o[2] && m.py > o[1] && m.py < o[3]) { under = true; break; }
+      if (under) continue;              // behind a panel: the roster row and radar ping carry it
+      m.vis = true;
+      pushRect(m.px - 9, m.py - 9, m.px + 9, m.py + 9);
+    }
+    for (const m of order) {
+      if (!m.vis) { if (m.mode !== 'hidden') { m.mode = 'hidden'; m.el.className = `mk mk-${m.kind} ${m.cls} m-hidden`; } continue; }
+      const sx = m.px, sy = m.py;
       const want = m.forceFull || m.d < FULL_DIST ? 'full' : 'compact';
-      // try: previous placement first (stability), then full/compact at increasing lifts, then a dot
-      let mode = null, dy = 0;
-      if (m.mode === want && fits(m, m.mode, m.dy, sx, sy)) { mode = m.mode; dy = m.dy; }
+      let mode = null, side = 0;
+      if (m.mode === want && fits(m, m.mode, m.side, sx, sy)) { mode = m.mode; side = m.side; }
       else {
         const tries = want === 'full' ? TRY_FULL : TRY_CMP;
-        for (let k = 0; k < tries.length; k += 2) if (fits(m, tries[k], tries[k + 1], sx, sy)) { mode = tries[k]; dy = tries[k + 1]; break; }
+        for (let k = 0; k < tries.length; k += 2) if (fits(m, tries[k], tries[k + 1], sx, sy)) { mode = tries[k]; side = tries[k + 1]; break; }
       }
-      if (!mode) { mode = 'dot'; dy = 0; }
-      pushRect(sx - 8, sy - 8, sx + 8, sy + 8); // the ground foot is always reserved
-      if (mode !== m.mode || dy !== m.dy) {
-        m.mode = mode;
-        m.el.className = `mk mk-${m.kind} ${m.cls} m-${mode}`;
-        if (dy !== m.dy) { m.dy = dy; m.lbl.style.bottom = `${STEM + dy}px`; m.stem.style.height = `${STEM - 2 + dy}px`; }
-      }
+      if (!mode) { mode = 'dot'; side = 0; }
+      if (mode !== m.mode || side !== m.side) { m.mode = mode; m.side = side; m.el.className = `mk mk-${m.kind} ${m.cls} m-${mode} sd${side + 1}`; }
       if (Math.abs(sx - m.sx) > 0.3 || Math.abs(sy - m.sy) > 0.3) { m.sx = sx; m.sy = sy; m.el.style.transform = `translate3d(${sx.toFixed(1)}px,${sy.toFixed(1)}px,0)`; }
     }
   }
@@ -503,45 +516,46 @@ export function create(ctx) {
     if (!e) {
       const el = document.createElement('button');
       el.className = 'mk-edge'; el.dataset.edge = m.id;
-      el.innerHTML = `<i class="arw"><svg viewBox="0 0 12 12"><path d="M2 2l8 4-8 4z"/></svg></i><span class="ico"></span><b></b>`;
+      el.innerHTML = `<i class="arw"><svg viewBox="0 0 12 12"><path d="M1.5 1.5L10.5 6 1.5 10.5 4 6z"/></svg></i><span class="ico"></span><b></b>`;
+      el.title = m.kind === 'shelter' ? `${m.s.name} is locked: click to look` : 'Group in trouble: click to look';
       el.onclick = (q) => { q.stopPropagation(); focusCam(m.world.x, m.world.z); if (m.kind === 'group') selectGroup(m.g.id); };
       $('edges').appendChild(el);
-      e = { el, arw: el.querySelector('.arw'), ico: el.querySelector('.ico'), b: el.querySelector('b'), on: false, x: 0, y: 0, a: 0, txt: '', icon: '', cls: '' };
+      e = { el, arw: el.querySelector('.arw'), ico: el.querySelector('.ico'), b: el.querySelector('b'), on: false, x: 0, y: 0, a: 999, txt: '', icon: '' };
       edgeEls.set(m, e);
     }
     return e;
   }
   function placeEdges(cluster) {
-    const W = innerWidth, H = innerHeight, cx = W / 2, cy = H / 2;
-    const L = 290 * mkScale, T = 96, Rr = W - 46, B = H - 96 * mkScale;
+    const W = innerWidth, H = innerHeight, cx = W / 2, cy = H / 2, M = 22;
     for (const m of markers) {
-      const trouble = !cluster && (sim.phase === 'alert' || (sim.phase === 'prep' && sim.t >= pacing.earlyWarning)) && (
+      const trouble = !cluster && m.off && (sim.phase === 'alert' || (sim.phase === 'prep' && sim.t >= pacing.earlyWarning)) && (
         (m.kind === 'shelter' && m.s.locked && m.s.opening <= 0) ||
         (m.kind === 'group' && sim.phase === 'alert' && !m.done && (m.status === 'late' || m.status === 'blocked')));
-      const need = trouble && (m.mode === 'hidden' || m.under);
-      const e = need || edgeEls.has(m) ? edgeFor(m) : null;
+      const e = trouble || edgeEls.has(m) ? edgeFor(m) : null;
       if (!e) continue;
-      if (!need) { if (e.on) { e.on = false; e.el.hidden = true; } continue; }
+      if (!trouble) { if (e.on) { e.on = false; e.el.hidden = true; } continue; }
       if (!e.on) { e.on = true; e.el.hidden = false; }
       ev.copy(m.world).applyMatrix4(camera.matrixWorldInverse);
-      // direction in screen space; points behind the camera are mirrored
       let dx = ev.x, dy = -ev.y; const zf = Math.max(1, -ev.z);
       if (ev.z > 0) { dx = -dx; dy = -dy; }
       dx /= zf; dy /= zf; if (Math.abs(dx) + Math.abs(dy) < 1e-6) dy = 1;
-      const kx = dx > 0 ? (Rr - cx) / dx : (L - cx) / dx, ky = dy > 0 ? (B - cy) / dy : (T - cy) / dy;
-      const k = Math.min(Math.abs(kx), Math.abs(ky));
+      // clamp to the real viewport border, then step out of any panel along that border
+      const kx = Math.abs((dx > 0 ? W - M - cx : M - cx) / (dx || 1e-9)), ky = Math.abs((dy > 0 ? H - M - cy : M - cy) / (dy || 1e-9));
+      const k = Math.min(kx, ky);
       let x = cx + dx * k, y = cy + dy * k;
-      if (m.under) { const p = (ev.copy(m.world).project(camera)); x = Math.max(L, Math.min(Rr, (p.x + 1) / 2 * W)); y = Math.max(T, Math.min(B, (1 - p.y) / 2 * H)); }
-      for (const o of obstacles) if (x > o[0] - 70 && x < o[2] + 70 && y > o[1] - 16 && y < o[3] + 16) y = o[3] + 22;
+      for (const o of obstacles) {
+        if (x < o[0] - 12 || x > o[2] + 12 || y < o[1] - 12 || y > o[3] + 12) continue;
+        if (kx <= ky) x = dx < 0 ? o[2] + 16 : o[0] - 16; else y = dy < 0 ? o[3] + 16 : o[1] - 16;
+      }
       const a = Math.atan2(dy, dx) * 180 / Math.PI;
-      const txt = m.kind === 'shelter' ? `${shortName(m.s)} locked` : `${m.n} ${m.status === 'blocked' ? 'locked out' : 'late'}`;
+      const txt = m.kind === 'shelter' ? shortName(m.s) : m.n;
       const icon = m.kind === 'shelter' ? 'lock' : 'people';
-      if (txt !== e.txt) { e.txt = txt; e.b.textContent = txt; e.hw = (4 + 18 + 6 + textW(txt.toUpperCase(), '600 12px "IW Sans"', 0.72) + 10) / 2; e.a = 999; }
+      if (txt !== e.txt) { e.txt = txt; e.b.textContent = txt; e.a = 999; }
       if (icon !== e.icon) { e.icon = icon; e.ico.innerHTML = ic(icon); }
       if (Math.abs(x - e.x) > 0.5 || Math.abs(y - e.y) > 0.5) { e.x = x; e.y = y; e.el.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) translate(-50%,-50%)`; }
       if (Math.abs(a - e.a) > 1.5) {
-        e.a = a; const ca = Math.cos(a * Math.PI / 180), sa = Math.sin(a * Math.PI / 180);
-        const r = Math.min(Math.abs(ca) > 1e-3 ? (e.hw + 7) / Math.abs(ca) : 1e9, Math.abs(sa) > 1e-3 ? 20 / Math.abs(sa) : 1e9);
+        e.a = a; const ca = Math.cos(a * Math.PI / 180), sa = Math.sin(a * Math.PI / 180), hw = e.el.offsetWidth / 2 || 30;
+        const r = Math.min(Math.abs(ca) > 1e-3 ? (hw + 9) / Math.abs(ca) : 1e9, Math.abs(sa) > 1e-3 ? 20 / Math.abs(sa) : 1e9);
         e.arw.style.transform = `translate(${(ca * r).toFixed(1)}px,${(sa * r).toFixed(1)}px) rotate(${a.toFixed(0)}deg)`;
       }
     }
@@ -552,7 +566,7 @@ export function create(ctx) {
     if (cam.goal && cam.mode === 'tactical') { cam.goal.tx = x; cam.goal.tz = z; }
   }
   function readObstacles() {
-    obstacles.length = 0;
+    obstacles.length = 0; layoutDirty = true;
     for (const r of ['status', 'objp', 'ad', 'bar', 'alert', 'toast', 'back', 'roster', 'hint', 'feed', 'pop']) {
       const el = $(r); if (el.hidden) continue;
       const b = el.getBoundingClientRect(); if (b.width && b.height) obstacles.push([b.left - 4, b.top - 4, b.right + 4, b.bottom + 4]);
@@ -587,11 +601,12 @@ export function create(ctx) {
         $('obj').appendChild(li); li._i = li.querySelector('[data-i]'); li._t = li.querySelector('.t'); li._v = li.querySelector('.v'); li._b = li.querySelector('.bar'); li._bi = li._b.firstChild; li._st = ''; objEls.set(o.id, li);
         li._t.textContent = OBJ_LABEL[o.id] || o.text;
       }
-      if (li._st !== o.state) { li._st = o.state; li.className = o.state; li._i.innerHTML = ic(o.state === 'done' ? 'check' : o.state === 'failed' ? 'cross' : o.id === 'shelter' ? 'people' : o.id === 'nevatim' ? 'base' : o.id === 'town' ? 'town' : 'clock'); }
+      const shown = o.id === 'town' && o.state === 'active' && !sim.townHits && (sim.phase === 'aftermath' || sim.phase === 'debrief') ? 'done' : o.state;
+      if (li._st !== shown) { li._st = shown; li.className = shown; li._i.innerHTML = ic(shown === 'done' ? 'check' : shown === 'failed' ? 'cross' : o.id === 'shelter' ? 'people' : o.id === 'nevatim' ? 'base' : o.id === 'town' ? 'town' : 'clock'); }
       let val = '', frac = null;
       if (o.id === 'shelter') { const n = o.state === 'active' ? inside : total - (sim.exposedAtImpact ?? 0); val = `${n}/${total}`; frac = n / total; }
       else if (o.id === 'nevatim') { val = `${Math.round(sim.nevatim)}%`; frac = sim.nevatim / 100; }
-      else if (o.id === 'town') val = sim.townHits ? `${sim.townHits} hit${sim.townHits > 1 ? 's' : ''}` : '0';
+      else if (o.id === 'town') val = sim.townHits ? `${sim.townHits} hit${sim.townHits > 1 ? 's' : ''}` : shown === 'done' ? 'none' : '0';
       else if (o.id === 'hold') val = sim.phase === 'hold' ? `${Math.ceil(Math.max(0, sim.holdUntil - sim.t))}s` : o.state === 'done' ? 'done' : '';
       if (o.id === 'shelter' && (sim.phase === 'alert' || sim.phase === 'barrage') && o.state === 'active') val = '';
       set(li._v, 'textContent', val);
@@ -725,6 +740,28 @@ export function create(ctx) {
   const rxp = (x) => (x - X0) * sc, rzp = (z) => (z - Z0) * sc;
   const camDir = new THREE.Vector3();
   let radPing = 0;
+  // Arad inset: +-950 m around the town at ~30x the sector scale, top-left of the radar
+  const IN = { x: 3, y: 3, s: 62, r: 950 };
+  function drawInset(c) {
+    const k = IN.s / (IN.r * 2), ix = (x) => IN.x + (x + IN.r) * k, iz = (z) => IN.y + (z + IN.r) * k;
+    c.fillStyle = 'rgba(3,7,11,0.92)'; c.fillRect(IN.x, IN.y, IN.s, IN.s);
+    c.strokeStyle = 'rgba(160,200,215,0.35)'; c.strokeRect(IN.x + 0.5, IN.y + 0.5, IN.s - 1, IN.s - 1);
+    c.strokeStyle = 'rgba(160,200,215,0.12)'; c.beginPath(); c.ellipse(ix(0), iz(0), 800 * k, 680 * k, 0, 0, Math.PI * 2); c.stroke();
+    c.fillStyle = 'rgba(160,190,205,0.6)'; c.font = '500 7px "IW Mono"'; c.fillText('ARAD', IN.x + 3, IN.y + IN.s - 3);
+    for (const sh of sim.shelters) {
+      const bad = sh.locked && sh.opening <= 0;
+      c.fillStyle = bad ? '#ff5a47' : sh.locked ? '#ffb547' : '#9fe6ff'; c.fillRect(ix(sh.x) - 2, iz(sh.z) - 2, 4, 4);
+      if (bad && sim.phase !== 'barrage') { c.strokeStyle = `rgba(255,90,71,${(1 - radPing).toFixed(2)})`; c.beginPath(); c.arc(ix(sh.x), iz(sh.z), 3 + radPing * 6, 0, Math.PI * 2); c.stroke(); }
+    }
+    for (const g of info) {
+      if (g.status === 'sheltered' || g.status === 'out') continue;
+      c.fillStyle = COL[g.status] || COL.idle; c.beginPath(); c.arc(ix(g.x), iz(g.z), 1.6, 0, Math.PI * 2); c.fill();
+      if (g.id === selGroup) { c.strokeStyle = '#6fd3ff'; c.beginPath(); c.arc(ix(g.x), iz(g.z), 3.5, 0, Math.PI * 2); c.stroke(); }
+    }
+    // the camera's look point inside the town
+    const cam = ctx.systems.camera;
+    if (cam && cam.rig && Math.abs(cam.rig.tx) < IN.r && Math.abs(cam.rig.tz) < IN.r) { c.strokeStyle = 'rgba(232,238,241,0.7)'; c.strokeRect(ix(cam.rig.tx) - 3, iz(cam.rig.tz) - 3, 6, 6); }
+  }
   function drawRadar() {
     const c = rg; c.setTransform(2, 0, 0, 2, 0, 0); c.clearRect(0, 0, RW, RH);
     c.fillStyle = 'rgba(70,120,150,0.16)'; c.fillRect(rxp(9800), 0, rxp(16300) - rxp(9800), RH);
@@ -770,6 +807,7 @@ export function create(ctx) {
       c.fillStyle = COL[g.status] || COL.idle; c.fillRect(rxp(g.x) - 0.75, rzp(g.z) - 0.75, 1.5, 1.5);
       if (bad) { c.strokeStyle = `rgba(255,181,71,${(1 - radPing).toFixed(2)})`; c.beginPath(); c.arc(rxp(g.x), rzp(g.z), 2 + radPing * 6, 0, Math.PI * 2); c.stroke(); }
     }
+    if (sim.phase === 'prep' || sim.phase === 'alert' || sim.phase === 'barrage') drawInset(c);
     // camera
     camera.getWorldDirection(camDir);
     const cx = rxp(camera.position.x), cz = rzp(camera.position.z), a = Math.atan2(camDir.z, camDir.x);
@@ -830,6 +868,7 @@ export function create(ctx) {
     for (const s of sim.shelters) loads.set(s.id, s.occ);
     for (const g of info) loads.set(g.shelter, loads.get(g.shelter) + g.n - g.inside);
   }
+  let lastSig = NaN, layoutDirty = true, frameN = 0;
   let slowAcc = 1, obsAcc = 1.25, forceSlow = false, radarDue = 0, radarN = 0;
   function refreshSlow() { forceSlow = true; }
   function slowTick() {
@@ -838,6 +877,7 @@ export function create(ctx) {
     computeLoads();
     updateMarkerContent();
     order = markers.slice().sort((a, b) => b.prio - a.prio);
+    layoutDirty = true;
     updatePanels();
     if (++radarN % 2 === 0) radarDue = 2;   // radar at 5 Hz, drawn on the frame after a panel tick
   }
@@ -856,9 +896,10 @@ export function create(ctx) {
       if (slowAcc >= 0.1 || forceSlow) { slowAcc = 0; forceSlow = false; slowTick(); did = true; }
       else if (radarDue === 2) { radarDue = 0; drawRadar(); }
       const townDist = camera.position.distanceTo(townPos);
-      placeMarkers(townDist);
-      placeEdges(townDist > CLUSTER_DIST);
-      drawRoutes(townDist);
+      const me = camera.matrixWorld.elements, sig = me[12] + me[13] * 3.1 + me[14] * 7.3 + me[8] * 1e3 + me[9] * 2e3 + me[10] * 4e3 + innerWidth;
+      const moved = sig !== lastSig || layoutDirty; lastSig = sig; layoutDirty = false;
+      if (moved) { placeMarkers(townDist); placeEdges(townDist > CLUSTER_DIST); }
+      if (moved || (frameN++ & 1) === 0) drawRoutes(townDist);
       animateAlert(dt);
       for (const [m, t] of flashes) {
         const nt = t - dt;

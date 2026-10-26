@@ -2,6 +2,7 @@
 // with window.__slice.audioOffline() in a seeded headless run, then analyses the WAV.
 // Usage:
 //   node tools/audio-render.mjs --t0 150 --t1 190 --out status/audio/audio-r1/alert [--cam S4-alert] [--seed 1]
+//   node tools/audio-render.mjs --t0 229 --t1 259 --track --camscript trailer --out ...   (moving listener on the recorded camera track)
 // Writes <out>/audio.wav, spectrogram.png (event markers: emission = solid, arrival after the
 // speed-of-sound delay = dashed), report.json (peak/true-peak dBFS, approx. integrated loudness,
 // clipping, siren pitch contour, onset-vs-event alignment, voice counts) and meta.json (the
@@ -14,7 +15,7 @@ import { serve, withRenderLock, launch, args, openSlice, SLICE } from './lib.mjs
 
 const a = args();
 const t0 = +(a.t0 ?? 150), t1 = +(a.t1 ?? 190);
-const cam = a.cam || (t0 >= 200 && t0 < 290 ? 'S5-street' : 'S4-alert');
+const cam = a.cam || (a.camscript ? 'S6-salvo' : t0 >= 200 && t0 < 290 ? 'S5-street' : 'S4-alert');
 const out = path.resolve(a.out || path.join(SLICE, '.capture', `audio-${t0}-${t1}`));
 fs.mkdirSync(out, { recursive: true });
 
@@ -26,18 +27,26 @@ await withRenderLock(async () => {
     const q = new URLSearchParams({ seed: a.seed || '1', q: 'low', ui: '0', capture: '1', nointro: '1' });
     const { page, logs } = await openSlice(browser, url, { w: 320, h: 180, query: q.toString() });
     const t = Date.now();
-    res = await page.evaluate(async ({ t0, t1, cam }) => {
+    res = await page.evaluate(async ({ t0, t1, cam, track, camscript }) => {
       const S = window.__slice;
-      S.seek(t1, 2);
       const { SHOTS } = await import('/src/core/shots.js');
       const shot = SHOTS[cam];
-      if (shot) { S.ctx.shot = shot; S.ctx.bus.emit('shot', { name: cam, shot }); }
-      for (let i = 0; i < 3; i++) S.frame(1 / 30, false);
+      const setCam = () => { if (shot) { S.ctx.shot = shot; S.ctx.bus.emit('shot', { name: cam, shot }); } };
+      let b64;
+      if (track) { // moving listener: step the real loop through the window (no drawing), camera track recorded per frame
+        S.seek(t0, 2); setCam();
+        if (camscript) { const c = S.ctx.systems.camera; if (c && c.script) c.script(camscript); }
+        for (let i = 0, n = Math.round((t1 - t0) * 30); i < n; i++) S.frame(1 / 30, false);
+        b64 = await S.audioOffline(t0, t1);
+      } else {
+        S.seek(t1, 2); setCam();
+        for (let i = 0; i < 3; i++) S.frame(1 / 30, false);
+        b64 = await S.audioOffline(t0, t1, { listener: 'camera' });
+      }
       const c = S.ctx.camera;
-      const b64 = await S.audioOffline(t0, t1, { listener: 'camera' });
       const marks = S.ctx.bus.log.filter((e) => typeof e.t === 'number' && e.t >= t0 - 60 && e.t <= t1 && ['alert:early', 'alert:start', 'alert:impactWindow', 'alert:end', 'allclear', 'salvo:start', 'salvo:end'].includes(e.type)).map((e) => ({ type: e.type, t: e.t, id: e.id }));
       return { b64, meta: S.audioMeta, marks, listener: { x: c.position.x, y: c.position.y, z: c.position.z } };
-    }, { t0, t1, cam });
+    }, { t0, t1, cam, track: !!a.track, camscript: a.camscript || null });
     res.renderSeconds = (Date.now() - t) / 1000;
     res.consoleErrors = logs.filter((l) => l.startsWith('[error]') || l.startsWith('[pageerror]'));
     await page.close();
