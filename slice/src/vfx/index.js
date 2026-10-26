@@ -378,10 +378,10 @@ export function create(ctx) {
         } else {
           if (bi < MAXI) placeInst(ballistics, bi++, p, vl, 4);
           const h = th.heat;
+          const dcb = camDist(p.x, p.y, p.z), near = Math.min(1, Math.max(0, (dcb - 1200) / 1800));
           // meteor-like plasma head: white-hot core, orange sheath that grows with heating
           glow(p.x, p.y, p.z, 5 + 26 * h, 3 + 13 * h, 1.6 + 4 * h, 40 + 110 * h, 1);
           if (h > 0.04) glow(p.x, p.y, p.z, 2.4 * h, 0.9 * h, 0.3 * h, 260 + 380 * h, 0.55 * (0.2 + 0.8 * near));
-          const dcb = camDist(p.x, p.y, p.z), near = Math.min(1, Math.max(0, (dcb - 1200) / 1800));
           const steep = vl.y < -0.8 * Math.hypot(vl.x, vl.y, vl.z);
           if (h > 0.03 && !(steep && dcb < 1500)) hotTr.push(key, p.x, p.y, p.z, t, Math.min(1, h * 1.6) * (0.15 + 0.85 * near));
           if (p.y < 26000) smokeTr.push(key, p.x, p.y, p.z, t, Math.min(1, 0.3 + h));

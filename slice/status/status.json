@@ -10,7 +10,7 @@
       "id": "env",
       "name": "Environment & lighting",
       "scope": "Skyline, atmosphere, fog, tone mapping, bloom, SSAO, colour grade",
-      "state": "building",
+      "state": "critique",
       "round": 3,
       "scores": [
         {
@@ -26,7 +26,7 @@
       ],
       "best": 5,
       "noImprove": 1,
-      "shot": "status/shots/env-r2/S5-street.jpg",
+      "shot": "status/shots/env-dev6/noui/S7-aftermath.png",
       "issues": [
         {
           "severity": "blocker",
@@ -57,9 +57,9 @@
           "text": "Roofs are uniform flat grey slabs with one box and a red dot. In S5 the slabs have balconies, but at S4 zoom the roofs dominate and read as untextured. Rooftop clutter (solar heaters, tanks, parapets) isn't visible at tactical zoom."
         }
       ],
-      "note": "Critic R2: 5/10 (no change). Warmer and layered (S7 depth, S5 windows near CS2), but the town still reads as a game board at S2/S6, Moab ridges are flat sheets, facades go black under flashes, near ground smudgy or blank. Round 3 building.",
+      "note": "Round 3 built: neighbourhood lobes, glow domes, deep hazy Moab ridges, flashes light facades, warm near ground. Critic reviewing.",
       "commit": null,
-      "updated": "2026-10-24T14:14:22.470Z"
+      "updated": "2026-10-26T01:21:47.585Z"
     },
     "vfx": {
       "id": "vfx",
@@ -223,6 +223,10 @@
   },
   "log": [
     {
+      "when": "2026-10-26T01:21:47.585Z",
+      "text": "Env round 3 finished; critic launched."
+    },
+    {
       "when": "2026-10-26T01:18:24.407Z",
       "text": "VFX critic R3 scored 7/10. Round 4 started on the three fixes the critic says would reach 8."
     },
@@ -283,5 +287,5 @@
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-26T01:18:24.407Z"
+  "updated": "2026-10-26T01:21:47.585Z"
 }
