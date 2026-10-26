@@ -1,0 +1,60 @@
+{
+  "stream": "vfx",
+  "round": 4,
+  "score": 7,
+  "oneLine": "One of the three round-3 blockers is fixed, but two remain. Fixed: the Nevatim columns now lean, have wisps and a fire-lit base, and the dark 'egg' is gone (S9/C5). Still broken: the near-camera ballistic J-hook, the full-height orange pillar and the warm wash are unchanged in C4 (f00097, f00107). The new Arrow remnant shells render as round, pale-blue cotton balls that make S6 look more like a sprite effect, not less. Post-kill smudges are still lone round puffs, and S7 is still a repetitive row of identical points on the escarpment. Console clean.",
+  "strengths": [
+    "S9-nevatim / C5 (f00095): the hero ballistic column now leans downwind, frays into wisps, shears at the top and keeps a fire-lit orange skirt at its base. The earlier column at x~815 (S9) is now a narrow, tapered dark plume with a fire point, not the opaque egg from round 3. It is close to a CoH3 heavy-impact silhouette at that range.",
+    "C5 t=253.75-255.17: a meteor re-entry head with a tapered orange tail, a ground flash with a sky lobe, and a fireball that cools to orange. The anticipation, hit and follow-through read as authored, like Broken Arrow's ballistic strikes.",
+    "S3-drones / C3-drone-kill: the Iron Dome launches are still trailer-grade. Thick, curving, widening lit ribbons, a booster flash that lights the billow and the ground (C3 t=74.67), and the battery shrouded in launch smoke. This holds up next to WARNO's AD launch vocabulary.",
+    "S5-street: tapered re-entry heads, an intercept flash that lights the surrounding smoke, fragment sprays with glowing trails and white Sling ribbons crossing. It is a strong store-page frame.",
+    "C1-arrow: the exo kills are crisp four-point stars with diagonal glints and afterglow, read as bright points high over the Dead Sea (Broken Arrow's high-altitude SAM kills).",
+    "Hygiene: consoleErrors are empty in all 4 clips and 5 shots. The point and ribbon pools are typed-array with no per-frame allocation, and the RNG is seeded with a separate per-frame stream. vfx update samples run 0.2-1.1 ms. C4 sampled 1.9 ms, slightly over the 1.5 ms budget, but that is one sample under SwiftShader."
+  ],
+  "issues": [
+    {
+      "severity": "major",
+      "area": "near-camera ballistic re-entry (pillar, hook, wash)",
+      "text": "This is unchanged from round 3. C4 f00097: a bright orange J-hook trail curls down the left edge (x~15-30, y~70-240). C4 f00107: it becomes a full-height thin vertical orange line with a pale column beside it, and a broad warm brown-orange wash covers the left 40% of the sky. It reads as a rendering glitch, not a meteor or an impact, and it is in the canonical overhead/street clip.",
+      "evidence": "status/clips/vfx-r4/C4-overhead/frames/f00107.jpg",
+      "fix": "index.js threat loop: the guard `!(steep && dcb < 1500)` misses this object, which is steep but more than 1.5 km away. Raise it to dcb < 4000 and use a softer test (vl.y < -0.6*|v|). Also scale the hot-trail alpha with a screen-space length factor, not only `near` (fade when the projected trail is more than 40% of screen height). trails.js: give the additive hot set a uNearFade uniform (smoothstep(800, 3500, dz)) so committed points near the camera fade too. For the hook, clamp the head tangent to th.vel in hotTr.push for ballistic keys. For the wash, the impact envFlash still passes I = 3e7*s*max(0.25, d0/5000), which is 7.5e6*s at close range. Use a floor of 0.05 and multiply by smoothstep(1500, 5000, d0). Also cap the 'fire' addLight at radius 450*s when the camera is within 3 km, so the column's fire light doesn't tint the whole sky."
+    },
+    {
+      "severity": "major",
+      "area": "Arrow remnant shells / canonical S6",
+      "text": "S6 (t=222.7) still lands between kills, and the frame now shows four round, pale-blue, cotton-ball puffs (about 25-35 px at 1600, x~770-910 y~135-195), each with orange streaks through it. They are the most 'sprite-looking puff / hard-edged circle' element in the shot. C1 f00088 shows the same: tidy round balls beside the star. Broken Arrow's exo-kill remnant is a faint, wide, irregular haze, not a discrete ball. Separately, the short orange dashes around the kills (ballistic hot trails at 25+ km) still read as a fireworks drizzle.",
+      "evidence": "status/shots/vfx-r4/S6-salvo.jpg",
+      "fix": "index.js exo branch: the 7 remnant smoke sprites use s0=600 and s1=1800-3200 at alpha 0.16-0.22. At ~30 km that is about 30 px, so the FRAG_SMOKE edge noise (tuned for the 20-80 px range) keeps them round. Instead, spawn 14-18 smaller sprites (s1 900-1600, alpha 0.06-0.1) strung along e.vel over ±1.5 km with lateral spread ±600 m, so they merge into one elongated smear. Drop the blue tint (use 0.7/0.68/0.66 albedo; the moon and ambient already give the cool cast). In FRAG_SMOKE, use the stronger edge erosion (1.7) regardless of vPx when vAux.y==0 && vA<0.25 (thin haze). For the orange dashes, lower the hot-trail alpha for ballistic threats above 20 km (multiply by 0.35 when p.y>20000) so the stars dominate. Ask the camera/shots owner to move S6 to a kill frame (t~220.8 or ~224.1 per C1)."
+    },
+    {
+      "severity": "major",
+      "area": "lingering post-kill smudges",
+      "text": "The endo kill aftermath is still an isolated round grey puff, about 40-50 px at 1600 (S5 x~1145 y~370, detached from the burst and its spark spray), and in C4 f00097 a rounded puff sits at x~695 y~140 and another at x~680 y~220. The 12-puff smudge along the path isn't visible as a smear: it is too dim (alpha 0.18) beside the general explosion smoke ball (alpha 0.35-0.5, 12-22 s). CoH3 and WARNO post-kill smoke is torn and directional.",
+      "evidence": "status/shots/vfx-r4/S5-street.jpg",
+      "fix": "index.js explosion(): drop the general smoke puffs to alpha 0.15-0.25 and life 6-10 s, and raise the smudge alpha to 0.3-0.4 with s1 Rf*0.8-2.0, so the elongated path smear is what lingers. Give the smudge puffs a per-puff along-path velocity spread (vx/vl*R(-8,8)) so it stretches over time. Lower the lit-pool minimum pixel size for T_SMOKE so far puffs fade, not stay as a fixed-size disc."
+    },
+    {
+      "severity": "minor",
+      "area": "aftermath repetition and scale (S7)",
+      "text": "S7 from the high camera: about 8 identical bright starbursts with small pale puffs in an even row along the escarpment (x 770-1310, y 195-250). They read as procedural repetition (identical T_STAR light points, likely ongoing fires and impact flashes). The Nevatim column (x~1000) is modest, about 30 px, and doesn't anchor the frame the way CoH3 aftermath columns do.",
+      "evidence": "status/shots/vfx-r4/S7-aftermath.jpg",
+      "fix": "index.js: the small-fire and column-base fire sprites all use the same size and intensity. Vary per column with c.s (already R(0.8,1.25)), plus a per-column intensity R(0.4,1.2) stored on the column, and stagger cc.fire by R(0.4,1.0)*life so they don't all burn at once. For drone open-ground impacts, drop the column at 60% (now 50%) and use dust only. For the ballistic main column, scale the high-puff s1 by min(1.8, d/4000) when the camera is far, so the Nevatim plume becomes the frame's anchor."
+    },
+    {
+      "severity": "minor",
+      "area": "Arrow climb trails",
+      "text": "In C1 and S6 the Arrow boost trails are still wide, very faint blue vertical bands on the right side of the sky (S6 x 1150-1500). They read as aurora or searchlights, not as missile smoke.",
+      "evidence": "status/shots/vfx-r4/S6-salvo.jpg",
+      "fix": "ST.arrow.smoke: lower w1 from 120 to ~60 and altGrow from 5000 to ~2500, raise alpha in the 2-12 km band, and reduce atmospheric tinting (vAtm.a *= 0.6) for arrow-coded trails in trails.js VERT, so they keep a pale smoke value."
+    },
+    {
+      "severity": "minor",
+      "area": "far column at Nevatim (residual)",
+      "text": "The egg is gone, but the earlier column in C5 (x~488 y~250 at 960) is still a dark, uniform slug that hovers detached from the ground, with no visible fire base or lighter top, beside the hero plume.",
+      "evidence": "status/clips/vfx-r4/C5-nevatim/frames/f00095.jpg",
+      "fix": "index.js column loop: when a column's fire is out (c.t > c.fire), keep spawning a few low puffs (lo branch) at reduced rate so the plume stays attached to the ground. Lerp the high-puff albedo up with height (ab = 0.24 + 0.12*hh/(380*s)) so the top reads lighter and more diffuse than the base."
+    }
+  ],
+  "benchmarkNotes": "WARNO / Broken Arrow: the Dome launch and climb (S3/C3), the street-level barrage (S5) and the Nevatim re-entry strike (C5) match their AD and ballistic vocabulary. Arrow exo stars are the right shape, but the new remnant shells are round cotton balls, which is the opposite of the faint, irregular haze Broken Arrow leaves after high kills, and the canonical S6 still lands between kills. CoH3: the Nevatim column structure (flash, fireball, dust skirt, leaning wispy column, fire-lit base) is now close to the bar at S9, and the round-3 egg is fixed. But the S7 aftermath is still a repetitive row of identical points plus a modest column, and the round post-kill smudges are not CoH3's torn smoke. Iron Harvest: flash-to-smoke lighting interplay is at that level, but the C4 warm wash over the left third of the sky reads as a lighting bug, not drama. Of the three round-3 conditions for an 8, one is met (columns). The near-camera pillar, hook and wash are unchanged, and S6 has gained a new sprite artifact. Four player-visible gaps remain, which is a 7.",
+  "bestShot": "status/shots/vfx-r4/S3-drones.jpg"
+}

@@ -63,7 +63,7 @@
       "name": "VFX",
       "scope": "Launches, interceptor trails, intercepts, debris, smoke, screen shake",
       "state": "building",
-      "round": 3,
+      "round": 4,
       "scores": [
         {
           "round": 1,
@@ -79,59 +79,60 @@
           "round": 3,
           "score": 7,
           "when": "2026-10-26T01:18:24.407Z"
+        },
+        {
+          "round": 4,
+          "score": 7,
+          "when": "2026-10-26T13:15:39.849Z"
         }
       ],
       "best": 7,
-      "noImprove": 1,
-      "shot": "status/shots/vfx-r3/S3-drones.jpg",
+      "noImprove": 2,
+      "shot": "status/shots/vfx-r4/S3-drones.jpg",
       "issues": [
         {
           "severity": "major",
-          "text": "In C5 (every frame, x~488 y~250 at 960) and S9 (x~815 y~435), an earlier impact column renders as a solid, hard-edged, dark rounded egg about 30x40 px with no wisps, no shear and no fire light. It is the most obvious 'sprite-looking puff / hard-edged circle' failure sign in the slice, and it sits next to the hero impact in the canonical Nevatim shot. CoH3 and WARNO distant columns are tall, tapered and translucent, sheared by wind."
+          "text": "This is unchanged from round 3. C4 f00097: a bright orange J-hook trail curls down the left edge (x~15-30, y~70-240). C4 f00107: it becomes a full-height thin vertical orange line with a pale column beside it, and a broad warm brown-orange wash covers the left 40% of the sky. It reads as a rendering glitch, not a meteor or an impact, and it is in the canonical overhead/street clip."
         },
         {
           "severity": "major",
-          "text": "C4 f00097: a nearby ballistic hot trail curls into a bright orange J-hook at the left edge. C4 f00108: the same object becomes a full-height thin vertical orange pillar with a pale column beside it and a broad warm wash over the left third of the frame. Width capping helped, but the pillar and hook remain. They read as a rendering glitch, not a meteor."
+          "text": "S6 (t=222.7) still lands between kills, and the frame now shows four round, pale-blue, cotton-ball puffs (about 25-35 px at 1600, x~770-910 y~135-195), each with orange streaks through it. They are the most 'sprite-looking puff / hard-edged circle' element in the shot. C1 f00088 shows the same: tidy round balls beside the star. Broken Arrow's exo-kill remnant is a faint, wide, irregular haze, not a discrete ball. Separately, the short orange dashes around the kills (ballistic hot trails at 25+ km) still read as a fireworks drizzle."
         },
         {
           "severity": "major",
-          "text": "After each endo kill the lingering smoke is still an isolated, round, soft grey puff about 30-45 px across at 1600 (S5 x~1145 y~370, C4 x~683 y~225 in f00097 and f00108). They float alone, well away from the explosion, with a near-circular outline. CoH3 and WARNO post-kill smoke is torn, directional and connected to the burst."
-        },
-        {
-          "severity": "major",
-          "text": "S6 (t=222.7) still lands between kills. The store-page frame for 'Arrow 3 over the Dead Sea' shows about ten short orange streaks falling in parallel, like spent fireworks, with no star and no visible remnant smear. In C1 the same drizzle surrounds every star (f00030, f00084). Broken Arrow's exo kills leave a bright point plus a faint expanding smudge, not a shower of orange rockets."
+          "text": "The endo kill aftermath is still an isolated round grey puff, about 40-50 px at 1600 (S5 x~1145 y~370, detached from the burst and its spark spray), and in C4 f00097 a rounded puff sits at x~695 y~140 and another at x~680 y~220. The 12-puff smudge along the path isn't visible as a smear: it is too dim (alpha 0.18) beside the general explosion smoke ball (alpha 0.35-0.5, 12-22 s). CoH3 and WARNO post-kill smoke is torn and directional."
         },
         {
           "severity": "minor",
-          "text": "S7 from the high tactical camera: Nevatim has one dark column about 25-30 px wide (x~990 y~240 at 1600) with a small fire base. Along the escarpment there is a row of 8-10 near-identical pale puffs, each with a bright point at its base, evenly spaced. The row reads as procedural repetition. CoH3 aftermath frames are dominated by a few big, wind-sheared columns of varied size."
+          "text": "S7 from the high camera: about 8 identical bright starbursts with small pale puffs in an even row along the escarpment (x 770-1310, y 195-250). They read as procedural repetition (identical T_STAR light points, likely ongoing fires and impact flashes). The Nevatim column (x~1000) is modest, about 30 px, and doesn't anchor the frame the way CoH3 aftermath columns do."
         },
         {
           "severity": "minor",
-          "text": "In C1 and S6, the Arrow boost-phase trails still appear only as wide, very faint blue vertical bands on the right side of the sky (C1 f00030, x 650-850). They read as aurora or searchlights, not as lit missile smoke."
+          "text": "In C1 and S6 the Arrow boost trails are still wide, very faint blue vertical bands on the right side of the sky (S6 x 1150-1500). They read as aurora or searchlights, not as missile smoke."
         },
         {
           "severity": "minor",
-          "text": "David's Sling trails overhead in S5/C4 are clean but thin white lines about 3-6 px wide. They lack the billowing width of the Dome launch ribbons."
+          "text": "The egg is gone, but the earlier column in C5 (x~488 y~250 at 960) is still a dark, uniform slug that hovers detached from the ground, with no visible fire base or lighter top, beside the hero plume."
         }
       ],
-      "note": "Critic R3: 7/10 (better in absolute terms; 1 round without a higher score). Critic: fixing the dark 'egg' columns, near-camera re-entry pillars and the between-kills S6 frame makes 8 plausible. Round 4 building.",
+      "note": "Critic R4: 7/10 (2 rounds without improvement; round 5 is the last before flagging). Egg columns fixed (Nevatim column near CoH3); near-camera pillar/wash, round remnant shells and round smudges remain.",
       "commit": null,
-      "updated": "2026-10-26T01:18:24.407Z"
+      "updated": "2026-10-26T13:15:42.139Z"
     },
     "audio": {
       "id": "audio",
       "name": "Audio",
       "scope": "Siren timing, spatial audio, impacts, ambience (original/synthesized only)",
-      "state": "building",
+      "state": "critique",
       "round": 1,
       "scores": [],
       "best": null,
       "noImprove": 0,
       "shot": null,
       "issues": [],
-      "note": "",
+      "note": "Round 1 built: synthesized siren with relay poles, spatial engine, layered weapons, ambience, tension bed, offline renderer. Critic reviewing (judged from spectrograms and code; nobody has listened yet).",
       "commit": null,
-      "updated": "2026-10-26T01:24:12.305Z"
+      "updated": "2026-10-26T13:15:43.136Z"
     },
     "hud": {
       "id": "hud",
@@ -188,16 +189,51 @@
       "id": "camera",
       "name": "Camera & game feel",
       "scope": "Intro flyover, input response, hit-stop, alert → shelter → aftermath pacing",
-      "state": "critique",
+      "state": "building",
       "round": 1,
-      "scores": [],
-      "best": null,
+      "scores": [
+        {
+          "round": 1,
+          "score": 5,
+          "when": "2026-10-26T13:15:41.624Z"
+        }
+      ],
+      "best": 5,
       "noImprove": 0,
-      "shot": "status/shots/camera-dev1/S1-intro.png",
-      "issues": [],
-      "note": "Round 1 built: authored intro flyover, grab-pan rig (input-test 24/24), beats, hit-stop, cine camera, trailer script (framing still rough). Critic queued.",
+      "shot": "status/clips/camera-r1/trailer/frames/f00028.jpg",
+      "issues": [
+        {
+          "severity": "blocker",
+          "text": "The trailer (the deliverable's best moment) is mostly empty night sky. In shots A, D and E the town is a 5-10% strip on the bottom edge or cut off entirely, and the intercepts sit on the top or left frame edge or out of frame (t 231.5 flashes at the very top, t 242-248 the only flash is clipped at the left edge, t 256-258 trails enter from the top-left corner with no town under them). Next to a WARNO/Broken Arrow air-defence trailer shot or a CoH3 store screenshot, these frames read as a black screen with lines."
+        },
+        {
+          "severity": "blocker",
+          "text": "Shots B1 (impacts south, t 233.6-236) and B2 (Nevatim plain, t 236-241) frame empty desert: a road stub in the foreground, a flat plain, a dark smoke blob and a row of tiny dots for the base. No impact flash, fireball or dust is visible in either at 2 fps, so 7.5 s of the 30 s carry no action."
+        },
+        {
+          "severity": "major",
+          "text": "Every trailer shot is a 2-4 key Hermite segment whose end tangents are zero (paths.js tangent(): ends ease to rest), so each shot accelerates, decelerates to a full stop, then hard-cuts. That reads as 'move, stop, cut' rather than the continuous push/drift of an Iron Harvest or CoH3 cinematic. And no slow motion or hit-stop fired during the trailer: feelLog in trailer/capture.json is empty, so the designed Sling slow-mo beat never landed."
+        },
+        {
+          "severity": "major",
+          "text": "The crest reveal is underpowered. At t=9.5-14.5 Arad is a thin band of lights about 3-4 km away occupying ~25% of the width, on a featureless plain. The 'wadi climb' (t=2.5-8) is smooth rolling dunes with no canyon walls or rim to crest, so there is no moment where the land drops away and the town appears. The IRON WALL title sits directly under the town and competes with it. AoE IV and Iron Harvest intros land the reveal with foreground framing and a much closer, larger subject."
+        },
+        {
+          "severity": "major",
+          "text": "From t=17 to t=24 the intro is a high, slow drone shot over the town as a flat lit grid; the uniform street grid dominates and the shot has no subject or motion accent. It is a long stretch at a fixed tactical-like height before the hand-off."
+        },
+        {
+          "severity": "minor",
+          "text": "The siren push toward town is barely readable: frames t=160.25 vs 161.33 differ by a small reframe, while the HUD red wash does all the work. CoH3 and AoE IV beats use a short, clear camera nudge or a shake punch so the moment registers in the body."
+        },
+        {
+          "severity": "minor",
+          "text": "applyShake allocates a new THREE.Quaternion every frame while trauma > 0; during the barrage that is a steady GC source."
+        }
+      ],
+      "note": "Critic R1: 5/10. Controls match AoE IV (input-test 24/24, seamless hand-off); trailer frames mostly empty sky with two empty shots and move-stop-cut motion; intro reveal weak. Round 2 building.",
       "commit": null,
-      "updated": "2026-10-26T07:23:07.876Z"
+      "updated": "2026-10-26T13:15:42.628Z"
     },
     "perf": {
       "id": "perf",
@@ -216,6 +252,10 @@
     }
   },
   "log": [
+    {
+      "when": "2026-10-26T13:15:43.136Z",
+      "text": "Integrator fix: HUD ETA queries were consuming the sim RNG, so browser runs diverged from the Node sim. Fixed in civilians.js; browser and Node now share one timeline. VFX R4 7/10, camera R1 5/10; audio in critique."
+    },
     {
       "when": "2026-10-26T07:23:06.317Z",
       "text": "HUD critic R2 scored 7/10. Round 3 started. Camera critic launched."
@@ -293,5 +333,5 @@
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-26T07:23:07.876Z"
+  "updated": "2026-10-26T13:15:43.136Z"
 }

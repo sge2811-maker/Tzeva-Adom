@@ -81,7 +81,10 @@ export function createCivilians(sim) {
   }
   function makePath(i, si) {
     const s = shelters[si];
-    const dj = rng.range(-1.6, 1.6);
+    // deterministic per-person jitter: makePath is also called by read-only queries
+    // (groupInfo ETA estimates from the HUD), so it must not consume the sim RNG
+    const hj = Math.sin((i + 1) * 12.9898 + (si + 1) * 78.233) * 43758.5453;
+    const dj = (hj - Math.floor(hj)) * 3.2 - 1.6;
     const door = { x: s.door.x + dj, z: s.door.z + dj };
     if (Math.hypot(door.x - A.x[i], door.z - A.z[i]) < 140 && clearLine(A.x[i], A.z[i], door.x, door.z)) return [{ x: A.x[i], z: A.z[i] }, door];
     const start = nearestNodeTo(A.x[i], A.z[i]);

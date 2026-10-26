@@ -1,0 +1,50 @@
+{
+  "stream": "camera", "round": 1, "score": 5,
+  "oneLine": "Solid AoE IV-grade tactical rig (input-test 24/24, seamless intro hand-off), but the two showpieces miss: the trailer spends most of its 30 s on near-black empty sky with the town as a strip on the bottom edge and the action at the frame edges, and the intro crest reveals Arad as a distant sliver with no escarpment drama.",
+  "strengths": [
+    "Tactical rig measures like AoE IV: 1-frame latency on drag/zoom/rotate/keys, 0% overshoot, 250-270 ms settle, grab-to-pan with clean fling stop (750 ms, no reversal), zoom-to-cursor drift 17 m, pitch eases with zoom 35.5 -> 31.1 deg, rotation pivots exactly on screen centre (tools/input-test.mjs, status/camera-input.json).",
+    "Anti-clip holds: >= 6 m clearance over 524 frames including 150 m over towers and below the rim; bounds and zoom clamped.",
+    "Intro hand-off is seamless: frames at t=21.5 and t=24 (status/clips/camera-r1/intro/contact.png) show the same pose with HUD fading in, no pop. Ease-in at the end has no velocity jump.",
+    "Opening over the Dead Sea (t=0) with the moon glitter and the dateline card is a good, quiet first beat, comparable in intent to Iron Harvest mission openers.",
+    "Siren beat fires on time (feelLog: beat siren at simT 160, 1.3 s) and never takes control longer than the brief allows; clean console in all captures."
+  ],
+  "issues": [
+    { "severity": "blocker", "area": "trailer framing",
+      "text": "The trailer (the deliverable's best moment) is mostly empty night sky. In shots A, D and E the town is a 5-10% strip on the bottom edge or cut off entirely, and the intercepts sit on the top or left frame edge or out of frame (t 231.5 flashes at the very top, t 242-248 the only flash is clipped at the left edge, t 256-258 trails enter from the top-left corner with no town under them). Next to a WARNO/Broken Arrow air-defence trailer shot or a CoH3 store screenshot, these frames read as a black screen with lines.",
+      "evidence": "status/clips/camera-r1/trailer/contact.png; frames f00004, f00042, f00048, f00054, f00059",
+      "fix": "src/camera/paths.js TRAILER: stop aiming look-targets at fixed far points 9000 m away and 3.7-6 km up (shots A, E: l=[9000,3700..6000,...]; D: l=[-1500..-1800,1900..2300,2400..2600]). Key the look target to where the events are at those sim times (log intercept/launch positions from a seed-1 run with a small tools script, then author keys so the event lands on the upper third and the skyline on the lower third, with the horizon at 25-35% from the bottom). Cap look elevation at ~12-15 deg for shots with the town in frame and use a wider FOV (70-75) instead of tilting up. Add a track-the-subject option: let a TRAILER key reference a sim entity (e.g. {follow:'firstSlingKill'}) and blend the look target toward it, as cine.js already does."
+    },
+    { "severity": "blocker", "area": "trailer shot selection",
+      "text": "Shots B1 (impacts south, t 233.6-236) and B2 (Nevatim plain, t 236-241) frame empty desert: a road stub in the foreground, a flat plain, a dark smoke blob and a row of tiny dots for the base. No impact flash, fireball or dust is visible in either at 2 fps, so 7.5 s of the 30 s carry no action.",
+      "evidence": "status/clips/camera-r1/trailer/frames/f00010.jpg, f00016.jpg",
+      "fix": "In paths.js, either cut B1/B2 or re-aim them using the logged impact positions/times: put the camera within 600-900 m of a Nevatim impact, low (40-80 m AGL), with hangars/shelters in the foreground and the impact at frame centre on the beat. Start each shot 0.5-1 s before the event so there is anticipation (TARGET.md: weight, timing, anticipation)."
+    },
+    { "severity": "major", "area": "trailer motion / feel",
+      "text": "Every trailer shot is a 2-4 key Hermite segment whose end tangents are zero (paths.js tangent(): ends ease to rest), so each shot accelerates, decelerates to a full stop, then hard-cuts. That reads as 'move, stop, cut' rather than the continuous push/drift of an Iron Harvest or CoH3 cinematic. And no slow motion or hit-stop fired during the trailer: feelLog in trailer/capture.json is empty, so the designed Sling slow-mo beat never landed.",
+      "evidence": "status/clips/camera-r1/trailer/capture.json (feelLog: []), src/camera/paths.js tangent()",
+      "fix": "Give trailer shots constant entry/exit velocity (set v/lv on first and last keys of each TRAILER shot, or add a per-shot flag so evalKeys uses linear end tangents) so the camera is moving at the cut. In index.js intercept handler, make the trailer slow-mo not depend on onScreen() of the current frame (the subject is off-frame because of issue 1). Trigger it by sim time/subject from the script (e.g. TRAILER key {slowmo:[t,dur,scale]}) and log it, so it is deterministic and verifiable in feelLog."
+    },
+    { "severity": "major", "area": "intro reveal",
+      "text": "The crest reveal is underpowered. At t=9.5-14.5 Arad is a thin band of lights about 3-4 km away occupying ~25% of the width, on a featureless plain. The 'wadi climb' (t=2.5-8) is smooth rolling dunes with no canyon walls or rim to crest, so there is no moment where the land drops away and the town appears. The IRON WALL title sits directly under the town and competes with it. AoE IV and Iron Harvest intros land the reveal with foreground framing and a much closer, larger subject.",
+      "evidence": "status/shots/camera-r1/S1-intro.jpg; status/clips/camera-r1/intro/contact.png (t=7.0-14.5)",
+      "fix": "src/camera/paths.js introKeys: fly lower and closer to the escarpment so terrain walls frame the first 8 s (keys at t=3.2-8.4 with p.y 30-60 m AGL via agl:true, inside the wadi line), hold a low foreground ridge in the lower third and rise over it at t~9.6 so the town pops above the ridge line. Move the crest key ~1.5 km closer to Arad (e.g. p around [2200, ground+60, -900]) so the town fills 45-60% of the width. Coordinate with HUD so the title card sits in the upper sky band, or reveal the town first and land the title 0.5-1 s after."
+    },
+    { "severity": "major", "area": "intro second half",
+      "text": "From t=17 to t=24 the intro is a high, slow drone shot over the town as a flat lit grid; the uniform street grid dominates and the shot has no subject or motion accent. It is a long stretch at a fixed tactical-like height before the hand-off.",
+      "evidence": "status/clips/camera-r1/intro/frames/f00038.jpg, f00046.jpg",
+      "fix": "In introKeys, keep the camera lower (200-400 m) and orbiting past a landmark (lookout, an Iron Dome battery, the tallest towers) until ~t=20, then do a single 3-4 s rising ease into TACTICAL_HOME. Alternatively, shorten introLen to ~20 s to cut the dead portion."
+    },
+    { "severity": "minor", "area": "siren beat",
+      "text": "The siren push toward town is barely readable: frames t=160.25 vs 161.33 differ by a small reframe, while the HUD red wash does all the work. CoH3 and AoE IV beats use a short, clear camera nudge or a shake punch so the moment registers in the body.",
+      "evidence": "status/clips/camera-r1/C2/contact.png",
+      "fix": "index.js runBeats siren: raise the push (to.dist *= 0.78, 40% toward town) with a fast-in/slow-out ease (expo out instead of ease3) over 1.2 s, and add a short low-frequency shake impulse (trauma +0.35 decaying over 0.6 s) timed to the first siren rise."
+    },
+    { "severity": "minor", "area": "per-frame allocation",
+      "text": "applyShake allocates a new THREE.Quaternion every frame while trauma > 0; during the barrage that is a steady GC source.",
+      "evidence": "src/camera/index.js applyShake",
+      "fix": "Hoist a module-level Quaternion and reuse it (shakeQ.setFromEuler(shakeEuler); camera.quaternion.multiply(shakeQ))."
+    }
+  ],
+  "benchmarkNotes": "AoE IV (camera feel): the tactical rig matches it on measured responsiveness, pitch-with-zoom, zoom-to-cursor and clean stops; this part would pass. AoE IV / Iron Harvest (intro): the structure is right (opening, title, ease into gameplay with no pop), but the reveal lacks scale and foreground framing, and the last third is a static aerial. Roughly 6/10 against those openers. WARNO / Broken Arrow and CoH3 (trailer-grade moments): the trailer is well below the bar. Most frames are dark sky with the town as an edge strip and action at the frame edges or off-screen, two shots show empty desert, and motion stops at every cut with no slow-mo punctuation. About 4/10. Weighted heavily as the final deliverable's best moment, the stream scores 5.",
+  "bestShot": "status/clips/camera-r1/trailer/frames/f00028.jpg"
+}
