@@ -254,7 +254,7 @@ export function createTerrain(ctx) {
       }`,
   });
   const ridge = (x0, seed, base, amp, followTerrain, mixK) => {
-    const step = 45, z0 = -70000, z1 = 70000, rows = [[-2600, 0.0], [-1100, 0.72], [0, 1.0], [1600, 0.82]];
+    const step = 70, z0 = -70000, z1 = 70000, rows = [[-2600, 0.0], [-1100, 0.72], [0, 1.0], [1600, 0.82]];
     const tops = [], xs2 = [];
     for (let z = z0; z <= z1; z += step) {
       const x = x0 + (fbm(z * 0.00006 + seed, seed * 3.1, 3) - 0.5) * 5000;

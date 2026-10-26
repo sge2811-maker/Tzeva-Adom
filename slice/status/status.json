@@ -65,7 +65,7 @@
       "id": "vfx",
       "name": "VFX",
       "scope": "Launches, interceptor trails, intercepts, debris, smoke, screen shake",
-      "state": "critique",
+      "state": "building",
       "round": 3,
       "scores": [
         {
@@ -77,48 +77,49 @@
           "round": 2,
           "score": 7,
           "when": "2026-10-24T14:06:12.337Z"
+        },
+        {
+          "round": 3,
+          "score": 7,
+          "when": "2026-10-26T01:18:24.407Z"
         }
       ],
       "best": 7,
-      "noImprove": 0,
-      "shot": "status/shots/vfx-dev10/S5-street.png",
+      "noImprove": 1,
+      "shot": "status/shots/vfx-r3/S3-drones.jpg",
       "issues": [
         {
           "severity": "major",
-          "text": "C1/S6: each Arrow kill is a sharp star inside a big, smooth, round glow disc about 180px across at 960px (C1 f00058, f00084). It reads as a lens blob, not a pinpoint flash. After the flash, what remains is a cluster of vertical orange streaks plus pale round dots: a fireworks shower. The canonical S6 frame (t=222.7) lands between kills, so the store-page frame for 'Arrow 3 over the Dead Sea' shows only that drizzle. Broken Arrow and WARNO high-altitude kills are a hard white point with a brief sky lift, then a faint expanding smudge that stays readable for several seconds."
+          "text": "In C5 (every frame, x~488 y~250 at 960) and S9 (x~815 y~435), an earlier impact column renders as a solid, hard-edged, dark rounded egg about 30x40 px with no wisps, no shear and no fire light. It is the most obvious 'sprite-looking puff / hard-edged circle' failure sign in the slice, and it sits next to the hero impact in the canonical Nevatim shot. CoH3 and WARNO distant columns are tall, tapered and translucent, sheared by wind."
         },
         {
           "severity": "major",
-          "text": "C5 (Nevatim from about 4-5 km): a ballistic warhead hit is a small white dot flash, then a brown lump about 25px wide at 960px. The dust ring is barely visible and no expanding fireball reads. Six seconds later the column is a thin dark wisp (C5 f00095). In S7, the canonical aftermath, the only post-strike smoke is one dark column about 15px wide over Nevatim plus pale puffs along the escarpment. CoH3 heavy artillery and WARNO missile strikes leave large, dark, wind-sheared columns that dominate a tactical-zoom frame."
+          "text": "C4 f00097: a nearby ballistic hot trail curls into a bright orange J-hook at the left edge. C4 f00108: the same object becomes a full-height thin vertical orange pillar with a pale column beside it and a broad warm wash over the left third of the frame. Width capping helped, but the pillar and hook remain. They read as a rendering glitch, not a meteor."
         },
         {
           "severity": "major",
-          "text": "The ballistic hot trails are constant-width, evenly 'beaded' orange lines (C4 f00064 crop, S5, C5 f00017). They look like tracer or laser beams rather than meteor plasma that sputters and cools. When one passes close to the camera, it renders as a full-height vertical orange pillar with a wide warm wash at the frame edge (C4 f00108, left)."
+          "text": "After each endo kill the lingering smoke is still an isolated, round, soft grey puff about 30-45 px across at 1600 (S5 x~1145 y~370, C4 x~683 y~225 in f00097 and f00108). They float alone, well away from the explosion, with a near-circular outline. CoH3 and WARNO post-kill smoke is torn, directional and connected to the burst."
         },
         {
           "severity": "major",
-          "text": "The lingering 'smudge' after each endo kill is an isolated, round, soft grey ball about 25-40px across with a near-circular outline (S5 right of centre, C4 f00108 two blobs mid-sky, C1 pale dots). CoH3 and WARNO post-kill smoke is torn and directional. Round puffs floating alone are the 'sprite-looking puffs' failure sign."
+          "text": "S6 (t=222.7) still lands between kills. The store-page frame for 'Arrow 3 over the Dead Sea' shows about ten short orange streaks falling in parallel, like spent fireworks, with no star and no visible remnant smear. In C1 the same drizzle surrounds every star (f00030, f00084). Broken Arrow's exo kills leave a bright point plus a faint expanding smudge, not a shower of orange rockets."
         },
         {
           "severity": "minor",
-          "text": "The Arrow 3 boost-phase trails appear only as wide, very faint blue-grey vertical bands on the right of the sky in C1 and S6. They read like searchlight beams or aurora, not lit missile smoke."
+          "text": "S7 from the high tactical camera: Nevatim has one dark column about 25-30 px wide (x~990 y~240 at 1600) with a small fire base. Along the escarpment there is a row of 8-10 near-identical pale puffs, each with a bright point at its base, evenly spaced. The row reads as procedural repetition. CoH3 aftermath frames are dominated by a few big, wind-sheared columns of varied size."
         },
         {
           "severity": "minor",
-          "text": "Where an Iron Dome trail crests and turns toward the camera, flat blade-like folds with straight edges and thin seam lines are still visible (C3 f00032 top, S3 centre at about x=1040 y=130). Much better than round 1, but a sharp eye still sees polygons."
+          "text": "In C1 and S6, the Arrow boost-phase trails still appear only as wide, very faint blue vertical bands on the right side of the sky (C1 f00030, x 650-850). They read as aurora or searchlights, not as lit missile smoke."
         },
         {
           "severity": "minor",
-          "text": "Measured over 90 frames at the S5 moment (scratch probe of ctx.timings.update.vfx): median 0.6 ms, but p95 2.8 ms and max 6-8 ms, against a 1.5 ms budget. S6 is fine (median 0.3, p95 0.6). The spikes line up with the 40 Hz batched smoke-trail rebuild and smoke-pool update running in the same frame."
-        },
-        {
-          "severity": "minor",
-          "text": "David's Sling smoke trails seen from below are still thin white lines, about 3-5px at 1600px (S5 right edge, C4). They are readable now, but not the billowing ribbons of the Dome launch."
+          "text": "David's Sling trails overhead in S5/C4 are clean but thin white lines about 3-6 px wide. They lack the billowing width of the Dome launch ribbons."
         }
       ],
-      "note": "Round 3 built: crisp exo star flashes, distance-scaled impacts with smouldering columns, de-lasered ballistic trails, smeared smudges. Critic reviewing.",
+      "note": "Critic R3: 7/10 (better in absolute terms; 1 round without a higher score). Critic: fixing the dark 'egg' columns, near-camera re-entry pillars and the between-kills S6 frame makes 8 plausible. Round 4 building.",
       "commit": null,
-      "updated": "2026-10-24T14:14:22.172Z"
+      "updated": "2026-10-26T01:18:24.407Z"
     },
     "audio": {
       "id": "audio",
@@ -222,6 +223,10 @@
   },
   "log": [
     {
+      "when": "2026-10-26T01:18:24.407Z",
+      "text": "VFX critic R3 scored 7/10. Round 4 started on the three fixes the critic says would reach 8."
+    },
+    {
       "when": "2026-10-24T14:14:22.470Z",
       "text": "VFX round 3 finished; critic launched. Env round 3 resumed."
     },
@@ -278,5 +283,5 @@
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-24T14:14:22.470Z"
+  "updated": "2026-10-26T01:18:24.407Z"
 }
