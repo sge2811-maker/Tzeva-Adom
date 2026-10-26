@@ -37,11 +37,11 @@ await withRenderLock(async () => {
         S.seek(t0, 2); setCam();
         if (camscript) { const c = S.ctx.systems.camera; if (c && c.script) c.script(camscript); }
         for (let i = 0, n = Math.round((t1 - t0) * 30); i < n; i++) S.frame(1 / 30, false);
-        b64 = await S.audioOffline(t0, t1);
+        b64 = await S.audioOffline(t0, t1, { master: false });
       } else {
         S.seek(t1, 2); setCam();
         for (let i = 0; i < 3; i++) S.frame(1 / 30, false);
-        b64 = await S.audioOffline(t0, t1, { listener: 'camera' });
+        b64 = await S.audioOffline(t0, t1, { listener: 'camera', master: false });
       }
       const c = S.ctx.camera;
       const marks = S.ctx.bus.log.filter((e) => typeof e.t === 'number' && e.t >= t0 - 60 && e.t <= t1 && ['alert:early', 'alert:start', 'alert:impactWindow', 'alert:end', 'allclear', 'salvo:start', 'salvo:end'].includes(e.type)).map((e) => ({ type: e.type, t: e.t, id: e.id }));

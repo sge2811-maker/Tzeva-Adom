@@ -35,6 +35,9 @@ export function dogPlan(seed, alertT, clearT) {
   return out.sort((a, b) => a.t - b.t);
 }
 
+// bus.log stores { type, ...payload }; the impact payload has its own `type` (the threat type),
+// which overwrites 'impact' in the log, so impacts are recognised by shape.
+export const isImpact = (e) => e.type === 'impact' || ('dmg' in e && (e.kind === 'nevatim' || e.kind === 'town' || e.kind === 'open'));
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 const RANGE = { drone: 6500, cruise: 9000, jet: 16000 };
 
@@ -90,8 +93,8 @@ export async function renderOffline(ctx, rec, t0, t1, opts = {}) {
     else if (e.type === 'intercept') {
       if (e.y > EXO_ALT) { if (e.t >= toSim(PRE) - 1 && e.t <= t1) meta.events.push({ type: 'intercept', kind: e.kind, te: e.t, alt: Math.round(e.y), scheduled: false, why: 'high-altitude kill: inaudible on the ground' }); continue; }
       add('intercept', e, e, e.t);
-      if (e.kill && !e.offmap) add('debris', e, { x: e.x, y: e.y - 150, z: e.z }, e.t + 0.4);
-    } else if (e.type === 'impact') add('impact', e, { x: e.x, y: e.y + 15, z: e.z }, e.t);
+      if (e.kill && !e.offmap) add('debris', { ...e, type: 'debris' }, { x: e.x, y: e.y - 150, z: e.z }, e.t + 0.4);
+    } else if (isImpact(e)) add('impact', e, { x: e.x, y: e.y + 15, z: e.z }, e.t);
   }
   for (const g of dogPlan(seed, firstOf('alert:start'), firstOf('allclear'))) add(g.howl ? 'dog:howl' : 'dog:bark', { type: 'dog', id: Math.round(g.t * 10), t: g.t }, g.pos, g.t, { howl: g.howl });
   jobs.sort((a, b) => a.c - b.c);
@@ -141,7 +144,21 @@ export async function renderOffline(ctx, rec, t0, t1, opts = {}) {
   const buf = await ac.startRendering();
   const off = Math.round(PRE * SR), n = Math.round(len * SR);
   const ch = [buf.getChannelData(0).subarray(off, off + n), buf.getChannelData(1).subarray(off, off + n)];
-  const wav = encodeWav(ch, SR);
+  // optional mastering for video (captures): gain toward a loudness target, capped by a -1 dBFS
+  // peak ceiling. audio-render.mjs passes { master: false } to show the raw game mix.
+  let gain = 1;
+  if (opts.master !== false) {
+    const target = opts.targetLufs ?? -17;
+    let pk = 1e-9, sum = 0, cnt = 0;
+    const W = Math.round(0.4 * SR), blocks = [];
+    for (let s0 = 0; s0 + W <= n; s0 += W / 4) { let e = 0; for (let i = s0; i < s0 + W; i += 4) e += ch[0][i] * ch[0][i] + ch[1][i] * ch[1][i]; blocks.push(e / (W / 4)); }
+    for (let i = 0; i < n; i++) pk = Math.max(pk, Math.abs(ch[0][i]), Math.abs(ch[1][i]));
+    for (const b of blocks) if (b > 1e-7) { sum += b; cnt++; }
+    const lufs = cnt ? -0.691 + 10 * Math.log10(sum / cnt) : -70; // ungated, unweighted approximation
+    gain = Math.min(Math.pow(10, (target - lufs) / 20), 0.891 / pk, 8);
+    meta.master = { approxLufsBefore: +lufs.toFixed(1), gainDb: +(20 * Math.log10(gain)).toFixed(2), target };
+  }
+  const wav = encodeWav(ch, SR, gain);
   meta.stats = { ...E.stats, cap: 48, voiceTimeline: E.timeline.filter(([c]) => c >= PRE).map(([c, k]) => [+(c - PRE).toFixed(3), k]) };
   meta.maxConcurrentVoices = meta.stats.maxConc + meta.sirens.length + meta.movers.length;
   return { b64: toBase64(wav), meta };

@@ -40,11 +40,11 @@ export function create(ctx) {
   const when = (d) => A.ac.currentTime + 0.03 + d / C;
 
   bus.on('begin', () => { init(); if (A.ac && A.ac.state === 'suspended') A.ac.resume(); });
-  bus.on('launch', (e) => { if (!A.ac) return; const d = camD(e); if (d <= MAXD.launch) A.E.launch(e, when(d), d, evRng(params.seed, e)); });
+  bus.on('launch', (e) => { if (!A.ac) return; const d = camD(e); if (d <= MAXD.launch) A.E.launch(e, when(d), d, evRng(params.seed, { ...e, type: 'launch' })); });
   bus.on('intercept', (e) => {
     if (!A.ac || e.y > EXO_ALT) return;
     const d = camD(e); if (d > MAXD.blast) return;
-    A.E.intercept(e, when(d), d, evRng(params.seed, e));
+    A.E.intercept(e, when(d), d, evRng(params.seed, { ...e, type: 'intercept' }));
     if (e.kill && !e.offmap && d < 5000) A.E.debris({ x: e.x, y: e.y - 150, z: e.z }, when(d) + 0.4, d, evRng(params.seed, { ...e, type: 'debris' }));
   });
   bus.on('impact', (e) => { if (!A.ac) return; const p = { x: e.x, y: e.y + 15, z: e.z }, d = camD(p); if (d <= MAXD.blast) A.E.impact(e, when(d), d, evRng(params.seed, e)); });

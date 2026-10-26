@@ -268,7 +268,7 @@ export function createEngine(ac, { seed = 1, live = false } = {}) {
     const off = o_offset(t0);
     A.duck = lvl(1); A.duck.connect(bus.amb);
     // wind
-    A.windL = lvl(0.32); loop(B.wind, 1, off).connect(bq('highpass', 40, 0.7)).connect(A.windL).connect(A.duck);
+    A.windL = lvl(0.32); loop(B.wind, 1, off).connect(bq('highpass', 85, 0.7)).connect(A.windL).connect(A.duck);
     // insects
     A.insects = lvl(1); A.insL = lvl(0.18); A.insects.connect(A.insL).connect(A.duck);
     loop(B.cricketsA, 1, off * 1.3).connect(A.insects); const cb = loop(B.cricketsB, 0.97, off * 0.7); const cbg = lvl(0.6); cb.connect(cbg).connect(A.insects);
