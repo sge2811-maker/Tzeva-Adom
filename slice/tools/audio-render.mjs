@@ -102,7 +102,7 @@ tt = tt + t0
 
 # ---- siren pitch contour (measured from the WAV): dominant 270-1000 Hz peak while the Arad
 # poles sound, restricted to frames where that band dominates
-sir = [s for s in meta.get('sirens', []) if s['name'].startswith('Arad')]
+sir = [s for s in meta.get('sirens', []) if s['name'].startswith('Arad') and s.get('endOutT') is not None and s['endOutT'] > 0]
 siren = None
 if sir:
     s0 = t0 + max(0.0, min(s['outT'] for s in sir) + 4.0); s1 = t0 + min(dur, min(s['endOutT'] for s in sir) - 4.0)
@@ -123,7 +123,7 @@ if sir:
         y = fm - fm.mean(); ac_ = np.correlate(y, y, 'full')[len(y) - 1:]; dt_ = ts[1] - ts[0]
         lo, hi = int(2.5 / dt_), min(len(ac_) - 1, int(8 / dt_))
         per = float((lo + np.argmax(ac_[lo:hi])) * dt_) if hi > lo else None
-        design = [s for s in meta['sirens'] if s['name'] == 'Arad centre'][0]
+        design = [s for s in sir if s['name'] == 'Arad centre'][0] if any(s['name'] == 'Arad centre' for s in sir) else sir[0]
         siren = {'window': [round(float(s0), 2), round(float(s1), 2)], 'minHz': round(float(np.percentile(fm, 3)), 1), 'maxHz': round(float(np.percentile(fm, 97)), 1),
                  'periodS': round(per, 3) if per else None, 'design': {'fLo': design['fLo'], 'fHi': design['fHi'], 'period': design['period']},
                  'contour': {'t': [round(float(v), 2) for v in ts[::4]], 'hz': [round(float(v), 1) for v in fm[::4]]}}
