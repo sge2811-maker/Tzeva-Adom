@@ -138,54 +138,51 @@
       "name": "HUD & UX",
       "scope": "Alert countdown, objectives, shelter routing — cinematic and minimal",
       "state": "building",
-      "round": 1,
+      "round": 2,
       "scores": [
         {
           "round": 1,
           "score": 7,
           "when": "2026-10-24T14:05:23.623Z"
+        },
+        {
+          "round": 2,
+          "score": 7,
+          "when": "2026-10-26T07:23:06.317Z"
         }
       ],
       "best": 7,
-      "noImprove": 0,
-      "shot": "status/shots/hud-r1c/S4-alert.jpg",
+      "noImprove": 1,
+      "shot": "status/shots/hud-r2c/S4-alert.jpg",
       "issues": [
         {
           "severity": "major",
-          "text": "Toasts and banners are drawn over the world markers. They are not treated as obstacles, and they sit exactly where the town's markers cluster at the alert camera. In ux-2 the 'Opening West shelter' toast hides a group label. In ux-1 the 'David's Sling deploying' toast sits between the DEPLOY pad and a LOCKED shelter. In ux-3 the 'ALL 92 IN PROTECTED SPACES' banner is crossed by shelter labels (16/24, 8/40) and becomes hard to read. AoE IV and CoH3 never let notification text fight world pins."
+          "text": "At the siren (C2 f00040–f00056), the 'WEST LOCKED' and '10 LOCKED OUT' pointers sit in open world space at x≈190–370, not on a screen edge. They are clamped to an inner left bound of 290*mkScale past the roster, or to the projected foot of an 'under' marker. Each pill is the largest element on screen after the alert box, about twice the height of a world chip, and its direction arrow is a 5 px triangle. A player reads them as world labels sitting on random buildings, not as 'over there'. The real Lookout lock and group are visible top-left as a dot plus a '16' chip, so the same trouble shows twice. AoE IV and CoH3 put off-screen alerts flush against the viewport border as small icon tabs, and the minimap carries the ping."
         },
         {
           "severity": "major",
-          "text": "At the siren, the things the player must act on are often off-screen or jammed at the screen edge, and nothing points to them. In C2 f00040 the locked Lookout shelter and its 16-person group are wedged into the corner between the clock and the roster, and the second locked shelter (West) is not on screen at all. The roster says LOCKED, but clicking a roster row does not move the camera. The radar shows no shelters or groups. CoH3 and AoE IV use edge arrows and minimap pings for this."
+          "text": "Selecting a group (ux-1, the core routing action) forceFulls every shelter (m.forceFull = !!sel). The town centre becomes a stack of 5–6 long text chips ('LOCKED 260s CLICK: OPEN + SEND', '0/40 248s 32 FREE', '0/28 383s 16 FREE') lifted 24 px above feet that sit close together. Which stem and foot belong to which chip is ambiguous: the 0/40 chip and the 0/28 chip both hover over the same cluster of red diamonds. Unselected groups drop to icon-only dots with no count. CoH3 and AoE IV show a compact cost or ETA tag pinned exactly on the target and keep the long help text in the tooltip or coach line."
         },
         {
           "severity": "minor",
-          "text": "The roster's right column has no right padding: 'LOCKED' and the ETAs (31s, 26s) touch or cross the panel border, and it is worse in compact mode. Feed timestamps are illegible because the row gradient starts fully transparent exactly where <time> sits (23:46 over a road in S2). The barrage subline 'SALVO 2 OF 3 · INTERCEPTS AND FALLING DEBRIS' wraps, leaving 'DEBRIS' as an orphan line in the alert box."
+          "text": "In S4b-alert-wide and S2, open shelters are bare icons with no capacity. The brief asks for shelter markers that show capacity, and at the alert a player choosing where to reroute cannot see '0/40' vs '0/12' without zooming or selecting a group. The open shelter icon often sits under its group's chip (S4b: '10 21s' chip over its shelter at 632,378), so the pair reads as one blob. The builder's own gaps (open shelters collapsing to dots mid-zoom, locked S1/S5 as dots at the siren) are confirmed: ux-test reports 'marker dot' for both S1 and S5 when clicked."
         },
         {
           "severity": "minor",
-          "text": "World markers read more like debug tooltips than game pins. Every one is a mono-text box with a 1px stem, and at the S4b wide view or in compact 960x540 the town becomes a field of 14+ boxes with long, crossing leader lines from the 24/48 px lifts. Compact mode zooms the panels to 0.78 but not the markers, so at 960 they dominate (S2-tactical-960). Group feet that drop to 'dot' mode lose all identity. Compare the AoE IV and CoH3 icon-first pins, where text appears on hover or selection."
+          "text": "The radar now plots shelters and groups, but at 2 px shelter squares and 1.5 px group dots on a 226×118 map where Arad spans a few pixels, the town is an unreadable speck (S2, S4). The locked-shelter ping is the only usable signal. WARNO and Broken Arrow minimaps use clearly sized, shape-coded contacts."
         },
         {
           "severity": "minor",
-          "text": "The pad build popup opens over the air-defence panel and the command bar (ux-0), and marker feet and route rings render under the semi-transparent panels (a group ring under the roster and a diamond between the clock and the roster in C2; the 20/20 pad stem runs into the command bar in S7). The pad label in compact mode shows only '13/20' or 'DEPLOY' with no pad name or battery type."
+          "text": "Feed timestamps (10 px, --ink-faint #627580) are still barely legible over bright terrain (S2 bottom right, '23:46'). The feed stacks to the screen edge with no bottom margin matching the command bar. A marker chip pokes out at the left screen edge behind the roster (blue square at x=0 in C2 f00056). Between the siren and the auto-unlock, the Lookout locked shelter in C2 f00040 is a red lock dot jammed between the clock and roster panels."
         },
         {
           "severity": "minor",
-          "text": "On the debrief, 'Watch the sky' hides the debrief but leaves .iw-play.dim (opacity 0) on, so the player gets a bare scene with no HUD and no way back to the debrief or to Play again."
-        },
-        {
-          "severity": "minor",
-          "text": "The same numbers are framed three ways at once: the roster says 'People outside 92/92', the alert says 'In protected spaces 0/92' and the objective says '0/92'. The debrief says '56/68 threats intercepted' while the AD panel said 86% and the history note says 99%. Each is defensible, but the hierarchy goal is one place per fact."
-        },
-        {
-          "severity": "minor",
-          "text": "In compact mode, the AD panel is CSS-zoomed to 0.78, but the radar click handler maps clientX/Y with the unzoomed scale (sc = 226/width), so radar clicks land at the wrong world position below 1100x640."
+          "text": "In S7 (all clear, no town hits) 'No impacts in Arad' still shows '0' with no check while the other three are ticked. The debrief then shows it as done, which is inconsistent. capture.json reports hud update 2.5 ms on the sampled frame against a 4 ms whole-frame JS budget, which is too much for a DOM overlay."
         }
       ],
-      "note": "Critic R1: 7/10. Red-alert module near CoH3, start/intro/debrief at AoE IV level; toasts cover markers, no off-screen pointers at the siren, overflows, debug-tooltip markers, small bugs. Round 2 building.",
+      "note": "Critic R2: 7/10 (fixes verified; 1 round without a higher score). Edge pointers float mid-screen, chip pile on group select, open shelters lose capacity at default zoom, radar town plot unreadable, HUD 2.5 ms/frame. Round 3 building.",
       "commit": null,
-      "updated": "2026-10-24T14:05:23.623Z"
+      "updated": "2026-10-26T07:23:06.317Z"
     },
     "camera": {
       "id": "camera",
@@ -200,7 +197,7 @@
       "issues": [],
       "note": "Round 1 built: authored intro flyover, grab-pan rig (input-test 24/24), beats, hit-stop, cine camera, trailer script (framing still rough). Critic queued.",
       "commit": null,
-      "updated": "2026-10-26T01:24:10.894Z"
+      "updated": "2026-10-26T07:23:07.876Z"
     },
     "perf": {
       "id": "perf",
@@ -219,6 +216,10 @@
     }
   },
   "log": [
+    {
+      "when": "2026-10-26T07:23:06.317Z",
+      "text": "HUD critic R2 scored 7/10. Round 3 started. Camera critic launched."
+    },
     {
       "when": "2026-10-26T01:28:45.808Z",
       "text": "Env critic R3 scored 5/10 again. Round 4 is the final round before the stream is flagged."
@@ -292,5 +293,5 @@
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-26T01:28:45.808Z"
+  "updated": "2026-10-26T07:23:07.876Z"
 }

@@ -1,0 +1,61 @@
+{
+  "stream": "hud",
+  "round": 2,
+  "score": 7,
+  "oneLine": "The HUD is restrained and coherent and works with real clicks. The round-1 collisions are fixed and the alert, toast and banner system is at CoH3 level. It is still a 7. At the siren, off-screen pointers float mid-screen as the loudest elements, and with a group selected the town turns into a stack of lifted text chips whose stems are hard to follow. At wide zoom, open shelters lose their capacity, and the radar's town plot is too small to read.",
+  "strengths": [
+    "Red-alert module (S4-alert, S4b, C2) is unmissable but elegant: צבע אדום renders correctly in Plex Sans Hebrew, with the English line, a large tabular countdown, a draining bar and 'in protected spaces 0/92'. The STAY INSIDE barrage state (ux-3) adds the Hebrew instruction, 'SALVO 2 OF 3 · DEBRIS OVERHEAD' on one line, and turns green at 92/92. It matches the restraint of CoH3's objective banners.",
+    "The round-1 overlay collisions are fixed. The toast has a fixed slot under the alert module with a solid plate (ux-2, 'Opening West shelter · crew on site in 5 s'). The impact-window banner has a dark backing plate, and markers reduce to dots around it (ux-3). No notification text fights a world pin in any frame I rendered.",
+    "Icon-first chips at default zoom (S2, S4b): groups show the people icon, count and ETA, and open shelters are icon-only. This is much closer to AoE IV pins than the round-1 text boxes. S2, S4 and S4b have no overlaps, and the ARAD cluster pin works far away (S7).",
+    "Routing feedback is strong once a group is selected (ux-1). Every shelter is recoloured by fit against the countdown ('0/22 39s 22 FREE', 'LOCKED 260s CLICK: OPEN + SEND'), the selected group reads 'ETA 179s · TOO LATE', the roster row is highlighted, and the coach line explains the next click. 'Opening 5s WEST' gets an amber state chip.",
+    "Information consistency is fixed. The objective value hides during the alert (the alert module owns it), and the roster is headed 'OUTSIDE 92'. The debrief's '86% · intercepted in your sector · 56 of 65' matches the AD panel's 86% in S7.",
+    "The debrief (S8) reads like a game's after-action report: a large verdict, objective columns with checks, mono stats, intercept bars by layer and the 'In history' coda. 'Watch the sky' now restores the HUD and a back button (index.js:812).",
+    "tools/ux-test.mjs passes 12/12 with real clicks: pad build, pre-alert G7 to S7 with a hover preview, siren unlocks of S1/S5, a roster click that pans, and 0/92 exposed at the impact window. report.json, capture.json and the UX run all have clean consoles."
+  ],
+  "issues": [
+    {
+      "severity": "major",
+      "area": "edge pointers / siren moment",
+      "text": "At the siren (C2 f00040–f00056), the 'WEST LOCKED' and '10 LOCKED OUT' pointers sit in open world space at x≈190–370, not on a screen edge. They are clamped to an inner left bound of 290*mkScale past the roster, or to the projected foot of an 'under' marker. Each pill is the largest element on screen after the alert box, about twice the height of a world chip, and its direction arrow is a 5 px triangle. A player reads them as world labels sitting on random buildings, not as 'over there'. The real Lookout lock and group are visible top-left as a dot plus a '16' chip, so the same trouble shows twice. AoE IV and CoH3 put off-screen alerts flush against the viewport border as small icon tabs, and the minimap carries the ping.",
+      "evidence": "status/clips/hud-r2c/C2/frames/f00040.jpg, status/clips/hud-r2c/C2/frames/f00056.jpg",
+      "fix": "src/hud/index.js placeEdges(): (1) For m.under (foot hidden behind a panel), do not draw a free-floating pill. Instead lift the normal marker label out of the panel rect: place it at the nearest point just outside the obstacle and keep the stem to the foot, or just rely on the roster row plus the radar ping. (2) For truly off-screen items, clamp to the real viewport border (L = 6, not 290; T = 6; R = W-6; B = H-6) and skip only the panel rects by sliding along the border, not inward. (3) In hud.css, shrink .mk-edge to chip size (height 22px, 11px text, count + icon only, e.g. '[lock] W'; full text on hover) and make the arrow a 10–12 px chevron that is part of the pill shape. (4) When a trouble marker is visible on screen as a chip, never also show its edge pointer."
+    },
+    {
+      "severity": "major",
+      "area": "declutter with a group selected",
+      "text": "Selecting a group (ux-1, the core routing action) forceFulls every shelter (m.forceFull = !!sel). The town centre becomes a stack of 5–6 long text chips ('LOCKED 260s CLICK: OPEN + SEND', '0/40 248s 32 FREE', '0/28 383s 16 FREE') lifted 24 px above feet that sit close together. Which stem and foot belong to which chip is ambiguous: the 0/40 chip and the 0/28 chip both hover over the same cluster of red diamonds. Unselected groups drop to icon-only dots with no count. CoH3 and AoE IV show a compact cost or ETA tag pinned exactly on the target and keep the long help text in the tooltip or coach line.",
+      "evidence": "status/shots/hud-ux/ux-1-route-preview.png",
+      "fix": "src/hud/index.js updateMarkerContent(): when sel is set, only the hovered shelter and the group's current target get 'full'. Every other shelter gets a compact chip with icon + ETA coloured by fit (the .e field) and free places as a small badge. Drop the 'click: open + send' string from chips (the coach line already says it) and use the lock icon plus ETA. In placeMarkers() TRY_FULL, try sideways offsets (±w/2+4) before the 24 px lift, and draw the stem as a slanted line to the foot (or highlight the foot diamond on chip hover) so ownership stays unambiguous."
+    },
+    {
+      "severity": "minor",
+      "area": "shelter capacity at default zoom",
+      "text": "In S4b-alert-wide and S2, open shelters are bare icons with no capacity. The brief asks for shelter markers that show capacity, and at the alert a player choosing where to reroute cannot see '0/40' vs '0/12' without zooming or selecting a group. The open shelter icon often sits under its group's chip (S4b: '10 21s' chip over its shelter at 632,378), so the pair reads as one blob. The builder's own gaps (open shelters collapsing to dots mid-zoom, locked S1/S5 as dots at the siren) are confirmed: ux-test reports 'marker dot' for both S1 and S5 when clicked.",
+      "evidence": "status/shots/hud-r2c/S4b-alert-wide.png, status/shots/hud-r2c/S2-tactical.png",
+      "fix": "src/hud/index.js updateMarkerContent()/placeMarkers(): in compact mode keep a 2-glyph capacity badge on open shelters (free places, e.g. '28') rendered inside the icon chip. Treat a locked shelter at alert as priority above every group (prio 250, forceFull) so it never falls to 'dot'. Reserve the group foot and shelter foot as one combined rect, and offset the shelter chip to the opposite side of the group chip."
+    },
+    {
+      "severity": "minor",
+      "area": "radar legibility",
+      "text": "The radar now plots shelters and groups, but at 2 px shelter squares and 1.5 px group dots on a 226×118 map where Arad spans a few pixels, the town is an unreadable speck (S2, S4). The locked-shelter ping is the only usable signal. WARNO and Broken Arrow minimaps use clearly sized, shape-coded contacts.",
+      "evidence": "status/shots/hud-r2c/S2-tactical.png, status/shots/hud-r2c/S4-alert.png",
+      "fix": "src/hud/index.js drawRadar(): during prep/alert, when the camera is within ~2500 of Arad, draw an inset magnifier (e.g. a 54×54 px box in the radar's top-left showing a ±900 m window around Arad at about 20× scale) with 4 px shelter squares, 3 px status-coloured group dots and the pings. Or switch the whole radar to a town-scale extent during the alert phase, with a small toggle."
+    },
+    {
+      "severity": "minor",
+      "area": "panel polish",
+      "text": "Feed timestamps (10 px, --ink-faint #627580) are still barely legible over bright terrain (S2 bottom right, '23:46'). The feed stacks to the screen edge with no bottom margin matching the command bar. A marker chip pokes out at the left screen edge behind the roster (blue square at x=0 in C2 f00056). Between the siren and the auto-unlock, the Lookout locked shelter in C2 f00040 is a red lock dot jammed between the clock and roster panels.",
+      "evidence": "status/shots/hud-r2c/S2-tactical.png, status/clips/hud-r2c/C2/frames/f00056.jpg",
+      "fix": "src/hud/hud.css:188: .iw-feed .ev time { color: var(--ink-dim) }, and set the gradient's first stop at 0.7 alpha. Align .iw-feed bottom with .iw-bar bottom (14px). In placeMarkers(), hide markers whose label rect would extend past x<4 or y<4 rather than drawing them partially off-screen, and extend the obstacle padding between the status and roster panels to cover the gap between them."
+    },
+    {
+      "severity": "minor",
+      "area": "objective state / perf",
+      "text": "In S7 (all clear, no town hits) 'No impacts in Arad' still shows '0' with no check while the other three are ticked. The debrief then shows it as done, which is inconsistent. capture.json reports hud update 2.5 ms on the sampled frame against a 4 ms whole-frame JS budget, which is too much for a DOM overlay.",
+      "evidence": "status/shots/hud-r2c/S7-aftermath.png, status/clips/hud-r2c/C2/capture.json",
+      "fix": "src/hud/index.js updatePanels(): render the town objective as done (check icon, 'none') once phase is aftermath and townHits is 0. For perf, skip placeEdges()/placeMarkers() rect work when the camera matrix has not changed since the last frame and no slow tick ran, and cache the sorted order so hits() is not O(n²) on every frame."
+    }
+  ],
+  "benchmarkNotes": "AoE IV: the panel hierarchy (one corner per job, compact objectives, calm command bar), the icon-first chips at default zoom and the start, intro and debrief screens now meet the AoE IV bar. The gaps are off-screen alerts that do not sit on the viewport edge, and the selected-group chip pile. AoE IV keeps target info compact on the target and the long text in tooltips. CoH3: the alert, toast and banner system with backing plates and a fixed toast slot is at CoH3 objective-banner quality, and the collisions from round 1 are gone. Iron Harvest: restraint is good (thin hairlines, a quiet feed, a siren-synced red vignette), but at the siren the two large red pointer pills break it in C2. WARNO / Broken Arrow: the battery ammo and reload bars and the sector radar are believable, but the town-scale radar contacts are too small to use. Overall: close to the bar, with 2–4 visible gaps a player notices at the most important moment, the siren. That is a 7.",
+  "bestShot": "status/shots/hud-r2c/S4-alert.jpg"
+}
