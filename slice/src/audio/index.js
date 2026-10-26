@@ -109,7 +109,8 @@ export function create(ctx) {
           const vr = ((p.x - L.x) * w.x + (p.y - L.y) * w.y + (p.z - L.z) * w.z) / Math.max(1, d);
           const rate = Math.min(1.6, Math.max(0.6, C / (C + vr)));
           v.g.gain.setTargetAtTime(v.ref / Math.max(v.ref, d) * v.power, tt, 0.08);
-          v.lp.frequency.setTargetAtTime(Math.max(150, Math.min(20000, 20000 / (1 + d / 700))), tt, 0.08);
+              for (const f of v.lps) f.frequency.setTargetAtTime(Math.max(150, Math.min(20000, 20000 / (1 + d / 700))), tt, 0.08);
+          if (v.flange) v.flange.delayTime.setTargetAtTime(A.E.flangeDelay(L, p, d), tt, 0.05);
           v.p.positionX.setTargetAtTime(p.x, tt, 0.05); v.p.positionY.setTargetAtTime(p.y, tt, 0.05); v.p.positionZ.setTargetAtTime(p.z, tt, 0.05);
           for (const [pr, base] of v.rates) pr.setTargetAtTime(base * rate, tt, 0.1);
         }

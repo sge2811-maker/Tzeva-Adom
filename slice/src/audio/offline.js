@@ -9,14 +9,15 @@ import { createEngine, C, EXO_ALT, MAXD, distGain, airCut, evRng } from './engin
 import { encodeWav, toBase64 } from './dsp.js';
 
 export const SR = 48000;
+const REENTRY_LEAD = 3; // s of re-entry roar before the ground blast
 export const PRE = 12; // pre-roll seconds (tails of earlier sounds, limiter settles), trimmed
 
 // Siren poles: three in Arad (relay offsets and slightly different horns, so they phase against
 // each other like real poles), plus the Nevatim and Dimona sirens heard from afar.
 export const POLES = [
-  { name: 'Arad centre', pos: { x: 0, y: 28, z: 0 }, dt: 0, fLo: 330, fHi: 720, rise: 2.3, fall: 2.3, ref: 160, power: 0.26, slap: true },
-  { name: 'Arad north', pos: { x: -380, y: 28, z: -300 }, dt: 0.35, fLo: 338, fHi: 736, rise: 2.25, fall: 2.4, ref: 140, power: 0.26, slap: true },
-  { name: 'Arad south-east', pos: { x: 430, y: 28, z: 340 }, dt: 0.8, fLo: 322, fHi: 706, rise: 2.4, fall: 2.2, ref: 140, power: 0.26, slap: true },
+  { name: 'Arad centre', pos: { x: 0, y: 28, z: 0 }, dt: 0, fLo: 330, fHi: 720, rise: 2.3, fall: 2.3, ref: 160, power: 0.21, slap: true },
+  { name: 'Arad north', pos: { x: -380, y: 28, z: -300 }, dt: 0.35, fLo: 338, fHi: 736, rise: 2.25, fall: 2.4, ref: 140, power: 0.21, slap: true },
+  { name: 'Arad south-east', pos: { x: 430, y: 28, z: 340 }, dt: 0.8, fLo: 322, fHi: 706, rise: 2.4, fall: 2.2, ref: 140, power: 0.21, slap: true },
   { name: 'Nevatim', pos: { x: -6800, y: 40, z: 2900 }, dt: 1.2, fLo: 300, fHi: 660, rise: 2.6, fall: 2.6, ref: 700, power: 0.4, cycles: 9 },
   { name: 'Dimona', pos: { x: -3600, y: 40, z: 13800 }, dt: 2.0, fLo: 345, fHi: 760, rise: 2.2, fall: 2.5, ref: 1100, power: 0.4, cycles: 7 },
 ];
@@ -49,6 +50,7 @@ export async function renderOffline(ctx, rec, t0, t1, opts = {}) {
   const toCtx = (s) => L.simToOut(s) + PRE;
   const toSim = (c) => L.outToSim(c - PRE);
   const meta = { t0, t1, len, sr: SR, listener: L.kind, events: [], sirens: [], movers: [], beats: [] };
+  E.lis = (c) => L.at(toSim(c)).p; // moving sources (launch climb, re-entry) re-evaluate against this
 
   // listener automation
   const lis = ac.listener;
@@ -76,6 +78,8 @@ export async function renderOffline(ctx, rec, t0, t1, opts = {}) {
     for (const P of POLES) {
       const te = e.t + P.dt, { ta, d } = arrive(L, te, P.pos);
       const s = E.siren(P.pos, toCtx(ta), sirenCycles(P, e.countdown ?? 75), d, P);
+      // level and air follow the listener (10 Hz), e.g. a camera flying from Arad toward Nevatim
+      if (s) for (let c = Math.max(0, s.t0), first = true; c <= Math.min(total, s.tOff); c += 0.1, first = false) s.track(L.at(toSim(c)).p, c, first);
       meta.sirens.push({ name: P.name, triggerT: +te.toFixed(3), arriveT: +ta.toFixed(3), outT: +(toCtx(ta) - PRE).toFixed(3), endOutT: s ? +(s.tOff - PRE).toFixed(3) : null, d: Math.round(d), delay: +(ta - te).toFixed(3), fLo: P.fLo, fHi: P.fHi, period: P.rise + P.fall, levelDb: +(20 * Math.log10(distGain(d, P.ref))).toFixed(1) });
     }
   }
@@ -94,7 +98,11 @@ export async function renderOffline(ctx, rec, t0, t1, opts = {}) {
       if (e.y > EXO_ALT) { if (e.t >= toSim(PRE) - 1 && e.t <= t1) meta.events.push({ type: 'intercept', kind: e.kind, te: e.t, alt: Math.round(e.y), scheduled: false, why: 'high-altitude kill: inaudible on the ground' }); continue; }
       add('intercept', e, e, e.t);
       if (e.kill && !e.offmap) add('debris', { ...e, type: 'debris' }, { x: e.x, y: e.y - 150, z: e.z }, e.t + 0.4);
-    } else if (isImpact(e)) add('impact', e, { x: e.x, y: e.y + 15, z: e.z }, e.t);
+    } else if (isImpact(e)) {
+      add('impact', e, { x: e.x, y: e.y + 15, z: e.z }, e.t);
+      // incoming ballistic: shock + tearing roar arrive just ahead of the ground blast (supersonic)
+      if (e.type === 'ballistic') { const { ta } = arrive(L, e.t, e), top = { x: e.x, y: e.y + 3500, z: e.z }; add('reentry', { ...e, type: 'reentry' }, top, ta - REENTRY_LEAD - dist(L.at(ta - REENTRY_LEAD).p, top) / C, { lead: REENTRY_LEAD }); }
+    }
   }
   for (const g of dogPlan(seed, firstOf('alert:start'), firstOf('allclear'))) add(g.howl ? 'dog:howl' : 'dog:bark', { type: 'dog', id: Math.round(g.t * 10), t: g.t }, g.pos, g.t, { howl: g.howl });
   jobs.sort((a, b) => a.c - b.c);
@@ -104,6 +112,7 @@ export async function renderOffline(ctx, rec, t0, t1, opts = {}) {
     if (j.type === 'launch') V = j.d <= MAXD.launch ? E.launch(j.e, j.c, j.d, r) : (why = 'beyond audible range', null);
     else if (j.type === 'intercept') V = j.d <= MAXD.blast ? E.intercept(j.e, j.c, j.d, r) : (why = 'beyond audible range', null);
     else if (j.type === 'impact') V = j.d <= MAXD.blast ? E.impact(j.e, j.c, j.d, r) : (why = 'beyond audible range', null);
+    else if (j.type === 'reentry') V = j.d <= MAXD.blast ? E.reentry(j.pos, j.c, j.d, r, j.lead) : (why = 'beyond audible range', null);
     else if (j.type === 'debris') V = j.d < 5000 ? E.debris(j.pos, j.c, j.d, r) : (why = 'too far to hear crackle', null);
     else V = j.d < 4000 ? E.dog(j.pos, j.c, j.d, r, j.howl) : (why = 'too far', null);
     if (!V && !why) why = 'voice cap (dropped: quieter than all active voices)';
@@ -133,7 +142,8 @@ export async function renderOffline(ctx, rec, t0, t1, opts = {}) {
       const rate = prevTe != null && q ? Math.min(1.6, Math.max(0.6, (te - prevTe) / Math.max(1e-6, s - prevS))) : 1;
       prevTe = q ? te : null; prevS = s; peak = Math.max(peak, gain);
       const set = (param, val) => (first ? param.setValueAtTime(val, c) : param.linearRampToValueAtTime(val, c));
-      set(v.g.gain, gain); set(v.lp.frequency, airCut(d));
+      set(v.g.gain, gain); for (const f of v.lps) set(f.frequency, airCut(d));
+      if (v.flange && q) set(v.flange.delayTime, E.flangeDelay(lp, q, d));
       if (q) { set(v.p.positionX, q.x); set(v.p.positionY, q.y); set(v.p.positionZ, q.z); }
       for (const [pr, base] of v.rates) set(pr, base * rate);
       first = false;
@@ -144,6 +154,9 @@ export async function renderOffline(ctx, rec, t0, t1, opts = {}) {
   const buf = await ac.startRendering();
   const off = Math.round(PRE * SR), n = Math.round(len * SR);
   const ch = [buf.getChannelData(0).subarray(off, off + n), buf.getChannelData(1).subarray(off, off + n)];
+  // 5 ms raised-cosine fades so a muxed window never starts or ends mid-waveform
+  const F = Math.round(0.005 * SR);
+  for (let i = 0; i < F; i++) { const w = 0.5 - 0.5 * Math.cos(Math.PI * i / F); for (const c of ch) { c[i] *= w; c[n - 1 - i] *= w; } }
   // optional mastering for video (captures): gain toward a loudness target, capped by a -1 dBFS
   // peak ceiling. audio-render.mjs passes { master: false } to show the raw game mix.
   let gain = 1;
