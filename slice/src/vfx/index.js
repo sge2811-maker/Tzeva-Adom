@@ -163,10 +163,10 @@ export function create(ctx) {
     for (let i = 0; i < nsm; i++) {
       const d = randDir(), off = R(0, 0.7) * Rf, sp = R(0.1, 0.3) * Rf;
       smoke.add(x + d.x * off, y + d.y * off * 0.7, z + d.z * off, vx * 0.04 + d.x * sp, vy * 0.04 + d.y * sp * 0.6, vz * 0.04 + d.z * sp,
-        smokeAlb, smokeAlb * 0.97, smokeAlb * 0.94, Rf * R(0.4, 0.7), Rf * R(1.4, 2.4), R(0.35, 0.5), R(12, 22), -1, 0.5, 1.1, T_SMOKE, R(1.4, 2.4), R(0.12, 0.45), 1);
+        smokeAlb, smokeAlb * 0.97, smokeAlb * 0.94, Rf * R(0.4, 0.7), Rf * R(1.2, 2.0), R(0.22, 0.34), R(8, 14), -1, 0.5, 1.1, T_SMOKE, R(1.4, 2.4), R(0.12, 0.45), 1);
     }
     addLight(x, y, z, 1 * lightI, 0.72 * lightI, 0.45 * lightI, Rf * 8, 1.8, 0);
-    if (opts.smudge) { const vl = Math.hypot(vx, vy, vz) || 1; for (let i = 0; i < 12; i++) { const d = randDir(), a = R(-3, 3) * Rf, off = R(0, 0.4) * Rf; smoke.add(x + vx / vl * a + d.x * off, y + vy / vl * a + d.y * off, z + vz / vl * a + d.z * off, vx * 0.02 + d.x * 6, vy * 0.02, vz * 0.02 + d.z * 6, 0.3, 0.29, 0.28, Rf * R(0.2, 0.4), Rf * R(0.4, 1.6), 0.18, R(25, 40), 0.2, 0.3, 1.5, T_SMOKE, 0.4, R(0.4, 1.0), 1); } }
+    if (opts.smudge) { const vl = Math.hypot(vx, vy, vz) || 1; for (let i = 0; i < 16; i++) { const d = randDir(), a = R(-4.5, 4.5) * Rf, off = R(0, 0.3) * Rf; smoke.add(x + vx / vl * a + d.x * off, y + vy / vl * a + d.y * off, z + vz / vl * a + d.z * off, vx * 0.02 + d.x * 6, vy * 0.02, vz * 0.02 + d.z * 6, 0.3, 0.29, 0.28, Rf * R(0.2, 0.35), Rf * R(0.4, 1.2), 0.13, R(20, 32), 0.2, 0.3, 1.5, T_SMOKE, 0.4, R(0.4, 1.0), 1); } }
   }
 
   // ---------------------------------------------------------------- debris
@@ -258,7 +258,7 @@ export function create(ctx) {
         const q = randDir(), sp = R(60, 420);
         fire.add(e.x, e.y, e.z, q.x * sp + e.vx * 0.3, q.y * sp + e.vy * 0.3, q.z * sp + e.vz * 0.3, 2.2, 1.3, 0.7, R(25, 45), 15, 0.7, R(0.7, 1.4), 4, 0.15, 1.0);
       }
-      if (e.kill) for (let i = 0; i < 7; i++) { const f = i * 0.3; smoke.add(e.x + e.vx * f * 0.4 + R(-250, 250), e.y + e.vy * f * 0.4 + R(-150, 150), e.z + e.vz * f * 0.4 + R(-250, 250), e.vx * 0.12, e.vy * 0.12, e.vz * 0.12, 0.85, 0.85, 0.9, 600, R(1800, 3200), R(0.16, 0.22), R(16, 24), 0, 0.05, 0.9, T_SMOKE, 0.5); }
+      if (e.kill) for (let i = 0; i < 16; i++) { const f = (i / 15 - 0.3) * 1.2; smoke.add(e.x + e.vx * f + R(-120, 120), e.y + e.vy * f + R(-80, 80), e.z + e.vz * f + R(-120, 120), e.vx * 0.1, e.vy * 0.1, e.vz * 0.1, 0.8, 0.78, 0.75, 500, R(1100, 2000), R(0.07, 0.11), R(16, 24), 0, 0.05, 0.9, T_SMOKE, 0); }
       addLight(e.x, e.y, e.z, 9 * k, 8 * k, 7.5 * k, 1800, 1.0, 0);
       envFlash(e.x, e.y, e.z, [0.95, 0.9, 1], e.kill ? 0.8e5 : 0.4e5, 1, 0.4);
       ctx.fx.flash = Math.min(2.5, ctx.fx.flash + (e.kill ? 0.12 : 0.04));
@@ -322,19 +322,19 @@ export function create(ctx) {
     // the cloud above the blast, lit by the fireball, then the persistent column
     for (let i = 0; i < 10 * mul + 3; i++) { const q = randDir(); smoke.add(e.x + q.x * 30 * s, y + R(30, 90) * s, e.z + q.z * 30 * s, q.x * 18 * s, R(20, 45) * s, q.z * 18 * s, 0.2, 0.19, 0.18, 50 * s, R(180, 300) * s, 0.75, R(24, 36), -1, 0.6, 1.4, T_SMOKE, R(1.0, 1.6), R(0.1, 0.4), 1); }
     let c = null;
-    const nCol = e.type === 'ballistic' ? 1 + (rng.chance(0.5) ? 2 : 1) : e.type === 'drone' && e.kind === 'open' && rng.chance(0.5) ? 0 : 1; // main column + smouldering satellites
+    const nCol = e.type === 'ballistic' ? 1 + (rng.chance(0.5) ? 2 : 1) : e.type === 'drone' && e.kind === 'open' && rng.chance(0.75) ? 0 : 1; // main column + smouldering satellites
     for (let n = 0; n < nCol; n++) {
       let cc = null; for (let i = 0; i < CMAX; i++) if (!columns[i].on) { cc = columns[i]; break; }
       if (!cc) break;
       const sat = n > 0, a = R(0, 6.283), off = sat ? R(60, 150) : 0;
-      cc.on = true; cc.x = e.x + Math.cos(a) * off; cc.z = e.z + Math.sin(a) * off; cc.y = groundAt(cc.x, cc.z); cc.s = sat ? s * R(0.35, 0.5) : s;
-      cc.t = sat ? -R(0.5, 2) : 0; cc.acc = 0; cc.eacc = 0; cc.life = e.type === 'ballistic' ? (sat ? 90 : 120) : 60; cc.fire = e.kind === 'open' ? 9 : cc.life * 0.75;
+      cc.on = true; cc.x = e.x + Math.cos(a) * off; cc.z = e.z + Math.sin(a) * off; cc.y = groundAt(cc.x, cc.z); cc.s = sat ? s * R(0.35, 0.5) : s * (e.type === 'ballistic' ? Math.min(1.6, Math.max(1, Math.sqrt(d0 / 4000))) : 1);
+      cc.t = sat ? -R(0.5, 2) : 0; cc.acc = 0; cc.eacc = 0; cc.life = e.type === 'ballistic' ? (sat ? 90 : 120) : 60; cc.fire = e.kind === 'open' ? R(3, 12) : cc.life * R(0.35, 0.8);
       if (!sat) c = cc;
     }
     addLight(e.x, y + 40 * s, e.z, 20 * s, 12 * s, 6 * s, 450 * s, 2.2, 0);
-    if (c) addLight(e.x, y + 20 * s, e.z, 4.5 * s, 2.0 * s, 0.6 * s, 200 * s, c.fire, 1);
+    if (c) { const fi = R(0.5, 1.3); addLight(e.x, y + 20 * s, e.z, 4.5 * s * fi, 2.0 * s * fi, 0.6 * s * fi, 200 * s, c.fire, 1); }
     scorch.add(e.x, e.z, 48 * s, rng.next(), shared.uTime.value, e.kind === 'open' ? 0.5 : 1);
-    envFlash(e.x, y + 60, e.z, [1, 0.62, 0.32], 3e7 * s * Math.min(1, Math.max(0.25, d0 / 5000)), 9000, 0.9);
+    envFlash(e.x, y + 60, e.z, [1, 0.62, 0.32], 3e7 * s * Math.min(1, Math.max(0, (d0 - 1500) / 3500)), 9000, 0.9);
     const d = camDist(e.x, y, e.z);
     ctx.fx.flash = Math.min(2.5, ctx.fx.flash + 0.6 * s * Math.min(1, 4000 / (d + 600)));
     shake(1.2 * s, d, 12000, 0.9, 'impact', e.t);
@@ -378,12 +378,13 @@ export function create(ctx) {
         } else {
           if (bi < MAXI) placeInst(ballistics, bi++, p, vl, 4);
           const h = th.heat;
-          const dcb = camDist(p.x, p.y, p.z), near = Math.min(1, Math.max(0, (dcb - 2000) / 6000));
+          const dcb = camDist(p.x, p.y, p.z), near = Math.min(1, Math.max(0, (dcb - 2500) / 5500));
           // meteor-like plasma head: white-hot core, orange sheath that grows with heating
           glow(p.x, p.y, p.z, 5 + 26 * h, 3 + 13 * h, 1.6 + 4 * h, 40 + 110 * h, 1);
           if (h > 0.04) glow(p.x, p.y, p.z, 2.4 * h, 0.9 * h, 0.3 * h, 260 + 380 * h, 0.55 * (0.2 + 0.8 * near));
           const steep = vl.y < -0.8 * Math.hypot(vl.x, vl.y, vl.z);
-          if (h > 0.03 && !(steep && dcb < 1500)) hotTr.push(key, p.x, p.y, p.z, t, Math.min(1, h * 1.6) * (0.15 + 0.85 * near));
+          const hiK = p.y > 20000 ? 0.35 : 1; // dim above the exo layer
+          if (h > 0.03 && !(steep && dcb < 4000)) hotTr.push(key, p.x, p.y, p.z, t, Math.min(1, h * 1.6) * near * hiK);
           if (p.y < 26000) smokeTr.push(key, p.x, p.y, p.z, t, Math.min(1, 0.3 + h));
         }
       }
