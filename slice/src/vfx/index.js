@@ -406,7 +406,9 @@ export function create(ctx) {
           glow(p.x, p.y, p.z, 5 * f, 2.6 * f, 1.1 * f, st.head * 4, 0.45 * (1 - exoK));
           smokeTr.push(key, p.x, p.y, p.z, t, 1 - exoK);
         } else glow(p.x, p.y, p.z, 9 * f, 9 * f, 10 * f, st.head * 2.4, 1);
-        hotTr.push(key, p.x, p.y, p.z, t, 1 - exoK * 0.6);
+        // a motor diving steeply near the camera would draw a full-height pillar: fade it out
+        const vlI = it.vel, dive = vlI.y < -0.7 * Math.hypot(vlI.x, vlI.y, vlI.z) ? Math.min(1, Math.max(0, (camDist(p.x, p.y, p.z) - 1500) / 2500)) : 1;
+        hotTr.push(key, p.x, p.y, p.z, t, (1 - exoK * 0.6) * dive);
       }
       ints.count = ii;
       seen.forEach(endStale);

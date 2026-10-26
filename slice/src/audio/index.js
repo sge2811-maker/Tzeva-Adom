@@ -1,139 +1,175 @@
-// Audio stream: everything is synthesized at runtime (no audio files): rising-falling Home
-// Front Command style siren, launches, intercept booms delayed by the speed of sound, impacts,
-// the Shahed buzz, desert wind and crickets. Spatialised with HRTF panners on the camera.
-const SOUND_SPEED = 343;
+// Audio stream. Everything is synthesized at runtime (no audio files): a civil-defence
+// rising-and-falling siren from three poles in Arad plus Nevatim and Dimona in the distance,
+// per-layer interceptor launches, near crack / far rumble blasts delayed by the speed of sound,
+// heavy impacts, debris crackle, the Shahed two-stroke, cruise missiles, coalition jets, desert
+// wind, insects that stop with the siren, a faint town hum, a distant dog and a low tension bed.
+//
+//   engine.js   graph builders, recipes, distance model, voice cap/stealing (shared live/offline)
+//   dsp.js      seeded procedural buffers, clip-aware automation, WAV encoder
+//   offline.js  window.__slice.audioOffline(t0, t1[, opts]) -> base64 WAV (+ __slice.audioMeta)
+//
+// The live mix starts on the 'begin' gesture. The camera track (listener) and mover positions
+// are recorded every frame / 0.1 s so the offline render can reproduce the mix deterministically.
+import { createEngine, C, EXO_ALT, MAXD, evRng } from './engine.js';
+import { renderOffline, POLES, sirenCycles, dogPlan } from './offline.js';
+import { makeRng } from '../core/rng.js';
+
+const TRACK_N = 16384;
 
 export function create(ctx) {
-  const { bus, camera, sim, params } = ctx;
-  const A = { ac: null, master: null, buses: {}, noise: null, siren: null, buzz: null, on: !params.mute };
+  const { bus, camera, sim, params, clock } = ctx;
+  const rec = makeRecorder(ctx);
+  const A = { ac: null, E: null, amb: null, movers: null, sirens: [], on: !params.mute, rec };
   ctx.audio = A;
+  window.__slice.audioOffline = (t0, t1, opts = {}) => renderOffline(ctx, rec, t0, t1, opts).then((r) => { window.__slice.audioMeta = r.meta; return r.b64; });
 
+  // ---------------------------------------------------------------- live mix
+  let dogs = dogPlan(params.seed, ctx.pacing.alertAt, null), dogI = 0;
   function init() {
     if (A.ac || params.mute) return;
-    try { A.ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+    try { A.ac = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' }); } catch (e) { return; }
     const ac = A.ac;
-    const comp = ac.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.25;
-    A.master = ac.createGain(); A.master.gain.value = 0.9; A.master.connect(comp).connect(ac.destination);
-    for (const b of ['sfx', 'amb', 'siren', 'ui']) { const g = ac.createGain(); g.connect(A.master); A.buses[b] = g; }
-    A.buses.amb.gain.value = 0.5;
-    const buf = ac.createBuffer(1, ac.sampleRate * 3, ac.sampleRate), d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    A.noise = buf;
-    // ambience: wind + crickets
-    const wind = ac.createBufferSource(); wind.buffer = buf; wind.loop = true;
-    const wl = ac.createBiquadFilter(); wl.type = 'lowpass'; wl.frequency.value = 420;
-    const wg = ac.createGain(); wg.gain.value = 0.08;
-    const lfo = ac.createOscillator(); lfo.frequency.value = 0.08; const lg = ac.createGain(); lg.gain.value = 0.04; lfo.connect(lg).connect(wg.gain); lfo.start();
-    wind.connect(wl).connect(wg).connect(A.buses.amb); wind.start();
-    A.crickets = setInterval(() => chirp(), 650);
-    // drone buzz voice
-    const bo = ac.createOscillator(); bo.type = 'sawtooth'; bo.frequency.value = 118;
-    const bl = ac.createOscillator(); bl.frequency.value = 19; const bg2 = ac.createGain(); bg2.gain.value = 7; bl.connect(bg2).connect(bo.frequency); bl.start();
-    const bf = ac.createBiquadFilter(); bf.type = 'bandpass'; bf.frequency.value = 820; bf.Q.value = 1.4;
-    const bg = ac.createGain(); bg.gain.value = 0;
-    bo.connect(bf).connect(bg).connect(A.buses.sfx); bo.start(); A.buzz = bg;
+    A.E = createEngine(ac, { seed: params.seed, live: true });
+    A.amb = A.E.ambience(ac.currentTime);
+    A.movers = { drone: [], cruise: [], jet: [] };
+    const N = { drone: 4, cruise: 2, jet: 2 };
+    for (const k in N) for (let i = 0; i < N[k]; i++) A.movers[k].push(A.E.mover(k, makeRng(params.seed, `live:${k}:${i}`), ac.currentTime));
+    while (dogI < dogs.length && dogs[dogI].t <= sim.t) dogI++;
   }
-  function chirp() {
-    const ac = A.ac; if (!ac || ctx.flow !== 'play' && ctx.flow !== 'menu') return;
-    if (sim.phase === 'barrage' || sim.phase === 'alert') return; // insects go quiet under the siren
-    if (Math.random() < 0.45) return;
-    const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
-    o.frequency.value = 4200 + Math.random() * 600; g.gain.value = 0;
-    for (let i = 0; i < 3; i++) { g.gain.setValueAtTime(0.012, t + i * 0.06); g.gain.setValueAtTime(0, t + i * 0.06 + 0.03); }
-    o.connect(g).connect(A.buses.amb); o.start(t); o.stop(t + 0.25);
-  }
+  const camD = (p) => Math.hypot(p.x - camera.position.x, p.y - camera.position.y, p.z - camera.position.z);
+  const when = (d) => A.ac.currentTime + 0.03 + d / C;
 
-  // positional voice: a panner at world position, optional speed-of-sound delay
-  function voice(pos, { delay = 0, bus = 'sfx', ref = 400 } = {}) {
-    const ac = A.ac, out = ac.createGain();
-    const p = ac.createPanner(); p.panningModel = 'HRTF'; p.distanceModel = 'inverse'; p.refDistance = ref; p.rolloffFactor = 1; p.maxDistance = 1e6;
-    p.positionX.value = pos.x; p.positionY.value = pos.y; p.positionZ.value = pos.z;
-    out.connect(p).connect(A.buses[bus]);
-    return { out, t: ac.currentTime + delay };
-  }
-  function noiseBurst(dst, t, dur, f0, f1, type = 'lowpass', q = 0.7, gain = 1) {
-    const ac = A.ac, s = ac.createBufferSource(); s.buffer = A.noise;
-    const f = ac.createBiquadFilter(); f.type = type; f.Q.value = q; f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
-    const g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    s.connect(f).connect(g).connect(dst); s.start(t, Math.random() * 2); s.stop(t + dur + 0.05);
-  }
-  function boom(pos, size = 1) {
-    const d = Math.hypot(pos.x - camera.position.x, pos.y - camera.position.y, pos.z - camera.position.z);
-    if (d > 60000) return;
-    const delay = Math.min(25, d / SOUND_SPEED);
-    const { out, t } = voice(pos, { delay, ref: 900 * size });
-    const far = Math.min(1, d / 15000);
-    noiseBurst(out, t, 2.6 * size + far * 2, 1800 * (1 - far * 0.85), 50, 'lowpass', 0.7, 1.6);
-    const o = A.ac.createOscillator(), og = A.ac.createGain();
-    o.frequency.setValueAtTime(70, t); o.frequency.exponentialRampToValueAtTime(28, t + 1.2);
-    og.gain.setValueAtTime(1.2 * size, t); og.gain.exponentialRampToValueAtTime(0.001, t + 1.6);
-    o.connect(og).connect(out); o.start(t); o.stop(t + 1.7);
-  }
-
-  // ---------------------------------------------------------------- siren
-  function sirenStart(pos, delay = 0, gain = 0.22, dur = 70) {
-    const ac = A.ac; if (!ac) return null;
-    const { out, t } = voice(pos, { delay, bus: 'siren', ref: 2500 });
-    const o1 = ac.createOscillator(), o2 = ac.createOscillator(); o1.type = 'sawtooth'; o2.type = 'square';
-    const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 2200;
-    const g = ac.createGain(); g.gain.value = 0;
-    o2.detune.value = 7;
-    const mix = ac.createGain(); mix.gain.value = 0.5; o2.connect(mix);
-    o1.connect(f); mix.connect(f); f.connect(g).connect(out);
-    // rising and falling tone, ~ 4.5 s per cycle
-    for (let i = 0; i < Math.ceil(dur / 4.5); i++) {
-      const c = t + i * 4.5;
-      for (const o of [o1, o2]) { o.frequency.setValueAtTime(380, c); o.frequency.linearRampToValueAtTime(820, c + 2.2); o.frequency.linearRampToValueAtTime(380, c + 4.5); }
-    }
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain, t + 2.5);
-    g.gain.setValueAtTime(gain, t + dur - 4); g.gain.linearRampToValueAtTime(0, t + dur);
-    o1.start(t); o2.start(t); o1.stop(t + dur + 0.1); o2.stop(t + dur + 0.1);
-    return { g, o1, o2 };
-  }
-
-  // ---------------------------------------------------------------- events
   bus.on('begin', () => { init(); if (A.ac && A.ac.state === 'suspended') A.ac.resume(); });
-  bus.on('alert:start', () => {
-    if (!A.ac) return;
-    A.siren = sirenStart({ x: 0, y: 30, z: 0 }, 0, 0.26, ctx.pacing.countdown);
-    sirenStart({ x: -3600, y: 40, z: 13800 }, 3.5, 0.08, ctx.pacing.countdown - 5);   // Dimona, later and fainter
-    sirenStart({ x: -6800, y: 40, z: 2900 }, 1.5, 0.10, ctx.pacing.countdown - 2);    // Nevatim
+  bus.on('launch', (e) => { if (!A.ac) return; const d = camD(e); if (d <= MAXD.launch) A.E.launch(e, when(d), d, evRng(params.seed, e)); });
+  bus.on('intercept', (e) => {
+    if (!A.ac || e.y > EXO_ALT) return;
+    const d = camD(e); if (d > MAXD.blast) return;
+    A.E.intercept(e, when(d), d, evRng(params.seed, e));
+    if (e.kill && !e.offmap && d < 5000) A.E.debris({ x: e.x, y: e.y - 150, z: e.z }, when(d) + 0.4, d, evRng(params.seed, { ...e, type: 'debris' }));
   });
-  bus.on('launch', (e) => {
+  bus.on('impact', (e) => { if (!A.ac) return; const p = { x: e.x, y: e.y + 15, z: e.z }, d = camD(p); if (d <= MAXD.blast) A.E.impact(e, when(d), d, evRng(params.seed, e)); });
+  bus.on('alert:start', (e) => {
     if (!A.ac) return;
-    const d = Math.hypot(e.x - camera.position.x, e.y - camera.position.y, e.z - camera.position.z);
-    if (d > 30000) return;
-    const { out, t } = voice(e, { delay: Math.min(12, d / SOUND_SPEED), ref: 300 });
-    noiseBurst(out, t, 2.2, 3200, 260, 'bandpass', 0.8, 1.4);
-    noiseBurst(out, t, 0.25, 600, 80, 'lowpass', 0.7, 1.5);
+    for (const P of POLES) { const d = camD(P.pos); A.sirens.push(A.E.siren(P.pos, when(d) + P.dt, sirenCycles(P, e.countdown ?? 75), d, P)); }
   });
-  bus.on('intercept', (e) => { if (A.ac && e.kill) boom(e, e.big ? 1.3 : 0.7); else if (A.ac) boom(e, 0.4); });
-  bus.on('impact', (e) => { if (A.ac) boom({ x: e.x, y: e.y + 20, z: e.z }, e.type === 'ballistic' ? 2.2 : 1.4); });
-  bus.on('cmd', ({ ok }) => {
+  for (const type of ['alert:early', 'alert:start', 'alert:impactWindow', 'alert:end', 'allclear']) bus.on(type, () => { if (A.ac) A.E.beat(A.amb, type, A.ac.currentTime); });
+  bus.on('allclear', (e) => { dogs = dogPlan(params.seed, ctx.pacing.alertAt, e.t); dogI = 0; while (dogI < dogs.length && dogs[dogI].t <= sim.t) dogI++; });
+  // the siren stops cleanly if the sim moves on early (e.g. at 4x speed)
+  bus.on('phase', ({ to }) => { if (A.ac && (to === 'hold' || to === 'aftermath')) { for (const s of A.sirens) if (s && s.tOff > A.ac.currentTime) s.stop(A.ac.currentTime); A.sirens.length = 0; } });
+
+  // ---------------------------------------------------------------- UI (subtle, consistent)
+  function ui(kind) {
     if (!A.ac) return;
-    const t = A.ac.currentTime, o = A.ac.createOscillator(), g = A.ac.createGain();
-    o.frequency.value = ok ? 1250 : 380; g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
-    o.connect(g).connect(A.buses.ui); o.start(t); o.stop(t + 0.1);
-  });
+    const ac = A.ac, t = ac.currentTime + 0.005, out = A.E.bus.ui;
+    const blip = (f0, f1, dur, g, type = 'sine', at = t) => {
+      const o = ac.createOscillator(), e = ac.createGain(); o.type = type;
+      o.frequency.setValueAtTime(f0, at); o.frequency.exponentialRampToValueAtTime(f1, at + dur);
+      e.gain.setValueAtTime(0, at); e.gain.linearRampToValueAtTime(g, at + 0.004); e.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+      o.connect(e).connect(out); o.start(at); o.stop(at + dur + 0.02); o.onended = () => { o.disconnect(); e.disconnect(); };
+    };
+    if (kind === 'ok') blip(1500, 1900, 0.05, 0.12);
+    else if (kind === 'no') { blip(320, 260, 0.09, 0.14, 'triangle'); blip(320, 240, 0.09, 0.1, 'triangle', t + 0.1); }
+    else if (kind === 'route') { blip(900, 1200, 0.05, 0.1); blip(1200, 1500, 0.06, 0.1, 'sine', t + 0.07); }
+    else if (kind === 'unlock') { blip(180, 70, 0.18, 0.3, 'triangle'); blip(2400, 1800, 0.04, 0.08, 'square', t + 0.02); }
+    else if (kind === 'build') { blip(120, 55, 0.25, 0.35, 'triangle'); blip(600, 1400, 0.22, 0.07, 'sine', t + 0.08); }
+  }
+  bus.on('cmd', ({ name, ok, args }) => { if (args && args.by === 'demo') return; if (!ok) ui('no'); else if (name === 'route') ui('route'); else if (name === 'unlock') ui('unlock'); else if (name === 'build') ui('build'); else ui('ok'); });
 
   // ---------------------------------------------------------------- per frame
-  const fwd = { x: 0, y: 0, z: -1 };
+  const near = { ids: new Array(4), d: new Float64Array(4), o: new Array(4) };
+  function nearest(list, kind, k, L) {
+    let n = 0;
+    for (const th of list) {
+      if (!th.alive || (kind !== 'jet' && th.type !== kind)) continue;
+      const d = Math.hypot(th.pos.x - L.x, th.pos.y - L.y, th.pos.z - L.z);
+      let i = Math.min(n, k); if (i === k && d >= near.d[k - 1]) continue;
+      while (i > 0 && near.d[i - 1] > d) { if (i < k) { near.d[i] = near.d[i - 1]; near.o[i] = near.o[i - 1]; } i--; }
+      near.d[i] = d; near.o[i] = th; if (n < k) n++;
+    }
+    return n;
+  }
+  let ambAcc = 9;
   return {
     update(dt) {
+      rec.frame();
       const ac = A.ac; if (!ac) return;
-      const L = ac.listener, p = camera.position;
-      const e = camera.matrixWorld.elements;
-      fwd.x = -e[8]; fwd.y = -e[9]; fwd.z = -e[10];
-      if (L.positionX) {
-        const tt = ac.currentTime;
-        L.positionX.setTargetAtTime(p.x, tt, 0.02); L.positionY.setTargetAtTime(p.y, tt, 0.02); L.positionZ.setTargetAtTime(p.z, tt, 0.02);
-        L.forwardX.setTargetAtTime(fwd.x, tt, 0.02); L.forwardY.setTargetAtTime(fwd.y, tt, 0.02); L.forwardZ.setTargetAtTime(fwd.z, tt, 0.02);
-        L.upX.value = e[4]; L.upY.value = e[5]; L.upZ.value = e[6];
+      const L = camera.position, e = camera.matrixWorld.elements, tt = ac.currentTime, lis = ac.listener;
+      if (lis.positionX) {
+        lis.positionX.setTargetAtTime(L.x, tt, 0.03); lis.positionY.setTargetAtTime(L.y, tt, 0.03); lis.positionZ.setTargetAtTime(L.z, tt, 0.03);
+        lis.forwardX.setTargetAtTime(-e[8], tt, 0.03); lis.forwardY.setTargetAtTime(-e[9], tt, 0.03); lis.forwardZ.setTargetAtTime(-e[10], tt, 0.03);
+        lis.upX.setTargetAtTime(e[4], tt, 0.03); lis.upY.setTargetAtTime(e[5], tt, 0.03); lis.upZ.setTargetAtTime(e[6], tt, 0.03);
       }
-      // Shahed buzz follows the nearest drone
-      let bd = 1e9; for (const th of sim.threats) if (th.alive && th.type === 'drone') { const d = Math.hypot(th.pos.x - p.x, th.pos.y - p.y, th.pos.z - p.z); if (d < bd) bd = d; }
-      A.buzz.gain.setTargetAtTime(ctx.clock.paused ? 0 : Math.max(0, 1 - bd / 6000) * 0.12, ac.currentTime, 0.3);
-      A.master.gain.setTargetAtTime(ctx.clock.paused ? 0.2 : 0.9, ac.currentTime, 0.2);
+      // movers: nearest Shaheds, cruise missiles and jets, with Doppler from radial speed
+      for (const kind of ['drone', 'cruise', 'jet']) {
+        const pool = A.movers[kind], n = nearest(kind === 'jet' ? sim.jets : sim.threats, kind, pool.length, L);
+        for (let i = 0; i < pool.length; i++) {
+          const v = pool[i];
+          if (i >= n || ctx.clock.paused) { v.g.gain.setTargetAtTime(0, tt, 0.15); continue; }
+          const th = near.o[i], d = near.d[i], p = th.pos, w = th.vel;
+          const vr = ((p.x - L.x) * w.x + (p.y - L.y) * w.y + (p.z - L.z) * w.z) / Math.max(1, d);
+          const rate = Math.min(1.6, Math.max(0.6, C / (C + vr)));
+          v.g.gain.setTargetAtTime(v.ref / Math.max(v.ref, d) * v.power, tt, 0.08);
+          v.lp.frequency.setTargetAtTime(Math.max(150, Math.min(20000, 20000 / (1 + d / 700))), tt, 0.08);
+          v.p.positionX.setTargetAtTime(p.x, tt, 0.05); v.p.positionY.setTargetAtTime(p.y, tt, 0.05); v.p.positionZ.setTargetAtTime(p.z, tt, 0.05);
+          for (const [pr, base] of v.rates) pr.setTargetAtTime(base * rate, tt, 0.1);
+        }
+      }
+      // ambience levels follow the listener (4 Hz), dogs, pause duck
+      ambAcc += dt;
+      if (ambAcc > 0.25) {
+        ambAcc = 0; const lv = A.E.ambLevels(L);
+        A.amb.windL.gain.setTargetAtTime(lv.wind, tt, 0.3); A.amb.insL.gain.setTargetAtTime(lv.ins, tt, 0.3); A.amb.townL.gain.setTargetAtTime(lv.town, tt, 0.3);
+        A.E.out.gain.setTargetAtTime(ctx.clock.paused ? 0.25 : 0.85, tt, 0.2);
+      }
+      while (dogI < dogs.length && dogs[dogI].t <= sim.t) {
+        const g = dogs[dogI++]; if (ctx.flow !== 'play') continue;
+        const d = camD(g.pos); if (d < 4000) A.E.dog(g.pos, when(d), d, evRng(params.seed, { type: 'dog', id: Math.round(g.t * 10), t: g.t }), g.howl);
+      }
+    },
+  };
+}
+
+// Records (1) the camera/listener track per frame (sim time, real time, position, forward, up)
+// in a fixed ring buffer, and (2) mover positions every 6 sim steps (0.1 s) by wrapping
+// sim.step (read-only: the wrapper only samples positions after the original step).
+function makeRecorder(ctx) {
+  const { sim, camera, clock } = ctx;
+  const T = new Float64Array(TRACK_N), R = new Float64Array(TRACK_N), P = new Float32Array(TRACK_N * 3), F = new Float32Array(TRACK_N * 3), U = new Float32Array(TRACK_N * 3);
+  let head = 0, count = 0, lastT = -1;
+  const movers = new Map();
+  const step = sim.step;
+  let k = 0;
+  sim.step = function (dt) {
+    step.call(sim, dt);
+    if (++k % 6 !== 0 || !sim.started) return;
+    for (const th of sim.threats) if (th.alive && th.type !== 'ballistic') put('t' + th.id, th.type, th.pos);
+    for (const j of sim.jets) if (j.alive) put('j' + j.id, 'jet', j.pos);
+  };
+  function put(id, kind, p) {
+    let M = movers.get(id);
+    if (!M) { M = { kind, t0: sim.t, a: [], at: (s) => { const f = (s - M.t0) / 0.1, i = Math.floor(f), n = M.a.length / 3; if (f < 0 || i >= n - 1) return i === n - 1 && f - i < 1e-6 ? { x: M.a[i * 3], y: M.a[i * 3 + 1], z: M.a[i * 3 + 2] } : null; const u = f - i, a = M.a; return { x: a[i * 3] + (a[i * 3 + 3] - a[i * 3]) * u, y: a[i * 3 + 1] + (a[i * 3 + 4] - a[i * 3 + 1]) * u, z: a[i * 3 + 2] + (a[i * 3 + 5] - a[i * 3 + 2]) * u }; } }; movers.set(id, M); }
+    M.a.push(p.x, p.y, p.z);
+  }
+  return {
+    movers,
+    frame() {
+      if (ctx.flow !== 'play' || sim.t <= lastT) return;
+      lastT = sim.t;
+      const e = camera.matrixWorld.elements, i = head, p = camera.position;
+      T[i] = sim.t; R[i] = clock.realT;
+      P[i * 3] = p.x; P[i * 3 + 1] = p.y; P[i * 3 + 2] = p.z;
+      F[i * 3] = -e[8]; F[i * 3 + 1] = -e[9]; F[i * 3 + 2] = -e[10];
+      U[i * 3] = e[4]; U[i * 3 + 1] = e[5]; U[i * 3 + 2] = e[6];
+      head = (head + 1) % TRACK_N; count = Math.min(TRACK_N, count + 1);
+    },
+    trackArrays() {
+      const n = count, o = { T: new Float64Array(n), R: new Float64Array(n), P: new Float32Array(n * 3), F: new Float32Array(n * 3), U: new Float32Array(n * 3) };
+      for (let j = 0; j < n; j++) {
+        const i = (head - n + j + TRACK_N) % TRACK_N;
+        o.T[j] = T[i]; o.R[j] = R[i];
+        for (let c = 0; c < 3; c++) { o.P[j * 3 + c] = P[i * 3 + c]; o.F[j * 3 + c] = F[i * 3 + c]; o.U[j * 3 + c] = U[i * 3 + c]; }
+      }
+      return o;
     },
   };
 }

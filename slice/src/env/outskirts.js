@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { heightAt, GEO } from '../world/geo.js';
 import { makeRng } from '../core/rng.js';
+import { fbm } from '../core/util.js';
 import { GN_GLSL } from './terrain.js';
 
 const segDist = (px, pz, ax, az, bx, bz) => {
@@ -67,15 +68,16 @@ export function planOutskirts(ctx) {
 
   // 1) south: a villa quarter on a looping lane, joined to the town's southern edge
   {
-    const cx = -60, cz = 930, rx = 330, rz = 150, loop = [];
-    for (let k = 0; k <= 20; k++) { const a = (k / 20) * Math.PI * 2; loop.push([cx + Math.cos(a) * rx, cz + Math.sin(a) * rz]); }
-    const top = [cx, cz - rz], n0 = node(cx, cz - rz - 200);
-    street(n0.x, n0.z, top[0], top[1], 10);
-    polyStreet(loop, 9);
-    street(cx - 120, cz, cx + 140, cz + 10, 8);
-    const before = segs.length;
-    for (const g of segs.slice(0)) if (g.az > 650 || g.bz > 650) frontage(g, 19, () => ({ type: 'house', w: rng.range(11, 15), d: rng.range(9, 12), floors: rng.chance(0.4) ? 2 : 1 }), 5);
-    void before;
+    // an organic lane network: a wandering spine, two side lanes and cul-de-sacs (no ring road)
+    const n0 = node(-60, 720);
+    const wob = (k) => (fbm(k * 0.37 + 4.1, 2.3, 2) - 0.5);
+    const spine = [[n0.x, n0.z]];
+    for (let k = 1; k <= 6; k++) spine.push([n0.x + wob(k) * 160 + k * 18, n0.z + k * 62]);
+    const s0 = segs.length;
+    polyStreet(spine, 10);
+    const side = (from, dir, n, bend) => { const pts = [from]; let [x, z] = from, a = dir; for (let k = 0; k < n; k++) { a += bend + wob(k + dir * 7) * 0.5; x += Math.cos(a) * 55; z += Math.sin(a) * 55; pts.push([x, z]); } polyStreet(pts, 8); };
+    side(spine[2], 0.15, 5, 0.12); side(spine[3], Math.PI - 0.1, 4, -0.15); side(spine[5], 0.5, 3, 0.25); side(spine[4], Math.PI + 0.4, 3, -0.2);
+    for (const g of segs.slice(s0)) frontage(g, 18, () => ({ type: 'house', w: rng.range(11, 15), d: rng.range(9, 12), floors: rng.chance(0.4) ? 2 : 1 }), 5);
   }
   // 2) north-east: a newer quarter of 4-6 storey slabs on a curving street
   {

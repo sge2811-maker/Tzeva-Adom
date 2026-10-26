@@ -58,7 +58,7 @@ export function createSky(ctx) {
                 + dome(d, normalize(vec3(-0.25, 0.0, 1.0)), 10.0, 11.0) * 0.016
                 + dome(d, normalize(vec3(1.0, 0.0, 0.08)), 16.0, 14.0) * 0.008;
         // airglow and scattered light just above the horizon: lets ridgelines read as silhouettes
-        lp += vec3(0.030, 0.034, 0.044) * exp(-max(y, 0.0) * 12.0) * smoothstep(-0.03, 0.004, y);
+        lp += (vec3(0.030, 0.034, 0.044) * exp(-max(y, 0.0) * 12.0) + vec3(0.010, 0.011, 0.016) * exp(-max(y, 0.0) * 3.0)) * smoothstep(-0.03, 0.004, y);
         // light-pollution domes over Arad, Nevatim and Dimona, seen from wherever the camera is
         lp += litDome(d, vec3(0.0, 0.0, 0.0), 1000.0, 650.0, 1.0)
             + litDome(d, vec3(-6800.0, -150.0, 2900.0), 2200.0, 700.0, 0.55)

@@ -123,6 +123,7 @@ export function buildStreets(ctx, group, rng, segs = []) {
     diffuseColor.rgb *= (0.86 + 0.22 * rN(tile * 0.37)) * (1.0 - 0.18 * joint);
     diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.62, 0.60, 0.56), curb);
     diffuseColor.rgb *= mix(1.0, 0.8, smoothstep(W * 0.5 - 0.6, W * 0.5, vm));
+    diffuseColor.rgb *= mix(1.0, 0.6, smoothstep(700.0, 2500.0, length(vRW - cameraPosition)));
     }`);
   // asphalt: worn grey with patches, paint, median and crossings
   mk(road, 0x45464b, 2, /* glsl */`
@@ -162,7 +163,7 @@ export function buildStreets(ctx, group, rng, segs = []) {
     paint = max(paint, (inA + inB) * zebra);
     col = mix(col, vec3(0.62, 0.62, 0.6) * (0.75 + 0.25 * rN(vRW.xz * 2.0)), clamp(paint, 0.0, 1.0) * 0.85);
     // far away asphalt reads as a pale grey line, not a black ribbon
-    col = mix(col, vec3(0.11, 0.105, 0.10), smoothstep(700.0, 4000.0, length(vRW - cameraPosition)) * 0.8);
+    col = mix(col, vec3(0.30, 0.25, 0.19), smoothstep(800.0, 4000.0, length(vRW - cameraPosition)) * 0.7); // melt into the desert with distance
     diffuseColor.rgb = col;`);
   return cars;
 }
@@ -342,7 +343,7 @@ export function buildBuildings(ctx, group, extra = []) {
       }
       // tower roof plant and a red aviation light
       box(-hw * 0.45, hw * 0.45, top, top + 3.4, -hd * 0.4, hd * 0.4, col.map((v) => v * 0.9));
-      extras.beacons.push([b.x, top + 4.2, b.z]);
+      if (floors >= 13) extras.beacons.push([b.x, top + 4.2, b.z]);
     }
     if (type === 2) {
       // garden wall around the plot with a gate gap on the street side
@@ -443,7 +444,7 @@ export function buildBuildings(ctx, group, extra = []) {
           diffuseColor.rgb *= 0.9 + 0.12 * bn(vBW.xz * 0.6 + vBW.y);
         }
         // far town: warm windows on dark massing, not silver boxes
-        diffuseColor.rgb *= mix(1.0, 0.5, smoothstep(1400.0, 5000.0, length(vBW - cameraPosition)));`)
+        diffuseColor.rgb *= mix(1.0, 0.25, smoothstep(900.0, 4000.0, length(vBW - cameraPosition)));`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
         // windows stay legible as a skyline when they shrink below a pixel
         // overhead bursts paint roofs and the walls facing them

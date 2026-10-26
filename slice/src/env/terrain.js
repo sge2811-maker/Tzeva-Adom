@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { heightAt, GEO } from '../world/geo.js';
 import { fbm, ridged, smoothstep } from '../core/util.js';
 import { ATM_GLSL, ATM } from './atmosphere.js';
+import { mergeGeometries as mergeG } from 'three/addons/utils/BufferGeometryUtils.js';
 
 // rotated gradient noise (no axis-aligned value-noise cells); lattice hashed mod 512 for fp32
 export const GN_GLSL = /* glsl */`
@@ -74,6 +75,20 @@ export function createTerrain(ctx) {
     curv[v] = Math.max(-1, Math.min(1, (lx + lz) * 250));
   }
   { const tmp = wadi.slice(); for (let j = 1; j < N; j++) for (let i = 1; i < N; i++) { const v = j * (N + 1) + i; wadi[v] = (tmp[v] * 4 + tmp[v - 1] + tmp[v + 1] + tmp[v - N - 1] + tmp[v + N + 1]) / 8; } }
+  // carve visible wadi channels into the drawn surface (visual only: the sim keeps geo.js heights;
+  // channels stay away from the town, the airbase, the battery pads and the rift floor)
+  {
+    const wb = wadi.slice();
+    for (let pass = 0; pass < 2; pass++) { const t = wb.slice(); for (let j = 1; j < N; j++) for (let i = 1; i < N; i++) { const v = j * (N + 1) + i; wb[v] = Math.max(t[v], (t[v - 1] + t[v + 1] + t[v - N - 1] + t[v + N + 1]) * 0.22); } }
+    const pads = ctx.layout.pads;
+    for (let j = 1; j < N; j++) for (let i = 1; i < N; i++) {
+      const v = j * (N + 1) + i, x = xs[i], z = xs[j];
+      if (wb[v] < 0.05 || glow[v] > 0.12 || H[v] < -380) continue;
+      let pk = 1; for (const p of pads) pk = Math.min(pk, smoothstep(150, 350, Math.hypot(x - p.x, z - p.z)));
+      const dep = 14 * Math.pow(wb[v], 0.8) * pk * (1 - smoothstep(0.04, 0.12, glow[v]));
+      H[v] -= dep; pos[v * 3 + 1] = H[v];
+    }
+  }
   const idx = new Uint32Array(N * N * 6);
   let q = 0;
   for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
@@ -134,6 +149,11 @@ export function createTerrain(ctx) {
         col = mix(col, vec3(0.36, 0.31, 0.24), (gN(vWP.xz * 0.0025 + 4.0) - 0.5) * 0.24 * flatK2 + 0.0);
         // large-scale hamada/loess variation, gentle
         col *= 0.93 + 0.14 * m1;
+        // view-scale hamada: dark flint-gravel sheets against pale loess (300-800 m patches)
+        float hm = 1.0 - abs(gN(vWP.xz * 0.0019 + 5.0) * 2.0 - 1.0);
+        hm = smoothstep(0.55, 0.85, hm * (0.6 + 0.6 * gN(vWP.xz * 0.0007 + 1.0)));
+        col = mix(col, vec3(0.20, 0.17, 0.135), hm * 0.45 * (1.0 - rockK));
+        col = mix(col, vec3(0.42, 0.37, 0.29), smoothstep(0.62, 0.8, gN(vWP.xz * 0.0013 + 8.0)) * 0.3 * (1.0 - hm));
         col *= 0.96 + 0.08 * m2 * (1.0 - rockK);
         // close-up grain, faded so it never shimmers
         col *= mix(1.0, 0.9 + 0.2 * m3, near);
@@ -146,7 +166,7 @@ export function createTerrain(ctx) {
           vec2 q = vWP.xz;
           #define BH(p) (0.9 * gN((p) * 0.018) + 0.45 * gN((p) * 0.06 + 3.0) * (1.0 - smoothstep(500.0, 2500.0, dcam)) + 0.15 * gN((p) * 0.2 + 1.0) * (1.0 - smoothstep(150.0, 700.0, dcam)))
           float h0 = BH(q), hx = BH(q + vec2(e, 0.0)), hz = BH(q + vec2(0.0, e));
-          float amp = (1.0 + 2.5 * rockK + 0.5 * (1.0 - smoothstep(600.0, 1500.0, dcam))) * (1.0 - 0.7 * smoothstep(0.15, 0.6, vGlow));
+          float amp = (1.0 + 2.5 * rockK + 1.2 * (1.0 - smoothstep(600.0, 1800.0, dcam))) * (1.0 - 0.7 * smoothstep(0.15, 0.6, vGlow));
           vec3 gW = vec3(-(hx - h0) / e, 0.0, -(hz - h0) / e) * amp * fadeB;
           normal = normalize(normal + (viewMatrix * vec4(gW, 0.0)).xyz);
         }`)
@@ -158,6 +178,33 @@ export function createTerrain(ctx) {
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = 'terrain';
   ctx.scene.add(mesh);
+
+  // rock outcrops and acacia clusters along the wadi beds within ~7 km of Arad (foreground silhouettes)
+  {
+    let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const rocks = [], trees = [];
+    for (let v = 0; v < NV; v++) {
+      const x = pos[v * 3], z = pos[v * 3 + 2], d = Math.hypot(x, z);
+      if (d > 7000 || glow[v] > 0.1 || H[v] < -380) continue;
+      const w = wadi[v], c = curv[v];
+      if (w > 0.35 && rnd() < 0.14) trees.push([x + (rnd() - 0.5) * 30, z + (rnd() - 0.5) * 30, 0.7 + rnd() * 0.7]);
+      else if (c < -0.4 && rnd() < 0.05) rocks.push([x + (rnd() - 0.5) * 30, z + (rnd() - 0.5) * 30, 2 + rnd() * 6]);
+      if (trees.length > 900 || rocks.length > 700) break;
+    }
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), sc = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0);
+    const rg = new THREE.DodecahedronGeometry(1, 0); rg.scale(1.3, 0.55, 1.0);
+    const rm = new THREE.InstancedMesh(rg, new THREE.MeshStandardMaterial({ color: 0x5e5446, roughness: 0.95, flatShading: true }), rocks.length);
+    rocks.forEach(([x, z, s2], i) => { q.setFromAxisAngle(Y, x * 0.13); m4.compose(p.set(x, ctx.envGround(x, z) + s2 * 0.15, z), q, sc.set(s2, s2, s2)); rm.setMatrixAt(i, m4); });
+    // acacia: thin trunk + flat umbrella crown, one merged geometry
+    const tr = new THREE.CylinderGeometry(0.12, 0.18, 3, 5); tr.translate(0, 1.5, 0);
+    const cr = new THREE.CylinderGeometry(3.2, 2.2, 0.9, 9); cr.translate(0, 3.4, 0);
+    const col2 = (g, c) => { const n = g.attributes.position.count, a = new Float32Array(n * 3); for (let i = 0; i < n; i++) a.set(c, i * 3); g.setAttribute('color', new THREE.BufferAttribute(a, 3)); return g.toNonIndexed(); };
+    const ag = mergeG([col2(tr, [0.25, 0.2, 0.15]), col2(cr, [0.17, 0.18, 0.11])]);
+    const am = new THREE.InstancedMesh(ag, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, flatShading: true }), trees.length);
+    trees.forEach(([x, z, s2], i) => { q.setFromAxisAngle(Y, z * 0.17); m4.compose(p.set(x, ctx.envGround(x, z) - 0.2, z), q, sc.set(s2, s2 * (0.8 + 0.3 * ((x * 7) % 1 + 1) % 1), s2)); am.setMatrixAt(i, m4); });
+    rm.name = 'rocks'; am.name = 'acacias';
+    ctx.scene.add(rm, am);
+  }
 
   // ---- Dead Sea: a grid whose shoreline is carved by the height field
   const SX0 = 7000, SX1 = 19400, SZ0 = -46000, SZ1 = 46000, SD = 200;
