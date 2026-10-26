@@ -1,0 +1,179 @@
+{
+  "when": "2026-10-26T19:54:26.551Z",
+  "viewport": [
+    480,
+    270
+  ],
+  "method": "capture=1, fixed 60 Hz stepping between real browser input events",
+  "results": [
+    {
+      "name": "drag: latency to first movement",
+      "ok": true,
+      "value": "1 frame",
+      "limit": "<= 1 frame",
+      "extra": ""
+    },
+    {
+      "name": "drag: settle after release",
+      "ok": true,
+      "value": "0ms",
+      "limit": "<= 350 ms",
+      "extra": "held still before release: no glide"
+    },
+    {
+      "name": "drag: overshoot",
+      "ok": true,
+      "value": "0.00%",
+      "limit": "<= 1%",
+      "extra": "moved 1039 m"
+    },
+    {
+      "name": "fling: glides after release",
+      "ok": true,
+      "value": "104m",
+      "limit": "> 3% of dist",
+      "extra": ""
+    },
+    {
+      "name": "fling: stops by itself",
+      "ok": true,
+      "value": "250ms",
+      "limit": "<= 1400 ms",
+      "extra": ""
+    },
+    {
+      "name": "fling: no reversal",
+      "ok": true,
+      "value": "0.00m",
+      "limit": "~0",
+      "extra": ""
+    },
+    {
+      "name": "zoom: latency to first movement",
+      "ok": true,
+      "value": "1 frame",
+      "limit": "<= 1 frame",
+      "extra": ""
+    },
+    {
+      "name": "zoom: settle after last notch",
+      "ok": true,
+      "value": "267ms",
+      "limit": "<= 450 ms",
+      "extra": "2600 -> 1688 m"
+    },
+    {
+      "name": "zoom: overshoot",
+      "ok": true,
+      "value": "0.00%",
+      "limit": "<= 1%",
+      "extra": ""
+    },
+    {
+      "name": "zoom: cursor anchor drift",
+      "ok": true,
+      "value": "29.5m",
+      "limit": "<= 51 m (3% of dist)",
+      "extra": ""
+    },
+    {
+      "name": "zoom: pitch eases with zoom",
+      "ok": true,
+      "value": "35.5->31.1deg",
+      "limit": "shallower when nearer",
+      "extra": ""
+    },
+    {
+      "name": "rotate: latency to first movement",
+      "ok": true,
+      "value": "1 frame",
+      "limit": "<= 1 frame",
+      "extra": ""
+    },
+    {
+      "name": "rotate: settle after release",
+      "ok": true,
+      "value": "250ms",
+      "limit": "<= 350 ms",
+      "extra": "30.3 deg"
+    },
+    {
+      "name": "rotate: overshoot",
+      "ok": true,
+      "value": "0.00%",
+      "limit": "<= 1%",
+      "extra": ""
+    },
+    {
+      "name": "rotate: pivots on screen centre",
+      "ok": true,
+      "value": "0.00m",
+      "limit": "target fixed",
+      "extra": ""
+    },
+    {
+      "name": "keys: latency to first movement",
+      "ok": true,
+      "value": "1 frame",
+      "limit": "<= 1 frame",
+      "extra": "90% speed after 167 ms"
+    },
+    {
+      "name": "keys: stop after key-up",
+      "ok": true,
+      "value": "117ms",
+      "limit": "<= 250 ms",
+      "extra": ""
+    },
+    {
+      "name": "keys: pan jitter (speed CV)",
+      "ok": true,
+      "value": "0.0030",
+      "limit": "<= 0.12",
+      "extra": "2726 m/s at 2600 m"
+    },
+    {
+      "name": "keys: Z zooms in, Q rotates",
+      "ok": true,
+      "value": "2600->1361m, -40deg",
+      "limit": "closer, rotated",
+      "extra": ""
+    },
+    {
+      "name": "focus (F): eased fly-to arrives",
+      "ok": true,
+      "value": "833ms",
+      "limit": "<= 1300 ms",
+      "extra": "moved 2572 m"
+    },
+    {
+      "name": "clearance: never clips terrain/roofs",
+      "ok": true,
+      "value": "6.0m",
+      "limit": ">= 3 m",
+      "extra": "524 frames: 150 m over towers, below the rim, extreme zoom-out"
+    },
+    {
+      "name": "bounds: target and zoom clamped",
+      "ok": true,
+      "value": "12000,9000 d12000",
+      "limit": "x<=12000 z<=9000 d<=12000",
+      "extra": ""
+    },
+    {
+      "name": "cpu: camera update",
+      "ok": true,
+      "value": "0.000ms",
+      "limit": "<= 0.3 ms median",
+      "extra": "p95 0.100 ms (performance.now() is coarsened to 0.1 ms)"
+    },
+    {
+      "name": "console: no errors",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "extra": ""
+    }
+  ],
+  "pass": true
+}
