@@ -241,8 +241,8 @@
       "id": "camera",
       "name": "Camera & game feel",
       "scope": "Intro flyover, input response, hit-stop, alert → shelter → aftermath pacing",
-      "state": "building",
-      "round": 1,
+      "state": "critique",
+      "round": 2,
       "scores": [
         {
           "round": 1,
@@ -283,9 +283,9 @@
           "text": "applyShake allocates a new THREE.Quaternion every frame while trauma > 0; during the barrage that is a steady GC source."
         }
       ],
-      "note": "Critic R1: 5/10. Controls match AoE IV (input-test 24/24, seamless hand-off); trailer frames mostly empty sky with two empty shots and move-stop-cut motion; intro reveal weak. Round 2 building.",
+      "note": "r2 builder done; critic running",
       "commit": null,
-      "updated": "2026-10-26T13:15:42.628Z"
+      "updated": "2026-10-26T19:58:01.193Z"
     },
     "perf": {
       "id": "perf",
@@ -393,5 +393,5 @@
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-26T19:48:36.879Z"
+  "updated": "2026-10-26T19:58:01.193Z"
 }
