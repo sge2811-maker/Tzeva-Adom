@@ -1,0 +1,53 @@
+{
+  "stream": "env",
+  "round": 4,
+  "score": 5,
+  "oneLine": "The ground has gained real relief: the wadis read as grazing-moonlight forms in S2 and S7, and the S4 and S5 town frames are in the 6-7 range. But the frames a player sees most are still a generated board. The tactical view shows a glowing octagon of outlined square tiles with two new forked 'trident' lane clusters on its flanks. S1 and S3 are still about 60% empty plain with a ruler-straight rim. The far town in S6 is still silver glitter, and Route 31 is still a navy cable. Competent indie, not yet next to CoH3, TW:WH3 or CS2.",
+  "strengths": [
+    "The console is clean in all 7 shots. The whole frame uses 79-96 draw calls and 1.08-1.13 M triangles, so the env share is at the 1.1 M ceiling but not clearly over it.",
+    "S2 and S7 terrain: the carved wadi channels and landform albedo finally give the plateau readable relief under grazing moonlight: lumpy drainage, hollows and crests, plus a dramatic escarpment band in S2's top third. This is the first time the wide frames show terrain forms rather than a flat sheet (Iron Harvest and CoH3 'legible night map' direction).",
+    "S7's Moab range is still the best vista element in the slice: lit west slopes, gullies, stepped haze and shore lights. It is the closest to TW:WH3-style plate separation.",
+    "S5-street: window variety (blinds, dark floors, warm and cool temperatures, recessed balconies) holds up next to Cities: Skylines II night facades. This is still the best frame.",
+    "S4-alert: slabs, towers, low commercial blocks and red-roof houses, with sodium pools against dark lots, palms, parked-car courts, crosswalks and a green shelter glow. The vocabulary matches a CoH3 night town at a glance.",
+    "S1 and S7 now show low-frequency hamada/loess patches, so the plain is no longer one flat albedo."
+  ],
+  "issues": [
+    {
+      "severity": "blocker",
+      "area": "town layout from the RTS camera (S2, S7)",
+      "text": "At the default tactical camera, Arad is still a near-perfect octagon of equal square blocks, each outlined by a bright tan walk strip. From S7 it reads as a glowing coin, and from S2 as a game board. The racetrack loop is gone, but the replacement villa quarter and the west industrial area both read from above as symmetric forked 'tridents' or feather shapes (a spine that splits into 2-3 short prongs with a single row of houses on each). That is just as procedural a tell. The NE slab quarter and west sheds are thin strings, not neighbourhoods. Age of Empires IV and CS2 overviews never show a town edge this geometric.",
+      "evidence": "status/shots/env-r4/S2-tactical.png",
+      "fix": "In world/layout.js (building generation only; keep streets, shelters and lights valid, then run tools/regress.mjs): break the octagon. Jitter grid nodes ±15-25 m so the blocks are not equal squares, merge 20-30% of adjacent block pairs into superblocks (a school, a park, a mall lot with a different decal), and drop or push out 4-6 perimeter cells so the edge is ragged. In src/env/outskirts.js lines 70-79, make the side lanes long enough to meet each other (loops and T-junctions, not dead-end prongs), give frontage() a second row of houses behind the first (offset by d+setback+6) so the quarter fills in, and vary the side() bend sign so branches are not mirror-paired. In src/env/town.js, cut the block perimeter 'walk' strip albedo and light-pool contribution with smoothstep(600, 2500, dist) by about 60%, so blocks stop reading as outlined tiles from the S2 and S7 height."
+    },
+    {
+      "severity": "major",
+      "area": "foreground and plateau emptiness; straight rim (S1, S3, S6)",
+      "text": "The ~700 outcrops and ~900 acacias are invisible in every canonical frame (two lone 'lollipop' trees in S1). S3 is still a uniform beige plane from the camera to a ruler-straight horizon at the plateau rim, with the battery pad as a raised hard-edged beige slab. S6 shows the same straight rim, with the town sitting on a featureless sheet. TW:WH3 and Iron Harvest foregrounds always carry rock, relief or vegetation. Here half the screen is still empty.",
+      "evidence": "status/shots/env-r4/S3-drones.png",
+      "fix": "src/env/terrain.js lines 185-192 has a scatter bug. The vertex loop runs row-major and `break`s at 900 trees or 700 rocks, so all instances land in the first rows (one z-band) instead of around the camera paths. Collect candidates first, then pick randomly, or weight by distance to the S1, S3 and S6 camera targets. Scale is also a problem: rocks of 2-8 m and crowns of about 4 m are sub-pixel at S1 and S3 distances, so add a 15-40 m boulder-field and low-mesa class on convex crests, and cluster acacias 5-12 per wadi bend. Raise the wadi carve depth on line 88 from 14 to 25-35 m near the S3 lookout so the rills cast moon shadow. Perturb the rim silhouette with 1-3 km noise (S3 and S6 still show a dead-straight edge). In batteries or terrain, feather the pad apron into the ground with a decal falloff instead of a raised slab with a hard edge."
+    },
+    {
+      "severity": "major",
+      "area": "far town reads silver, not warm (S6)",
+      "text": "Darkening the far facades to 0.25 did not fix S6: the town is still a band of silver-white boxes. The culprit is the window term, not the albedo. Far windows get 2.2x gain (town.js line ~452), and their mix of cool and white temperatures averages, at sub-pixel size, to a cold silver sheen. CS2 skylines at distance read as warm amber specks on dark massing.",
+      "evidence": "status/shots/env-r4/S6-salvo.png",
+      "fix": "In src/env/town.js in the emissive block: cap the far window gain (use 1.0 + 0.5*smoothstep(...) instead of 1.2), shift far window colour toward sodium or incandescent amber with mix(winCol, vec3(1.0,0.62,0.3), smoothstep(800,3000,d)), and fade the uFlashSky wall term with distance (multiply by 1.0 - 0.7*smoothstep(1000,4000,d)) so salvo flashes do not silver the whole town. Check that the bloom threshold does not merge sub-pixel windows into a grey veil."
+    },
+    {
+      "severity": "major",
+      "area": "regional roads still read as dark cables (S1, S7)",
+      "text": "Route 31 in S7 and the approach road in S1 are still the darkest, coldest value in the frame: a navy rope that looks raised above the desert. The new 'blend toward desert at distance' is in the town street shader (town.js line 166) and does not seem to reach the regional road ribbons, or it is overridden by fog and specular.",
+      "evidence": "status/shots/env-r4/S7-aftermath.png",
+      "fix": "Find the regional road mesh built from layout.regionalRoads (city.js or town.js strip()), and apply the same smoothstep(800,4000,d)*0.7 desert blend plus the terrain's warm emissive term. Set roughness to 1, metalness to 0 and kill env-map specular (the navy tint is sky reflection). Drop the ribbon y offset to about 0.1 with polygonOffset, and cap its far width so it renders as a pale grey track."
+    },
+    {
+      "severity": "minor",
+      "area": "upper sky in S6; roofs and lots up close (S4)",
+      "text": "S6's upper two-thirds is near-black with faint vertical blue streaks on the right, which read as banding or ray artefacts rather than sky. In S4, roofs are still flat grey slabs with one box and a red dot, repeated; lots are flat brown; scrub decals are square camo-like tiles with hard edges; and the S3 battery vehicles are box clusters.",
+      "evidence": "status/shots/env-r4/S4-alert.png",
+      "fix": "In src/env/sky.js and atmosphere.js, add blue-noise dither to the sky gradient and raise the zenith floor slightly. Check whether the streaks come from the god-ray or haze cone and clamp it. In city.js, add 3-8 solar heaters and tanks per slab roof, parapet lips, and head-house variety, and drop the red-dot box from most roofs. Give the decals a radial noise alpha and random rotation. In batteries.js, add a cab, wheels, an angled launcher box and a radar face."
+    }
+  ],
+  "benchmarkNotes": "Company of Heroes 3 night maps: S4 matches the vocabulary (light pools, mixed massing, props), but roofs and lots are uniform. It is CoH3-adjacent at a glance and falls apart under scrutiny. Iron Harvest: the sky, crescent and warm dome are in the right spirit, and the plateau relief in S2 and S7 is a real step toward a legible night map. But S1 and S3 foregrounds are still empty, where Iron Harvest would place rocks, fences and silhouettes. Total War: Warhammer III vistas: S7's Moab plates are close, but S3 and S6 still cut from a flat plain to a ridge along a straight rim, with no mid-ground layer. Cities: Skylines II night: S5 windows hold up, but the S6 skyline at distance is silver rather than warm, and the S2 overview is a tiled octagon. Age of Empires IV high camera: S2's octagon and forked trident outskirts remain the first-glance procedural giveaway. Net: S4 and S5 are at 6-7, S2 and S7 have improved to about 5, and S1, S3 and S6 remain at 4-5. Most canonical frames would sit visibly below the references in a store-page row, so the score stays at 5.",
+  "bestShot": "status/shots/env-r4/S5-street.jpg"
+}

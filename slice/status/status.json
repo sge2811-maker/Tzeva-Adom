@@ -10,8 +10,8 @@
       "id": "env",
       "name": "Environment & lighting",
       "scope": "Skyline, atmosphere, fog, tone mapping, bloom, SSAO, colour grade",
-      "state": "building",
-      "round": 3,
+      "state": "flagged",
+      "round": 4,
       "scores": [
         {
           "round": 1,
@@ -27,36 +27,41 @@
           "round": 3,
           "score": 5,
           "when": "2026-10-26T01:28:45.808Z"
+        },
+        {
+          "round": 4,
+          "score": 5,
+          "when": "2026-10-26T13:16:27.573Z"
         }
       ],
       "best": 5,
-      "noImprove": 2,
-      "shot": "status/shots/env-r3/S5-street.jpg",
+      "noImprove": 3,
+      "shot": "status/shots/env-r4/S5-street.jpg",
       "issues": [
         {
           "severity": "blocker",
-          "text": "At the default tactical camera, Arad is still an octagon of equal square blocks with glowing tan outlines on a blank plain. The new 'villa quarter' to the east is a perfect ellipse of red-roofed houses around a loop lane, with a straight spur in. From above it reads as a racetrack or a stadium, which is the most procedural-looking object in the frame. The west lobe is a thin Y of sheds, and the walled compounds are lone square tiles. In S6 the town is still a band of silver-white boxes, not warm windows on dark massing. Next to Age of Empires IV and CS2 overviews, this is a first-glance prototype tell."
+          "text": "At the default tactical camera, Arad is still a near-perfect octagon of equal square blocks, each outlined by a bright tan walk strip. From S7 it reads as a glowing coin, and from S2 as a game board. The racetrack loop is gone, but the replacement villa quarter and the west industrial area both read from above as symmetric forked 'tridents' or feather shapes (a spine that splits into 2-3 short prongs with a single row of houses on each). That is just as procedural a tell. The NE slab quarter and west sheds are thin strings, not neighbourhoods. Age of Empires IV and CS2 overviews never show a town edge this geometric."
         },
         {
           "severity": "major",
-          "text": "Three of the seven canonical frames are about 60% empty flat beige plane. S1's foreground is a uniform featureless surface, with nothing between the camera and the town. In S3 the plateau to the horizon is a single flat tone with no rocks, wadis, scrub or relief. In S7 the bottom two-thirds is an even grey-brown sheet. The claimed shrubs and desert-pavement mottling are invisible at these distances. Iron Harvest and CoH3 never leave half the screen as a flat albedo, and TW:WH3 foregrounds always carry rock, relief or vegetation."
+          "text": "The ~700 outcrops and ~900 acacias are invisible in every canonical frame (two lone 'lollipop' trees in S1). S3 is still a uniform beige plane from the camera to a ruler-straight horizon at the plateau rim, with the battery pad as a raised hard-edged beige slab. S6 shows the same straight rim, with the town sitting on a featureless sheet. TW:WH3 and Iron Harvest foregrounds always carry rock, relief or vegetation. Here half the screen is still empty."
         },
         {
           "severity": "major",
-          "text": "The regional roads render as blue-black tubes that look raised above the ground. In S7 the Route 31 line and the long diagonal look like cables lying on the desert. In S1 a dark navy rope curves in from the left. The town.js comment says far asphalt should read as a pale grey line, but in the shots it is the darkest value in the scene, and it is cold blue against the warm ground."
+          "text": "Darkening the far facades to 0.25 did not fix S6: the town is still a band of silver-white boxes. The culprit is the window term, not the albedo. Far windows get 2.2x gain (town.js line ~452), and their mix of cool and white temperatures averages, at sub-pixel size, to a cold silver sheen. CS2 skylines at distance read as warm amber specks on dark massing."
         },
         {
           "severity": "major",
-          "text": "The plateau still ends in a ruler-straight horizontal line against the far ridge in S3 and S6. There is no visible drop, rift haze or cliff band, so the mid-ground layer (escarpment and Dead Sea) is missing from both frames, and the composition goes straight from flat ground to the ridge. In S6 the far ridge is a flat uniform band, and above it is a huge empty black sky."
+          "text": "Route 31 in S7 and the approach road in S1 are still the darkest, coldest value in the frame: a navy rope that looks raised above the desert. The new 'blend toward desert at distance' is in the town street shader (town.js line 166) and does not seem to reach the regional road ribbons, or it is overridden by fog and specular."
         },
         {
           "severity": "minor",
-          "text": "Roofs are still flat grey slabs with a single box and a red dot, repeated across buildings. The rooftop clutter claimed to be bigger is not readable at S4 zoom. The block interiors are flat brown, and the scrub decals are square yellow-green tiles with hard edges. The battery vehicles in S3 are simple box clusters."
+          "text": "S6's upper two-thirds is near-black with faint vertical blue streaks on the right, which read as banding or ray artefacts rather than sky. In S4, roofs are still flat grey slabs with one box and a red dot, repeated; lots are flat brown; scrub decals are square camo-like tiles with hard edges; and the S3 battery vehicles are box clusters."
         }
       ],
-      "note": "Critic R3: 5/10 (2 rounds without improvement; round 4 is the last before flagging). S4/S5 near 6–7; wide frames (S1, S2, S3, S6, S7) still read as generated: octagon core and racetrack villa loop, empty beige foreground, cable-like far roads, straight plateau rim.",
+      "note": "FLAGGED after 4 critic rounds at 5/10 (3 rounds without improvement). Street-level frames (S4/S5) reach ~6–7 and the S7 Moab vista is strong; wide RTS frames still read procedural: octagon town core, trident lanes, invisible rock/acacia scatter (bug: all instances land in one strip), silver far town, navy regional roads. Open issues listed for a follow-up pass.",
       "commit": null,
-      "updated": "2026-10-26T01:28:45.808Z"
+      "updated": "2026-10-26T13:16:27.573Z"
     },
     "vfx": {
       "id": "vfx",
@@ -253,6 +258,10 @@
   },
   "log": [
     {
+      "when": "2026-10-26T13:16:27.573Z",
+      "text": "Env FLAGGED: 5/10 four times (3 rounds without improvement). Moving on; open issues kept on the board, including a scatter bug the last critic found."
+    },
+    {
       "when": "2026-10-26T13:15:43.136Z",
       "text": "Integrator fix: HUD ETA queries were consuming the sim RNG, so browser runs diverged from the Node sim. Fixed in civilians.js; browser and Node now share one timeline. VFX R4 7/10, camera R1 5/10; audio in critique."
     },
@@ -333,5 +342,5 @@
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-26T13:15:43.136Z"
+  "updated": "2026-10-26T13:16:27.573Z"
 }
