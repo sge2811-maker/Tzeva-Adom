@@ -67,8 +67,8 @@
       "id": "vfx",
       "name": "VFX",
       "scope": "Launches, interceptor trails, intercepts, debris, smoke, screen shake",
-      "state": "building",
-      "round": 4,
+      "state": "critique",
+      "round": 5,
       "scores": [
         {
           "round": 1,
@@ -120,9 +120,9 @@
           "text": "The egg is gone, but the earlier column in C5 (x~488 y~250 at 960) is still a dark, uniform slug that hovers detached from the ground, with no visible fire base or lighter top, beside the hero plume."
         }
       ],
-      "note": "Critic R4: 7/10 (2 rounds without improvement; round 5 is the last before flagging). Egg columns fixed (Nevatim column near CoH3); near-camera pillar/wash, round remnant shells and round smudges remain.",
+      "note": "r5 builder done; final critic running",
       "commit": null,
-      "updated": "2026-10-26T13:15:42.139Z"
+      "updated": "2026-10-26T19:48:35.372Z"
     },
     "audio": {
       "id": "audio",
@@ -190,8 +190,8 @@
       "id": "hud",
       "name": "HUD & UX",
       "scope": "Alert countdown, objectives, shelter routing — cinematic and minimal",
-      "state": "building",
-      "round": 2,
+      "state": "critique",
+      "round": 3,
       "scores": [
         {
           "round": 1,
@@ -233,9 +233,9 @@
           "text": "In S7 (all clear, no town hits) 'No impacts in Arad' still shows '0' with no check while the other three are ticked. The debrief then shows it as done, which is inconsistent. capture.json reports hud update 2.5 ms on the sampled frame against a 4 ms whole-frame JS budget, which is too much for a DOM overlay."
         }
       ],
-      "note": "Critic R2: 7/10 (fixes verified; 1 round without a higher score). Edge pointers float mid-screen, chip pile on group select, open shelters lose capacity at default zoom, radar town plot unreadable, HUD 2.5 ms/frame. Round 3 building.",
+      "note": "r3 builder done; critic running",
       "commit": null,
-      "updated": "2026-10-26T07:23:06.317Z"
+      "updated": "2026-10-26T19:48:36.879Z"
     },
     "camera": {
       "id": "camera",
@@ -393,5 +393,5 @@
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-26T13:31:35.674Z"
+  "updated": "2026-10-26T19:48:36.879Z"
 }
