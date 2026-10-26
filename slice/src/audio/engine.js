@@ -4,7 +4,7 @@
 //
 // Distance model (per voice, from the listener; moving sources re-evaluated at 10 Hz):
 //   level   = ref / max(ref, d)                 spherical spreading for the full-band layer
-//   LF      = (lfRef / d)^0.75 below ~250 Hz    blast rumble falls off slower (ground-coupled,
+//   LF      = (lfRef / d)^0.75 below ~450 Hz    blast rumble falls off slower (ground-coupled,
 //                                               little absorption): distant booms keep weight
 //   air     = 2 x lowpass (24 dB/oct) at 20 kHz / (1 + d/700): highs die over km
 //   wet     = reverb send grows with distance   (distant sounds are mostly reflections)
@@ -31,7 +31,7 @@ const LAUNCH = {
   arrow: { dur: 8.5, b0: 1000, b1: 190, roar: 1.1, low: 1.35, crack: 1.3, ref: 170, pulse2: false, v: 4600, boost: 2.2 },
   aam: { dur: 1.8, b0: 3800, b1: 1700, roar: 0.45, low: 0.15, crack: 0.25, ref: 45, pulse2: false, v: 950, boost: 0.3 },
 };
-export const SIZE = { intercept: { ballistic: 1.0, cruise: 0.62, drone: 0.45 }, impact: { ballistic: 1.7, cruise: 1.05, drone: 0.65 } };
+export const SIZE = { intercept: { ballistic: 1.0, cruise: 0.75, drone: 0.6 }, impact: { ballistic: 1.7, cruise: 1.05, drone: 0.65 } };
 const BOOM = { ref: 900, lfRef: 1900, lfPower: 1.3 }; // blast loudness: ~+9 dB over the siren at equal distance
 
 export function createEngine(ac, { seed = 1, live = false } = {}) {
@@ -90,7 +90,7 @@ export function createEngine(ac, { seed = 1, live = false } = {}) {
     const s = lvl((o.send ?? 0.25) * (0.3 + 0.7 * clamp(d / 2500, 0, 1)));
     g.connect(s).connect(verb);
     V.in = vin; V.g = g; V.lps = lps; V.p = p; V.nodes.push(vin, ...lps, g, p, s);
-    if (o.lfRef) { V.lf = ac.createGain(); const lflp = bq('lowpass', 250, 0.6); V.lfg = lvl(lfg0); V.lf.connect(lflp).connect(V.lfg).connect(p); V.nodes.push(V.lf, lflp, V.lfg); }
+    if (o.lfRef) { V.lf = ac.createGain(); const lflp = bq('lowpass', 450, 0.6); V.lfg = lvl(lfg0); V.lf.connect(lflp).connect(V.lfg).connect(p); V.nodes.push(V.lf, lflp, V.lfg); }
     V.kill = (at) => { vin.gain.setTargetAtTime(0, at, 0.012); if (V.lf) V.lf.gain.setTargetAtTime(0, at, 0.012); for (const x of V.srcs) { try { x.stop(at + 0.1); } catch (_) { /* already stopped */ } } };
     return V;
   }
@@ -208,6 +208,8 @@ export function createEngine(ac, { seed = 1, live = false } = {}) {
     chain(V, tl, bq('lowpass', 300, 0.6, [[t, 420, 'set'], [t + tail, 120, 'exp']]), eg(tp), V.lf);
     const tl2 = noise(V, B.pink, t, tail, r);
     chain(V, tl2, bq('bandpass', 500, 0.7, [[t, 900, 'set'], [t + tail, 220, 'exp']]), eg(tp.map(([a, v, m]) => [a, v * 0.35, m])), V.in);
+    const tl3 = noise(V, B.pink, t, tail, r); // low-mid thunder that carries (slow-falloff path)
+    chain(V, tl3, bq('bandpass', 260, 0.8, [[t, 380, 'set'], [t + tail, 150, 'exp']]), eg(tp.map(([a, v, m]) => [a, v * 0.7, m])), V.lf);
     if (ground && near > 0) { // ground debris rattle
       const rr = noise(V, B.crackle, t + 0.05, 2.2, r, 0.7);
       chain(V, rr, bq('lowpass', 2600, 0.6), eg(dec(t + 0.05, 0.45 * near, 0.02, 0.2, 2.1)), V.in);
