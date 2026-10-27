@@ -74,17 +74,17 @@ export function introKeys(introLen = 24) {
   const k = introLen / 24;
   const home = rigPose(TACTICAL_HOME);
   const K = [
-    { t: 0.0, p: [8300, 28, -1650], l: [5000, -175, -1640], fov: 40, agl: true, v: [-560, 0, -40], lv: [-540, 20, 0] },
-    { t: 2.6, p: [7000, 22, -1820], l: [4200, -70, -1520], fov: 40, agl: true, roll: -0.025 },
-    { t: 5.0, p: [5900, 20, -1850], l: [3500, -15, -1480], fov: 41, agl: true, roll: 0.03 },
-    { t: 7.0, p: [4850, 20, -1580], l: [2500, 25, -1150], fov: 42, agl: true, roll: -0.02 },
-    { t: 8.2, p: [4050, 24, -1500], l: [1700, 35, -900], fov: 42, agl: true },
-    { t: 9.2, p: [3350, 50, -1440], l: [400, 10, -300], fov: 44, agl: true },          // crest
-    { t: 11.0, p: [2350, 165, -1150], l: [200, -10, -150], fov: 46, agl: true, roll: 0.015 },
-    { t: 13.2, p: [1500, 150, -950], l: [0, 0, -60], fov: 47, agl: true, roll: 0.03 },
-    { t: 15.6, p: [700, 120, -900], l: [-100, 25, -60], fov: 47, agl: true, roll: 0.04 },
-    { t: 18.0, p: [-350, 135, -880], l: [-75, 35, 120], fov: 48, agl: true, roll: 0.035 },
-    { t: 20.3, p: [-1100, 250, -900], l: [150, 6, -20], fov: 48, agl: true },
+    // along the foot of the escarpment face (steepest stretch, x ~4800-6000), level horizon,
+    // looking up-slope so the rim is a skyline edge on the right of frame
+    { t: 0.0, p: [6900, 45, -3300], l: [4200, -40, -2350], fov: 40, agl: true, v: [-160, 0, 300], lv: [-120, 0, 260] },
+    { t: 2.6, p: [6250, 40, -2450], l: [3900, -20, -1750], fov: 40, agl: true },
+    { t: 5.0, p: [5300, 38, -1750], l: [3200, 10, -1250], fov: 41, agl: true },
+    { t: 7.2, p: [4100, 32, -1350], l: [1800, 25, -800], fov: 42, agl: true },
+    { t: 9.4, p: [2700, 30, -1000], l: [0, 15, -150], fov: 44, agl: true },        // crest: Arad rises over the ridge line
+    { t: 11.0, p: [1150, 85, -650], l: [-50, 35, -60], fov: 46, agl: true, roll: 0.015 },
+    { t: 12.6, p: [330, 78, -360], l: [-160, 30, 90], fov: 48, agl: true, roll: 0.03 },   // past the towers
+    { t: 14.0, p: [-320, 110, -480], l: [20, 25, 40], fov: 48, agl: true, roll: 0.025 },
+    { t: 17.0, p: [-1000, 260, -800], l: [180, 10, -20], fov: 48, agl: true },
     { t: 24.0, p: home.p, l: home.l, fov: 50 },
   ];
   for (const key of K) {
@@ -96,7 +96,7 @@ export function introKeys(introLen = 24) {
 }
 
 // ---------------------------------------------------------------- trailer (seed 1, good autopilot)
-// Recommended: --t 240 --len 30 --ui 0 (238-272 is covered). Shots are keyed to SIM time (they stay locked to the events
+// Recommended: --t 238 --len 30 --ui 0 (covers 238-268). Shots are keyed to SIM time (they stay locked to the events
 // and slow down with slow motion). Subjects (s) and anchors (a) are the logged positions of seed-1
 // events (Node sim == browser): each frame the look is solved so the subject sits in the upper part
 // of the frame and the anchor (town, impact site) in the lower third, tilt limited; keys run at
@@ -106,35 +106,35 @@ export function introKeys(introLen = 24) {
 //   257.6 Arrow 3 kills over the Dead Sea (258.8-261.0)  262.0 smoke and debris drifting over Arad
 const shot = (name, keys) => { keys.linear = true; return { name, keys }; };
 export const TRAILER = [
-  shot('A-rooftops-to-battery', [
-    { t: 238.0, p: [330, 125, 1650], s: [-120, 140, -1080], a: [-60, 20, -300], fov: 50 },
-    { t: 244.4, p: [175, 66, 640], s: [-120, 200, -1080], a: [-120, 0, -1080], fov: 54 },
+  shot('A-warheads-over-skyline', [
+    { t: 238.0, p: [-1250, 55, 560], s: [27000, 24000, 2300], a: [0, 25, 0], fov: 64, agl: true },
+    { t: 244.4, p: [-900, 70, 380], s: [13000, 17500, 3300], a: [0, 25, 0], fov: 64, agl: true },
   ]),
   shot('B-sling-ripple', [
     { t: 244.4, p: [170, 62, 620], s: [-120, 380, -1080], a: [-120, 0, -1080], fov: 56 },
     { t: 247.0, p: [150, 70, 500], s: [-200, 1400, -600], a: [-120, 0, -1080], fov: 58 },
     { t: 250.0, p: [120, 80, 360], s: [-500, 2600, 600], a: [-60, 0, -700], fov: 60 },
   ]),
-  shot('C-kills-over-town', [
-    { t: 250.0, p: [-700, 140, -3000], s: [-900, 6900, 2700], a: [0, 30, 0], fov: 60 },
-    { t: 254.0, p: [-620, 150, -2600], s: [-1400, 6400, 3000], a: [0, 30, 0], fov: 60 },
+  shot('C-kills-over-the-towers', [
+    { t: 250.0, p: [-260, 26, -720], s: [-900, 6900, 2700], a: [-100, 20, 0], fov: 68, agl: true, tilt: 36 },
+    { t: 254.0, p: [-200, 34, -640], s: [-1400, 6400, 3000], a: [-100, 20, 0], fov: 68, agl: true, tilt: 36 },
   ]),
   shot('D-nevatim-impact', [
-    { t: 254.0, p: [-6150, 55, 1420], s: [-6797, -40, 2100], a: [-6797, -150, 2100], fov: 50, agl: true },
-    { t: 257.6, p: [-6260, 70, 1560], s: [-6797, 40, 2100], a: [-6797, -150, 2100], fov: 50, agl: true },
+    { t: 254.0, p: [-6050, 100, 1300], s: [-6797, -40, 2100], a: [-6797, -150, 2100], fov: 50, agl: true },
+    { t: 257.6, p: [-6180, 108, 1480], s: [-6797, 40, 2100], a: [-6797, -150, 2100], fov: 50, agl: true },
   ]),
-  shot('E-arrow-dead-sea', [
-    { t: 257.6, p: [-3600, 120, 1500], s: [16200, 19700, 2800], a: [0, 30, 0], fov: 60 },
-    { t: 262.0, p: [-3350, 140, 1450], s: [16000, 19400, 2800], a: [0, 30, 0], fov: 60 },
+  shot('E-arrow-over-arad', [
+    { t: 257.6, p: [-520, 28, 160], s: [16200, 19700, 2800], a: [200, 25, 0], fov: 66, agl: true, tilt: 32 },
+    { t: 262.0, p: [-430, 34, 120], s: [16000, 19400, 2800], a: [200, 25, 0], fov: 66, agl: true, tilt: 32 },
   ]),
-  shot('F-fires-at-nevatim', [
-    { t: 262.0, p: [-250, 80, 350], s: [-6700, 700, 2400], a: [-900, 10, 600], fov: 52, agl: true },
-    { t: 272.0, p: [-650, 95, 520], s: [-6700, 900, 2400], a: [-1300, 10, 750], fov: 52, agl: true },
+  shot('F-pullback-over-rooftops', [
+    { t: 262.0, p: [-700, 35, 650], s: [-6700, 500, 2400], a: [-850, 10, 520], fov: 54, agl: true },
+    { t: 268.0, p: [-250, 175, 420], s: [-6700, 800, 2400], a: [-850, 10, 520], fov: 56, agl: true },
   ]),
 ];
 const _sa = { p: [0, 0, 0], l: [0, 0, 0] }, _sb = { p: [0, 0, 0], l: [0, 0, 0] };
 // look solve: subject above, anchor in the lower third, yaw biased toward the subject
-function frameLook(p, s, a, fov0, out) {
+function frameLook(p, s, a, fov0, out, tiltMax = 26) {
   const ys = Math.atan2(s[2] - p[2], s[0] - p[0]), ya = Math.atan2(a[2] - p[2], a[0] - p[0]);
   let dy = ys - ya; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
   const yaw = ya + dy * 0.62;
@@ -144,7 +144,7 @@ function frameLook(p, s, a, fov0, out) {
   const fov = clamp(Math.max(fov0, ((es - ea) / D) / 0.66), 40, 68) * D;
   let c = ea + 0.3 * fov;                       // anchor on the lower-third line
   if (es > c + 0.36 * fov) c = es - 0.36 * fov;  // never lose the subject off the top
-  c = Math.min(c, 26 * D);                       // tilt limit: keep the world in the frame
+  c = Math.min(c, tiltMax * D);                  // tilt limit: keep the world in the frame
   out.l[0] = p[0] + Math.cos(yaw) * Math.cos(c) * 1000; out.l[1] = p[1] + Math.sin(c) * 1000; out.l[2] = p[2] + Math.sin(yaw) * Math.cos(c) * 1000;
   out.fov = fov / D;
   return out;
@@ -158,7 +158,7 @@ export function trailerAt(t, out = { p: [0, 0, 0], l: [0, 0, 0], fov: 50 }) {
   const ka = K.map((k) => ({ t: k.t, p: k.a, l: k.a, fov: k.fov })); ka.linear = true;
   evalKeys(ks, tt, _sa); evalKeys(ka, tt, _sb);
   out.p[0] = _sa.p[0]; out.p[1] = _sa.p[1]; out.p[2] = _sa.p[2];
-  frameLook(out.p, _sa.l, _sb.p, _sa.fov, out);
+  frameLook(out.p, _sa.l, _sb.p, _sa.fov, out, K[0].tilt || 26);
   out.shot = sh.name; out.roll = 0;
   return out;
 }

@@ -254,7 +254,7 @@ export function create(ctx) {
     }
 
     // hit-stop: big kills near the camera and in view, at most one per 1.1 s, <= 80 ms
-    if (e.big && ((vis && d < 9000) || scriptName === 'trailer') && realT - lastStopReal > 1.1) {
+    if (e.big && vis && d < 9000 && realT - lastStopReal > 1.1) {
       const dur = d < 4000 ? 0.075 : 0.055;
       clock.hitStop(dur, 0.05); lastStopReal = realT;
       logFeel('hitstop', { dur, scale: 0.05, d: Math.round(d) });
@@ -304,7 +304,7 @@ export function create(ctx) {
     script(name) {
       if (!name || name === 'off') { if (scriptName) { scriptName = null; toTactical(); } return; }
       if (name !== 'trailer') throw new Error(`Unknown camera script ${name}`);
-      scriptName = name; scriptT = sim.t; mode = 'script'; pendingBeats.length = 0; slingSlow = false;
+      scriptName = name; scriptT = sim.t; mode = 'script'; pendingBeats.length = 0; slingSlow = false; slowDone = true; // one scripted slow-mo only
       bus.emit('camera:mode', { mode, script: name });
     },
     pickGround(x, y) { camera.updateMatrixWorld(); const p = pickGround(camera, x, y, innerWidth, innerHeight, new THREE.Vector3()); return p && { x: p.x, y: p.y, z: p.z }; },

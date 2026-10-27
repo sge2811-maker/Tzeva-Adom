@@ -1,0 +1,37 @@
+[
+ {
+  "severity": "major",
+  "area": "edge pointers at the siren",
+  "text": "In C2, from early warning (f00012) through the siren (f00040\u2013f00056, t\u2248158\u2013162), the 'WEST' locked-shelter pointer and the late '10' group pointer are not on the viewport edge. They sit in world space at about x=120\u2013230, y=260, just under the roster panel. At the siren they overlap each other: the '10' pill covers the end of 'WEST', so it reads 'WES'. Both chevrons point up into the roster's corner rather than toward the targets. A player reads them as a broken world label on a building. AoE IV and CoH3 keep off-screen alerts flush to the viewport border, spaced apart, with the arrow pointing at the target.",
+  "evidence": "status/clips/hud-r3c/C2/frames/f00040.jpg, status/clips/hud-r3c/C2/frames/f00056.jpg, status/clips/hud-r3c/C2/frames/f00012.jpg",
+  "fix": "src/hud/index.js placeEdges() lines 546\u2013549. When the border hit is on the left or right edge (kx <= ky) and it lands inside a panel, keep x on the border and slide y past the panel (y = o[3] + 16 or o[1] - 16, whichever is nearer the projected y). The current code moves x inward to o[2]+16 instead. Do the mirror case for top and bottom hits. Then run a simple collision pass over the edge pills: push each one along the border by its height + 4 px when it overlaps an earlier pill or any placed marker rect, or merge pointers that share a direction into one pill ('[lock] W \u00b7 [people] 10'). Recompute the chevron angle from the final pill position to the target's projected direction."
+ },
+ {
+  "severity": "minor",
+  "area": "coach line state",
+  "text": "In S4, S4b and C2 after t\u2248163, every shelter is already open (autopilot), but the coach line still says 'Click a locked shelter to open it \u00b7 click a group, then a shelter, to reroute'. This misleads a first-time player about what to do next. The CoH3 and AoE IV hint strips only show actions that are available right now.",
+  "evidence": "status/shots/hud-r3c/S4-alert.png, status/shots/hud-r3c/S4b-alert-wide.png",
+  "fix": "In src/hud/index.js where the hint text is chosen in the alert phase, branch on sim.shelters.some(s => s.locked && s.opening <= 0). With no locked shelters, show the late/tight-group variant ('All shelters open \u00b7 reroute amber or red groups: click a group, then a shelter'). With every group on time, hide the hint or show 'Everyone is on time \u00b7 hold'."
+ },
+ {
+  "severity": "minor",
+  "area": "markers pinned against panels",
+  "text": "Markers whose feet sit just outside a panel get squeezed against its border. In C2 f00012 and f00056, the Lookout lock chip sits right next to the roster's top-right corner (x\u2248220, y\u224860\u201378). In S4 the '1/20' Nevatim/pad chip and its diamond touch the roster edge at x\u2248257. They read as part of the panel rather than the world. Markers whose foot is under a panel are hidden entirely, so the Lookout lock at the siren has no on-screen marker or edge pointer, only the roster's red 'lock' text.",
+  "evidence": "status/shots/hud-r3c/S4-alert.png, status/clips/hud-r3c/C2/frames/f00056.jpg",
+  "fix": "placeMarkers(): add a 10\u201312 px margin around the obstacle rects for labels only (the feet keep the current rect). For a trouble marker (locked at alert, late group) with m.under, route it to placeEdges() as if off-screen, so it gets an edge pill on the border next to the panel. Do not hide it."
+ },
+ {
+  "severity": "minor",
+  "area": "group-shelter pairing",
+  "text": "At default and wide zoom (S4b, ux-2), each group's chip and its target shelter's chip often sit side by side with two feet a few pixels apart ('0/22' diamond plus '10 23s' ring, '0/28' plus '12 11s'). Which group is heading where is only implied by proximity. There is no faint route line unless a group is selected. CoH3 shows move intent with subtle ground lines.",
+  "evidence": "status/shots/hud-r3c/S4b-alert-wide.png, status/shots/hud-r3c/ux/ux-2-siren.png",
+  "fix": "In the route canvas during alert, draw every unsheltered group's current route at about 20% alpha, 1 px, status-coloured. Keep the full-strength dashed route for the selected or hovered group only."
+ },
+ {
+  "severity": "minor",
+  "area": "perf / polish",
+  "text": "HUD timing in capture.json is 28.5 ms on the sampled C2 frame and 8 ms in S4b's report.json. Both were taken on a heavily contended 2-CPU box (another builder's capture, regress and audio-render were running), so they are not conclusive. The builder's own measure, p95 1.8 ms against a 1 ms budget, still says the per-frame marker and edge placement is over budget. On the menu, the key-hint row wraps and leaves 'C cinematic' orphaned on a second line. The debrief's 'Intercepted in your sector \u00b7 55 of 65' and the layer bars (sum 79) use different denominators without saying so.",
+  "evidence": "status/clips/hud-r3c/C2/capture.json, status/shots/hud-r3c/M0-menu.png, status/shots/hud-r3c/S8-debrief.png",
+  "fix": "Run placeMarkers/placeEdges at most every other frame when the camera matrix is unchanged, and use a uniform grid for hits() instead of a linear scan. Menu: widen .keys or allow the hint row to use the 650 px text column width with flex-wrap balanced (or drop the 'C cinematic' hint to the intro card). Debrief: label the bars 'all intercepts tonight' or show '/ total' per layer."
+ }
+]

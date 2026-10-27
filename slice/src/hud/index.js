@@ -476,7 +476,7 @@ export function create(ctx) {
     const hideAll = sim.phase === 'debrief';
     // feet first: every visible foot is reserved before any label, so labels never cover a foot
     for (const m of order) {
-      m.off = false; m.vis = false;
+      m.off = false; m.vis = false; m.hiddenUnderPanel = false;
       let on = !hideAll;
       if (on && (m.kind === 'group' || m.kind === 'shelter')) on = !cluster && !(m.kind === 'group' && m.done);
       if (on && m === aradM) on = cluster;
@@ -489,7 +489,7 @@ export function create(ctx) {
       m.px = (v.x + 1) / 2 * W; m.py = (1 - v.y) / 2 * H;
       let under = false;
       for (const o of obstacles) if (m.px > o[0] && m.px < o[2] && m.py > o[1] && m.py < o[3]) { under = true; break; }
-      if (under) continue;              // behind a panel: the roster row and radar ping carry it
+      if (under) { m.hiddenUnderPanel = true; continue; } // behind a panel: trouble items get an edge pointer
       m.vis = true;
       pushRect(m.px - 9, m.py - 9, m.px + 9, m.py + 9);
     }
@@ -525,10 +525,12 @@ export function create(ctx) {
     }
     return e;
   }
+  const edgeLive = [];
   function placeEdges(cluster) {
     const W = innerWidth, H = innerHeight, cx = W / 2, cy = H / 2, M = 22;
+    edgeLive.length = 0;
     for (const m of markers) {
-      const trouble = !cluster && m.off && (sim.phase === 'alert' || (sim.phase === 'prep' && sim.t >= pacing.earlyWarning)) && (
+      const trouble = !cluster && (m.off || m.hiddenUnderPanel) && (sim.phase === 'alert' || (sim.phase === 'prep' && sim.t >= pacing.earlyWarning)) && (
         (m.kind === 'shelter' && m.s.locked && m.s.opening <= 0) ||
         (m.kind === 'group' && sim.phase === 'alert' && !m.done && (m.status === 'late' || m.status === 'blocked')));
       const e = trouble || edgeEls.has(m) ? edgeFor(m) : null;
@@ -539,22 +541,48 @@ export function create(ctx) {
       let dx = ev.x, dy = -ev.y; const zf = Math.max(1, -ev.z);
       if (ev.z > 0) { dx = -dx; dy = -dy; }
       dx /= zf; dy /= zf; if (Math.abs(dx) + Math.abs(dy) < 1e-6) dy = 1;
-      // clamp to the real viewport border, then step out of any panel along that border
+      // clamp to the real viewport border
       const kx = Math.abs((dx > 0 ? W - M - cx : M - cx) / (dx || 1e-9)), ky = Math.abs((dy > 0 ? H - M - cy : M - cy) / (dy || 1e-9));
-      const k = Math.min(kx, ky);
-      let x = cx + dx * k, y = cy + dy * k;
-      for (const o of obstacles) {
-        if (x < o[0] - 12 || x > o[2] + 12 || y < o[1] - 12 || y > o[3] + 12) continue;
-        if (kx <= ky) x = dx < 0 ? o[2] + 16 : o[0] - 16; else y = dy < 0 ? o[3] + 16 : o[1] - 16;
-      }
-      const a = Math.atan2(dy, dx) * 180 / Math.PI;
+      const k = Math.min(kx, ky), side = kx <= ky;
       const txt = m.kind === 'shelter' ? shortName(m.s) : m.n;
       const icon = m.kind === 'shelter' ? 'lock' : 'people';
       if (txt !== e.txt) { e.txt = txt; e.b.textContent = txt; e.a = 999; e.hw = (2 + 18 + 5 + textW(String(txt).toUpperCase(), '600 11px "IW Mono"', 0.44) + 8) / 2; }
       if (icon !== e.icon) { e.icon = icon; e.ico.innerHTML = ic(icon); }
+      const hw = e.hw || 30;
+      // left/right borders keep x and slide y; top/bottom keep y and slide x (never leave the border)
+      let x = side ? (dx > 0 ? W - M - hw : M + hw) : cx + dx * k;
+      let y = side ? cy + dy * k : (dy > 0 ? H - M - 12 : M + 12);
+      x = Math.min(W - M - hw, Math.max(M + hw, x));
+      edgeLive.push({ e, x, y, side, tx: cx + dx * k * 3, ty: cy + dy * k * 3, hw });
+    }
+    const hitPanel = (p) => { for (const o of obstacles) if (p.x + p.hw > o[0] - 10 && p.x - p.hw < o[2] + 10 && p.y + 13 > o[1] - 10 && p.y - 13 < o[3] + 10) return o; return null; };
+    const slide = (p, o) => {
+      if (p.side) {
+        const up = o[1] - 10 - 14, dn = o[3] + 10 + 14;
+        const cand = (Math.abs(p.y - up) <= Math.abs(p.y - dn) ? [up, dn] : [dn, up]).filter((v) => v >= M + 12 && v <= H - M - 12);
+        if (cand.length) p.y = cand[0];
+      } else {
+        const lf = o[0] - 10 - p.hw, rt = o[2] + 10 + p.hw;
+        const cand = (Math.abs(p.x - lf) <= Math.abs(p.x - rt) ? [lf, rt] : [rt, lf]).filter((v) => v >= M + p.hw && v <= W - M - p.hw);
+        if (cand.length) p.x = cand[0];
+      }
+    };
+    for (const p of edgeLive) for (let it = 0; it < 4; it++) { const o = hitPanel(p); if (!o) break; slide(p, o); }
+    // pointer-pointer separation along each border
+    for (let it = 0; it < 3; it++) for (let i = 0; i < edgeLive.length; i++) for (let j = i + 1; j < edgeLive.length; j++) {
+      const a = edgeLive[i], b = edgeLive[j];
+      if (Math.abs(a.x - b.x) >= a.hw + b.hw + 6 || Math.abs(a.y - b.y) >= 28) continue;
+      if (b.side) b.y += (b.y >= a.y ? 1 : -1) * (28 - Math.abs(a.y - b.y));
+      else b.x += (b.x >= a.x ? 1 : -1) * (a.hw + b.hw + 6 - Math.abs(a.x - b.x));
+      b.y = Math.min(H - M - 12, Math.max(M + 12, b.y)); b.x = Math.min(W - M - b.hw, Math.max(M + b.hw, b.x));
+      const o = hitPanel(b); if (o) slide(b, o);
+    }
+    for (const p of edgeLive) {
+      const { e, x, y } = p;
+      const a = Math.atan2(p.ty - y, p.tx - x) * 180 / Math.PI; // chevron from the pointer's final spot
       if (Math.abs(x - e.x) > 0.5 || Math.abs(y - e.y) > 0.5) { e.x = x; e.y = y; e.el.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) translate(-50%,-50%)`; }
       if (Math.abs(a - e.a) > 1.5) {
-        e.a = a; const ca = Math.cos(a * Math.PI / 180), sa = Math.sin(a * Math.PI / 180), hw = e.hw || 30;
+        e.a = a; const ca = Math.cos(a * Math.PI / 180), sa = Math.sin(a * Math.PI / 180), hw = p.hw;
         const r = Math.min(Math.abs(ca) > 1e-3 ? (hw + 9) / Math.abs(ca) : 1e9, Math.abs(sa) > 1e-3 ? 20 / Math.abs(sa) : 1e9);
         e.arw.style.transform = `translate(${(ca * r).toFixed(1)}px,${(sa * r).toFixed(1)}px) rotate(${a.toFixed(0)}deg)`;
       }
@@ -660,7 +688,7 @@ export function create(ctx) {
     const hint = $('hint');
     let h = '';
     if (selGroup) { const g = infoById.get(selGroup); h = `${ic('people')}<span><b>${g.name}</b> (${g.n - g.inside}) selected · click a shelter to send them · each shelter shows their ETA · <kbd>ESC</kbd> cancel</span>`; }
-    else if (sim.phase === 'alert') h = `${ic('lock')}<span>Click a <b>locked shelter</b> to open it · click a <b>group</b>, then a shelter, to reroute</span>`;
+    else if (sim.phase === 'alert') h = sim.shelters.some((x) => x.locked && x.opening <= 0) ? `${ic('lock')}<span>Click a <b>locked shelter</b> to open it · click a <b>group</b>, then a shelter, to reroute</span>` : `${ic('people')}<span>All shelters open · click a <b>group</b>, then a shelter, to reroute</span>`;
     else if (sim.phase === 'prep' && sim.t >= 40) h = `${ic('route')}<span>Plan ahead: click a <b>group</b>, then a <b>shelter</b>. Amber or red groups won't make it in ${pacing.countdown} s.</span>`;
     else if (sim.phase === 'prep' && sim.t < 40 && layout.pads.some((p) => !p.battery) && sim.budget >= 40) h = `${ic('hexplus')}<span>Click a dashed <b>pad</b> marker to deploy Iron Dome or David's Sling</span>`;
     if (h !== hint._h) { hint._h = h; hint.innerHTML = h; hint.hidden = !h; }

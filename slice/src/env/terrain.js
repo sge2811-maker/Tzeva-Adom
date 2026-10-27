@@ -188,8 +188,11 @@ export function createTerrain(ctx) {
       const w = wadi[v], c = curv[v];
       if (w > 0.35 && rnd() < 0.14) trees.push([x + (rnd() - 0.5) * 30, z + (rnd() - 0.5) * 30, 0.7 + rnd() * 0.7]);
       else if (c < -0.4 && rnd() < 0.05) rocks.push([x + (rnd() - 0.5) * 30, z + (rnd() - 0.5) * 30, 2 + rnd() * 6]);
-      if (trees.length > 900 || rocks.length > 700) break;
     }
+    // the scan is row-ordered, so an early break clustered everything in one strip: collect
+    // every candidate, then shuffle (seeded) and keep the caps so scatter covers the whole area
+    const cap = (arr, n) => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); const t = arr[i]; arr[i] = arr[j]; arr[j] = t; } arr.length = Math.min(arr.length, n); };
+    cap(trees, 900); cap(rocks, 700);
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), sc = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0);
     const rg = new THREE.DodecahedronGeometry(1, 0); rg.scale(1.3, 0.55, 1.0);
     const rm = new THREE.InstancedMesh(rg, new THREE.MeshStandardMaterial({ color: 0x5e5446, roughness: 0.95, flatShading: true }), rocks.length);

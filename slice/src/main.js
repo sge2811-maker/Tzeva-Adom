@@ -112,7 +112,7 @@ async function boot() {
 
 function resize() {
   const w = innerWidth, h = innerHeight;
-  const dpr = Math.min(window.devicePixelRatio || 1, quality.s.maxDpr) * quality.renderScale;
+  const dpr = quality.dprFor(w, h); // native DPR capped by tier pixel budget, x dynamic render scale (perf)
   ctx.size = { w, h, dpr };
   renderer.setPixelRatio(dpr);
   renderer.setSize(w, h, false);
@@ -120,7 +120,7 @@ function resize() {
   for (const name of ctx.order) { const s = ctx.systems[name]; if (s.resize) { try { s.resize(w, h, dpr); } catch (e) { console.error(e); } } }
 }
 ctx.resize = resize;
-quality.onChange((q, kind) => resize());
+quality.onChange((q, kind) => { if (kind !== 'post') resize(); }); // 'post' hooks are read by env, no resize
 
 // ---------------------------------------------------------------- loop
 let last = performance.now(), acc = 0;

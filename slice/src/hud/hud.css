@@ -58,8 +58,8 @@
 .iw-letter::before, .iw-letter::after { content: ""; position: fixed; left: 0; right: 0; height: 9vh; background: #000; transition: transform 0.9s ease; }
 .iw-letter::before { top: 0; } .iw-letter::after { bottom: 0; }
 .iw-letter.off::before { transform: translateY(-100%); } .iw-letter.off::after { transform: translateY(100%); }
-.iw-cards { position: absolute; left: 0; right: 0; bottom: 17vh; text-align: center; text-shadow: 0 2px 30px rgba(0,0,0,0.85); }
-.iw-cards > div { position: absolute; left: 0; right: 0; bottom: 0; opacity: 0; }
+.iw-cards { position: absolute; left: 0; right: 0; top: 13vh; /* sky, top third: clear of Arad at the reveal */ text-align: center; text-shadow: 0 2px 30px rgba(0,0,0,0.85); }
+.iw-cards > div { position: absolute; left: 0; right: 0; top: 0; opacity: 0; }
 .iw-cards .c1 { font-family: var(--f-data); letter-spacing: 0.46em; font-size: 13px; color: var(--amber); }
 .iw-cards .c1 b { display: block; margin-top: 10px; font-family: var(--f-ui); font-weight: 300; font-size: 22px; letter-spacing: 0.3em; color: var(--ink); }
 .iw-cards .c2 .t { font-weight: 700; font-size: clamp(64px, 9vw, 136px); line-height: 0.9; text-transform: uppercase; }

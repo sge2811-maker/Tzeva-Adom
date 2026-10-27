@@ -1,0 +1,54 @@
+{
+  "stream": "hud",
+  "round": 3,
+  "score": 7,
+  "oneLine": "Close to the bar but not there yet. Every static canonical shot is clean, restrained and AoE IV-legible: capacity sits on the chips, the selected-group view is decluttered, the objectives are consistent and the menu and debrief look shipped. At the siren, the one beat that matters most, the off-screen pointers still float inward under the roster instead of sitting on the screen edge, and the two of them overlap ('WES' cut off by the '10' pill) for about 2 s. The coach line also asks you to open locked shelters when none are locked.",
+  "strengths": [
+    "S2, S4 and S4b at 1600x900 have no marker overlaps. Shelters now show capacity on compact chips ('0/22', '0/40'). Groups show count + ETA chips coloured by status, and names appear only on near chips (S4: '0/26 AVENUE', '22 29s ON TIME · CAFÉ TERRACE'). This is close to the AoE IV pin discipline.",
+    "The selected-group view (ux/ux-1-route-preview.png) is fixed. Only the hovered shelter ('0/22 37s 22 FREE', white outline) and the current target ('0/26 ETA 180s 4 PLACES LEFT') get full chips. The other shelters are compact ETA chips tinted red or green by fit ('0/40 246s', 'LOCKED 361s'), and the roster row is highlighted. A first-time player can read it in seconds.",
+    "The red-alert module (S4, S4b, C2) is elegant and unmissable: צבע אדום in correct Hebrew, the English line, the large countdown, the draining bar and 'IN PROTECTED SPACES 0 / 92'. The toast has its own slot under the alert ('Opening West shelter · crew on site in 5 s', ux-2), and the opening shelters get amber '5s' chips. The banner and toast system is at CoH3 level.",
+    "Objective state is consistent. In S7 all four are ticked ('No impacts in Arad · none', 'Hold until the all-clear · done') and they match the debrief.",
+    "The menu (M0-menu) and debrief (S8) read like a shipped game: large display type, Hebrew חומת ברזל, a mono date line, keycap hints, a historical framing footnote, and an after-action report with intercept bars by layer and an 'In history' coda.",
+    "The radar now has an Arad inset (S2, S4, ux-2) with readable shelter squares and coloured group dots. That makes it usable at town scale, which WARNO / Broken Arrow-style minimaps also manage.",
+    "tools/ux-test.mjs re-run by the critic passes: every check PASS, UX-TEST PASS (pad popup build, G7 to S7 with hover preview, siren unlock of S1/S5 via 'marker full', roster pan, 0/92 exposed at t=235, no console errors). report.json and capture.json show 0 console errors in every shot and clip."
+  ],
+  "issues": [
+    {
+      "severity": "major",
+      "area": "edge pointers at the siren",
+      "text": "In C2, from early warning (f00012) through the siren (f00040–f00056, t≈158–162), the 'WEST' locked-shelter pointer and the late '10' group pointer are not on the viewport edge. They sit in world space at about x=120–230, y=260, just under the roster panel. At the siren they overlap each other: the '10' pill covers the end of 'WEST', so it reads 'WES'. Both chevrons point up into the roster's corner rather than toward the targets. A player reads them as a broken world label on a building. AoE IV and CoH3 keep off-screen alerts flush to the viewport border, spaced apart, with the arrow pointing at the target.",
+      "evidence": "status/clips/hud-r3c/C2/frames/f00040.jpg, status/clips/hud-r3c/C2/frames/f00056.jpg, status/clips/hud-r3c/C2/frames/f00012.jpg",
+      "fix": "src/hud/index.js placeEdges() lines 546–549. When the border hit is on the left or right edge (kx <= ky) and it lands inside a panel, keep x on the border and slide y past the panel (y = o[3] + 16 or o[1] - 16, whichever is nearer the projected y). The current code moves x inward to o[2]+16 instead. Do the mirror case for top and bottom hits. Then run a simple collision pass over the edge pills: push each one along the border by its height + 4 px when it overlaps an earlier pill or any placed marker rect, or merge pointers that share a direction into one pill ('[lock] W · [people] 10'). Recompute the chevron angle from the final pill position to the target's projected direction."
+    },
+    {
+      "severity": "minor",
+      "area": "coach line state",
+      "text": "In S4, S4b and C2 after t≈163, every shelter is already open (autopilot), but the coach line still says 'Click a locked shelter to open it · click a group, then a shelter, to reroute'. This misleads a first-time player about what to do next. The CoH3 and AoE IV hint strips only show actions that are available right now.",
+      "evidence": "status/shots/hud-r3c/S4-alert.png, status/shots/hud-r3c/S4b-alert-wide.png",
+      "fix": "In src/hud/index.js where the hint text is chosen in the alert phase, branch on sim.shelters.some(s => s.locked && s.opening <= 0). With no locked shelters, show the late/tight-group variant ('All shelters open · reroute amber or red groups: click a group, then a shelter'). With every group on time, hide the hint or show 'Everyone is on time · hold'."
+    },
+    {
+      "severity": "minor",
+      "area": "markers pinned against panels",
+      "text": "Markers whose feet sit just outside a panel get squeezed against its border. In C2 f00012 and f00056, the Lookout lock chip sits right next to the roster's top-right corner (x≈220, y≈60–78). In S4 the '1/20' Nevatim/pad chip and its diamond touch the roster edge at x≈257. They read as part of the panel rather than the world. Markers whose foot is under a panel are hidden entirely, so the Lookout lock at the siren has no on-screen marker or edge pointer, only the roster's red 'lock' text.",
+      "evidence": "status/shots/hud-r3c/S4-alert.png, status/clips/hud-r3c/C2/frames/f00056.jpg",
+      "fix": "placeMarkers(): add a 10–12 px margin around the obstacle rects for labels only (the feet keep the current rect). For a trouble marker (locked at alert, late group) with m.under, route it to placeEdges() as if off-screen, so it gets an edge pill on the border next to the panel. Do not hide it."
+    },
+    {
+      "severity": "minor",
+      "area": "group-shelter pairing",
+      "text": "At default and wide zoom (S4b, ux-2), each group's chip and its target shelter's chip often sit side by side with two feet a few pixels apart ('0/22' diamond plus '10 23s' ring, '0/28' plus '12 11s'). Which group is heading where is only implied by proximity. There is no faint route line unless a group is selected. CoH3 shows move intent with subtle ground lines.",
+      "evidence": "status/shots/hud-r3c/S4b-alert-wide.png, status/shots/hud-r3c/ux/ux-2-siren.png",
+      "fix": "In the route canvas during alert, draw every unsheltered group's current route at about 20% alpha, 1 px, status-coloured. Keep the full-strength dashed route for the selected or hovered group only."
+    },
+    {
+      "severity": "minor",
+      "area": "perf / polish",
+      "text": "HUD timing in capture.json is 28.5 ms on the sampled C2 frame and 8 ms in S4b's report.json. Both were taken on a heavily contended 2-CPU box (another builder's capture, regress and audio-render were running), so they are not conclusive. The builder's own measure, p95 1.8 ms against a 1 ms budget, still says the per-frame marker and edge placement is over budget. On the menu, the key-hint row wraps and leaves 'C cinematic' orphaned on a second line. The debrief's 'Intercepted in your sector · 55 of 65' and the layer bars (sum 79) use different denominators without saying so.",
+      "evidence": "status/clips/hud-r3c/C2/capture.json, status/shots/hud-r3c/M0-menu.png, status/shots/hud-r3c/S8-debrief.png",
+      "fix": "Run placeMarkers/placeEdges at most every other frame when the camera matrix is unchanged, and use a uniform grid for hits() instead of a linear scan. Menu: widen .keys or allow the hint row to use the 650 px text column width with flex-wrap balanced (or drop the 'C cinematic' hint to the intro card). Debrief: label the bars 'all intercepts tonight' or show '/ total' per layer."
+    }
+  ],
+  "benchmarkNotes": "AoE IV: the panel hierarchy (clock and budget top-left, roster under it, objectives top-right, air defence and radar bottom-left, command bar bottom-centre) and the icon-plus-number pins now meet the AoE IV bar in every static shot, and the selected-group routing view is as legible as AoE IV's target tags. CoH3: the alert module, toast slot and amber 'opening' chips match CoH3's objective and notification polish. The off-screen pointers at the siren still don't: CoH3 pins them to the screen border and never lets two overlap. Iron Harvest: restraint is good (thin hairlines, dim feed, siren-tinted vignette), and the menu and title type feel cinematic. WARNO / Broken Arrow: the battery ammo bars and the radar with its new Arad inset are believable air-defence UI. Overall it is close to the reference bar, with 2–3 visible gaps. The clearest is an overlapping, mis-anchored pointer pair at the most important beat, the siren, which is more than a nitpick. That keeps it at 7. Fixing placeEdges() and the stale coach line would likely make it an 8.",
+  "bestShot": "status/shots/hud-r3c/S4-alert.jpg"
+}
