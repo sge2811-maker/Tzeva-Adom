@@ -67,7 +67,7 @@
       "id": "vfx",
       "name": "VFX",
       "scope": "Launches, interceptor trails, intercepts, debris, smoke, screen shake",
-      "state": "critique",
+      "state": "flagged",
       "round": 5,
       "scores": [
         {
@@ -89,40 +89,63 @@
           "round": 4,
           "score": 7,
           "when": "2026-10-26T13:15:39.849Z"
+        },
+        {
+          "round": 5,
+          "score": 7,
+          "when": "2026-10-27T11:21:47.946Z"
         }
       ],
       "best": 7,
-      "noImprove": 2,
-      "shot": "status/shots/vfx-r4/S3-drones.jpg",
+      "noImprove": 3,
+      "shot": "status/shots/vfx-r5/S3-drones.jpg",
       "issues": [
         {
           "severity": "major",
-          "text": "This is unchanged from round 3. C4 f00097: a bright orange J-hook trail curls down the left edge (x~15-30, y~70-240). C4 f00107: it becomes a full-height thin vertical orange line with a pale column beside it, and a broad warm brown-orange wash covers the left 40% of the sky. It reads as a rendering glitch, not a meteor or an impact, and it is in the canonical overhead/street clip."
+          "area": "overhead intercept sky flash (C4)",
+          "text": "Each overhead Sling or ballistic kill flips the entire sky from near-black to a flat, uniform grey-lavender. The stars vanish and every building facade lights a flat cream, with no direction toward the burst. The burst itself is a small orange fireball at the top right. Sky mean luminance jumps from 1.5 to 51-54 and decays over about 0.3 s, and it fires about 7 times between t=252.2 and 254.7. It reads as exposure strobing or lightning, not as a flare-bright intercept lighting the smoke. Iron Harvest and CoH3 flashes light locally and directionally, with falloff.",
+          "evidence": "status/clips/vfx-r5/C4-overhead/frames/f00092.jpg (also f00065, f00071, f00077)",
+          "fix": "index.js intercept handler: the endo envFlash passes I = (big ? 1.4e6 : 6e5) * kill with rad 16000/7000, and ctx.fx.flash adds 0.45/0.18 scaled by 3000/(d+500). At d ~1-3 km overhead, both saturate. Scale envFlash I by smoothstep(1500, 6000, d) with a floor of about 0.15, as the impact handler already does with (d0-1500)/3500. Cap ctx.fx.flash per intercept at 0.08 when d < 4000. Coalesce flashes: keep a running envFlash energy that decays at about 6/s, and only add (target - current), so 7 kills in 2.5 s don't each restart from black. Ask env to make the sky-flash lobe directional (dot(viewDir, flashDir)) rather than a uniform sky lift."
         },
         {
           "severity": "major",
-          "text": "S6 (t=222.7) still lands between kills, and the frame now shows four round, pale-blue, cotton-ball puffs (about 25-35 px at 1600, x~770-910 y~135-195), each with orange streaks through it. They are the most 'sprite-looking puff / hard-edged circle' element in the shot. C1 f00088 shows the same: tidy round balls beside the star. Broken Arrow's exo-kill remnant is a faint, wide, irregular haze, not a discrete ball. Separately, the short orange dashes around the kills (ballistic hot trails at 25+ km) still read as a fireworks drizzle."
+          "area": "near-camera smoke ribbon wedge (S9 / C5)",
+          "text": "A pale, translucent, triangular band with a ruler-straight right edge runs from the top-centre sky down through the Nevatim impact and into the foreground ground (S9 x~800-1300, y 0-600 at 1600). It is in every C5 frame from about t=256. It is a smoke ribbon (most likely the David's Sling Nev. West launch trail beside the 11/12 marker) seen nearly end-on near the camera, so the billboarded strip becomes a huge flat polygon. It reads as a searchlight beam or a rendering glitch beside the hero impact. This is the 'hard-edged' and 'flat sprite' failure sign in TARGET §2.",
+          "evidence": "status/shots/vfx-r5/S9-nevatim.png",
+          "fix": "trails.js smoke VERT/FRAG: add a near-camera fade, alpha *= smoothstep(150.0, 900.0, viewDist), and clamp the projected half-width (if the screen-space width is more than about 12% of viewport height, scale alpha by (0.12/w)^2). Apply the existing noise/edge erosion across the ribbon's v coordinate (alpha *= smoothstep(0.0, 0.35, 1.0-abs(v*2.0-1.0)) with noise) so ribbon edges are never straight. Also fade ribbons whose tangent is nearly parallel to the view direction: alpha *= smoothstep(0.15, 0.4, length(cross(tangent, viewDir)))."
         },
         {
           "severity": "major",
-          "text": "The endo kill aftermath is still an isolated round grey puff, about 40-50 px at 1600 (S5 x~1145 y~370, detached from the burst and its spark spray), and in C4 f00097 a rounded puff sits at x~695 y~140 and another at x~680 y~220. The 12-puff smudge along the path isn't visible as a smear: it is too dim (alpha 0.18) beside the general explosion smoke ball (alpha 0.35-0.5, 12-22 s). CoH3 and WARNO post-kill smoke is torn and directional."
+          "area": "Arrow exo kills not readable (C1 / S6)",
+          "text": "In C1 the Arrow 3 kills land at the top-centre of the frame (about y 30-110 at 960), mostly behind the red alert panel. They are about 10-15 px soft stars at roughly the same brightness as the panel glow (f00049-f00090 zoom). The 16-sprite remnant haze added this round doesn't show at all. The canonical S6-salvo frame (t=222.7) is now essentially empty night sky: one small star under the alert panel (x~890 y~195) and faint aurora bands. The signature 'bright points high over the Dead Sea' moment from Broken Arrow's high-altitude SAM kills does not reach the player.",
+          "evidence": "status/shots/vfx-r5/S6-salvo.png ; status/clips/vfx-r5/C1-arrow/frames/f00051.jpg",
+          "fix": "index.js exo branch: raise the primary T_STAR size floor in screen space, so at 25-30 km it projects to at least 28-36 px at 1080p (s0/s1 ~2600/3400 when d > 20000). Raise the glint T_STAR intensity to 10-12 for kills, and hold a 0.8-1.2 s afterglow (the second star, life R(1.2,1.6), at 3x intensity). For the remnant, raise alpha from 0.07-0.11 to 0.14-0.2 at this range, or switch to a faint additive cool-grey T_GLOW smear lit by the star for its first 2 s. Coordinate with camera/HUD: C1/S6 framing puts the exo layer under the alert panel. Either tilt the S6 look target down by about 4 degrees or add a new shot (do not alter S6) so the kills sit in open sky."
         },
         {
           "severity": "minor",
-          "text": "S7 from the high camera: about 8 identical bright starbursts with small pale puffs in an even row along the escarpment (x 770-1310, y 195-250). They read as procedural repetition (identical T_STAR light points, likely ongoing fires and impact flashes). The Nevatim column (x~1000) is modest, about 30 px, and doesn't anchor the frame the way CoH3 aftermath columns do."
+          "area": "ruler-straight thin hot trails",
+          "text": "Long, perfectly straight, hairline trails cross the sky diagonally in S5 (x 850-1310, y 330-650, blue-grey fading to orange) and in C4 f00065/f00092 (several thin lines spanning a third of the frame). At street level they read as lines drawn on the sky, not as plasma or smoke. This is the 'trails as thin lines' failure sign. WARNO and Broken Arrow trails have width, taper and wind wobble.",
+          "evidence": "status/shots/vfx-r5/S5-street.png",
+          "fix": "ST.ballistic.smoke: w0 24 -> w1 170 is fine far away, but these are hot sets drawn at w1 8. Taper the hot-trail alpha to 0 over its back 70% (fadePow 2.5), and cap the hot-trail screen length (fade points whose projected distance from the head exceeds 25% of the viewport). For the blue-grey thin leg, raise the smoke ribbon minimum screen width to about 3 px and add turb/wkVar wobble so it isn't a straight segment."
         },
         {
           "severity": "minor",
-          "text": "In C1 and S6 the Arrow boost trails are still wide, very faint blue vertical bands on the right side of the sky (S6 x 1150-1500). They read as aurora or searchlights, not as missile smoke."
+          "area": "aftermath sparseness and repetition (S7)",
+          "text": "S7 from the high camera is mostly empty desert. Two matched pairs of identical bright flares with vertical spikes sit on the escarpment (x 840-860 and 945-965, y ~195-205) and still read as procedural copies. A field of thin vertical light streaks runs along the far shore. One modest column on the right (about 25 px wide) is the only real smoke. The CoH3 aftermath bar is several lingering, drifting palls of varied size over the battlefield.",
+          "evidence": "status/shots/vfx-r5/S7-aftermath.png",
+          "fix": "index.js column fire sprites: the paired flares are column-base T_STAR points at identical intensity. Swap them for T_FIREBALL flicker (no spike) at 0.4-1.2 per-column intensity, and drop the T_STAR spike entirely when the camera is more than 8 km away. Let the main ballistic columns spread into a wide, low pall after about 60 s (s1 grows with c.t, alpha 0.1-0.15, drift with wind), so the aftermath has haze layers, not points."
         },
         {
           "severity": "minor",
-          "text": "The egg is gone, but the earlier column in C5 (x~488 y~250 at 960) is still a dark, uniform slug that hovers detached from the ground, with no visible fire base or lighter top, beside the hero plume."
+          "area": "Arrow climb trails",
+          "text": "This is unchanged. In S6 and C1 the Arrow boost trails are still very wide, very faint blue vertical bands on the right side of the sky (S6 x 1150-1500), reading as aurora rather than missile smoke.",
+          "evidence": "status/shots/vfx-r5/S6-salvo.png",
+          "fix": "ST.arrow.smoke: w1 120 -> 60, altGrow 5000 -> 2500. In trails.js VERT, multiply the atmospheric tint by 0.6 for arrow-coded trails and raise alpha in the 2-12 km band so they keep a pale smoke value."
         }
       ],
-      "note": "r5 builder done; final critic running",
+      "note": "Flagged at 7 after final round 5 (r4 7, r5 7). Sky strobe on overhead kills and the near-camera trail wedge go into the integration pass.",
       "commit": null,
-      "updated": "2026-10-26T19:48:35.372Z"
+      "updated": "2026-10-27T11:21:47.946Z"
     },
     "audio": {
       "id": "audio",
@@ -412,5 +435,5 @@
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-27T11:21:36.985Z"
+  "updated": "2026-10-27T11:21:47.946Z"
 }
