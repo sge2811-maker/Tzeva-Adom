@@ -1,5 +1,5 @@
 {
-  "when": "2026-10-26T07:57:02.189Z",
+  "when": "2026-10-26T20:30:03.338Z",
   "viewport": [
     480,
     270
@@ -30,7 +30,7 @@
     {
       "name": "fling: glides after release",
       "ok": true,
-      "value": "766m",
+      "value": "752m",
       "limit": "> 3% of dist",
       "extra": ""
     },
@@ -72,7 +72,7 @@
     {
       "name": "zoom: cursor anchor drift",
       "ok": true,
-      "value": "17.5m",
+      "value": "17.7m",
       "limit": "<= 51 m (3% of dist)",
       "extra": ""
     },
@@ -144,7 +144,7 @@
       "ok": true,
       "value": "800ms",
       "limit": "<= 1300 ms",
-      "extra": "moved 2302 m"
+      "extra": "moved 2307 m"
     },
     {
       "name": "clearance: never clips terrain/roofs",
