@@ -252,77 +252,59 @@
         {
           "round": 3,
           "score": 6,
-          "when": "2026-10-27T11:21:26.037Z"
+          "when": "2026-10-27T11:21:36.985Z"
         }
       ],
       "best": 6,
-      "noImprove": 0,
+      "noImprove": 1,
       "shot": "status/clips/camera-r2/trailer/frames/f00070.jpg",
-      "issues": {
-        "stream": "camera",
-        "round": 2,
-        "score": 6,
-        "oneLine": "The trailer's middle (Sling ripple 247-254 s, Nevatim impact 254-257 s) now looks like a Broken Arrow / WARNO air-defence trailer, but the first 5 s and last 10 s carry no action. The intro wadi reads as flying over clouds, and the crest reveals a flat band of lights behind the title, so the stream sits at competent-indie level overall.",
-        "strengths": [
-          "Sling ripple and kills (frames f00048-f00080, sim 248-253.5) are trailer-grade: the battery is anchored low in frame, trails climb through the frame, the kills and burning debris fill the upper half, and the coastline gives depth. It compares well with a Broken Arrow air-defence beat.",
-          "The Nevatim impact (f00096-f00108) is shot low and close, with the fireball centred, the inbound trail leading into it and the moon as a counterweight. The impact lands on the beat, like a WARNO close-impact shot.",
-          "Shots run at constant velocity through the cuts (keys.linear). A-to-B is effectively one continuous push, and the camera no longer stops at each edit.",
-          "The trailer slow-mo now fires deterministically from the script (feelLog: slowmo at simT 250.83, 1.5 s at 0.3x, just after the first Sling kill) and reads as a beat, not lag.",
-          "The tactical rig still measures at AoE IV level: tools/input-test.mjs passes 24/24 (1-frame latency, 0% overshoot, 250-270 ms settle, 17.7 m zoom-anchor drift, pitch 35.5 to 31.1 deg, 6 m minimum clearance, clean console).",
-          "The siren beat is now readable: C2 at 159.17 vs 160.17 shows a clear push toward the town (expo ease, 1.2 s, under the 1.5 s control cap).",
-          "The intro hand-off stays seamless (21.5 to 24 s, same pose with the HUD fading in). The low pass over the towers at 17 s is the intro's best frame.",
-          "No console errors in any capture (S1, intro, trailer, C2, C4, input-test)."
-        ],
-        "issues": [
-          {
-            "severity": "major",
-            "area": "trailer: dead closing third",
-            "text": "Shot F (262-272 s, a third of the trailer) is a near-static wide view across an empty grey plain: three thin smoke columns 6 km away, the moon dead centre and a few trails at the top edge. The camera moves about 40 m/s at 6.5 km range, so there is no parallax and successive frames look identical (f00126, f00156, f00176). A CoH3 or WARNO trailer would never hold 10 s on this; it reads as the clip running out of material.",
-            "evidence": "status/clips/camera-r2/trailer/contact.png (t 264.3-269.8); frames f00140, f00176",
-            "fix": "src/camera/paths.js TRAILER shot F: cut it to 3-4 s and move the camera to 300-600 m from a Nevatim burn site, low (20-40 m AGL with agl:true), with hangars or wreckage in the foreground and a lateral dolly (about 30 m/s at that range gives real parallax). Or end on a rising pull-back over Arad's rooftops with the smoke drifting across the skyline (subject = the smoke column, anchor = town centre [0,30,0], p moving from 400 to 900 m altitude). Use the freed 6 s to push the opening later (see issue 2)."
-          },
-          {
-            "severity": "major",
-            "area": "trailer: no-action opening",
-            "text": "240-245 s is a slow push over the rooftops toward a horizon with nothing in the sky. Warheads are said to be inbound, but no trail or flash appears until the first Sling launch at about 245 s (f00030). The first 5 s of a trailer are its hook; here they show an empty night town.",
-            "evidence": "status/clips/camera-r2/trailer/frames f00000, f00012, f00024",
-            "fix": "Either start the recommended capture later (--t 243.5) and extend shot A's first key to 243.5, or keep 240 and aim shot A's subject at the inbound salvo's logged position at 240-244 (s keyed to the warheads, not the fixed point [-120,140,-1080]) so re-entry streaks are visible above the skyline. Otherwise open on the drone or cruise-missile layer if one is airborne then."
-          },
-          {
-            "severity": "major",
-            "area": "intro: wadi climb and crest reveal",
-            "text": "0-8 s skims 20 m over a lumpy, uniformly lit surface with a rolled horizon. It reads as flying over a cloud deck, not up a desert wadi: no walls, no rim and no sense of climbing (intro f00010 at t=5). At the crest (9.5-12 s, S1-intro at 11 s) Arad is still a thin band of lights about 3 km off on a featureless plain, sitting directly behind the IRON WALL title. AoE IV and Iron Harvest openers land the reveal on a close, framed subject. Here the reveal only works at 17 s, after the title has gone.",
-            "evidence": "status/shots/camera-r2/S1-intro.jpg; status/clips/camera-r2/intro/contact.png (t 2.5-12); intro/frames/f00010.jpg",
-            "fix": "src/camera/paths.js introKeys: route keys 2.6-8.2 along the actual escarpment face (sample groundAt to find where the slope is steepest and fly beside it, so the cliff fills one third of the frame), and look up-slope rather than along the ground so the rim reads as a skyline edge. Pull the crest key (9.2) 1-1.5 km closer to Arad and drop it to 25-35 m above a ridge, so the town rises above a dark foreground line. Bring the 15.6-18 s low tower pass forward to 11-14 s so the title lands on the strongest frame. Ask HUD to raise the title into the upper sky band, or delay it by about 1 s."
-          },
-          {
-            "severity": "major",
-            "area": "trailer: Arrow and Sling-kill shots lose the town",
-            "text": "Shots C (250-254) and E (257.6-262) put the camera 3+ km from Arad, so the town is a 3% sliver of lights on the bottom edge. In E the Arrow 3 star-flashes hang in empty sky over a bare plain, with the only ground interest a Nevatim smoke column at the right edge (f00126). Without the defended town under the flashes the stakes vanish, unlike Broken Arrow's interceptions over a skyline.",
-            "evidence": "status/clips/camera-r2/trailer/frames/f00080.jpg, f00126.jpg",
-            "fix": "paths.js TRAILER C/E: place the camera inside or at the edge of Arad (e.g. p ~[-300, 60-90, 200] with agl:true), looking east and up past the nearest towers, so rooftops fill the lower 25-30% and the flashes sit in the upper third. frameLook already allows this: keep a: [0,30,0] but bring p within 400-800 m of it and raise fov to 64-68 so a 60-70 deg elevation spread still fits."
-          },
-          {
-            "severity": "minor",
-            "area": "trailer feel: hit-stop overuse at distance",
-            "text": "In the trailer the hit-stop distance gate is bypassed (index.js: `|| scriptName === 'trailer'`), so six 55 ms hit-stops fire on kills 8.4-39 km from the camera, and a second slow-mo (Arrow, 258.82) follows 8 s after the Sling one. A freeze for a pinpoint flash 39 km away reads as a dropped frame in the exported video, not impact (TARGET §5: hit-stop must never feel like lag). Two slow-mos in 30 s also dilute the first.",
-            "evidence": "status/clips/camera-r2/trailer/capture.json feelLog (hitstop d=39095, 27400, 26372; slowmo simT 258.82)",
-            "fix": "src/camera/index.js intercept handler: in trailer mode keep the onScreen && d < 9000 gate (or script hit-stops explicitly like slingSlow), and skip the auto Arrow slow-mo when a scripted slow-mo has fired in the last 15 s (set slowDone = true inside script())."
-          },
-          {
-            "severity": "minor",
-            "area": "trailer: Nevatim reads as a sea",
-            "text": "In shot D the camera is so low over the flat, sheen-lit plain that the base ground reads like water, and Nevatim shows as scattered dark boxes with no hangar or shelter silhouette near the camera. The impact is strong, but its setting is anonymous.",
-            "evidence": "status/clips/camera-r2/trailer/frames/f00100.jpg",
-            "fix": "paths.js shot D: raise it to 90-120 m AGL and pick p so that a hardened shelter or the runway edge sits in the near foreground between the camera and the impact (look up Nevatim structure positions in src/world), and pitch down slightly so the runway lines give perspective."
-          }
-        ],
-        "benchmarkNotes": "AoE IV (camera feel): the tactical rig matches it on every measured axis (input-test 24/24) and would pass alone. AoE IV / Iron Harvest (intro): the structure and hand-off are right, but the 0-8 s wadi has no walls and reads as a cloud deck, and the crest reveal is a distant band behind the title. The good frames come at 15-18 s after the title has gone. Roughly 5-6. Broken Arrow / WARNO (trailer): 247-257 s is at or near the bar (Sling ripple with kills and debris, close Nevatim impact with slow-mo punctuation), a big step up. But 240-245 has no action, 262-272 is 10 s of near-static distant smoke on an empty plain, and the Arrow shot loses the town. Half the 30 s would be cut from a real trailer: roughly 6. CoH3 (pacing beats): the siren push is now readable and stays within the control cap. Weighted toward the trailer as the final deliverable, the stream scores 6.",
-        "bestShot": "status/clips/camera-r2/trailer/frames/f00070.jpg"
-      },
+      "issues": [
+        {
+          "severity": "major",
+          "area": "trailer: dead closing third",
+          "text": "Shot F (262-272 s, a third of the trailer) is a near-static wide view across an empty grey plain: three thin smoke columns 6 km away, the moon dead centre and a few trails at the top edge. The camera moves about 40 m/s at 6.5 km range, so there is no parallax and successive frames look identical (f00126, f00156, f00176). A CoH3 or WARNO trailer would never hold 10 s on this; it reads as the clip running out of material.",
+          "evidence": "status/clips/camera-r2/trailer/contact.png (t 264.3-269.8); frames f00140, f00176",
+          "fix": "src/camera/paths.js TRAILER shot F: cut it to 3-4 s and move the camera to 300-600 m from a Nevatim burn site, low (20-40 m AGL with agl:true), with hangars or wreckage in the foreground and a lateral dolly (about 30 m/s at that range gives real parallax). Or end on a rising pull-back over Arad's rooftops with the smoke drifting across the skyline (subject = the smoke column, anchor = town centre [0,30,0], p moving from 400 to 900 m altitude). Use the freed 6 s to push the opening later (see issue 2)."
+        },
+        {
+          "severity": "major",
+          "area": "trailer: no-action opening",
+          "text": "240-245 s is a slow push over the rooftops toward a horizon with nothing in the sky. Warheads are said to be inbound, but no trail or flash appears until the first Sling launch at about 245 s (f00030). The first 5 s of a trailer are its hook; here they show an empty night town.",
+          "evidence": "status/clips/camera-r2/trailer/frames f00000, f00012, f00024",
+          "fix": "Either start the recommended capture later (--t 243.5) and extend shot A's first key to 243.5, or keep 240 and aim shot A's subject at the inbound salvo's logged position at 240-244 (s keyed to the warheads, not the fixed point [-120,140,-1080]) so re-entry streaks are visible above the skyline. Otherwise open on the drone or cruise-missile layer if one is airborne then."
+        },
+        {
+          "severity": "major",
+          "area": "intro: wadi climb and crest reveal",
+          "text": "0-8 s skims 20 m over a lumpy, uniformly lit surface with a rolled horizon. It reads as flying over a cloud deck, not up a desert wadi: no walls, no rim and no sense of climbing (intro f00010 at t=5). At the crest (9.5-12 s, S1-intro at 11 s) Arad is still a thin band of lights about 3 km off on a featureless plain, sitting directly behind the IRON WALL title. AoE IV and Iron Harvest openers land the reveal on a close, framed subject. Here the reveal only works at 17 s, after the title has gone.",
+          "evidence": "status/shots/camera-r2/S1-intro.jpg; status/clips/camera-r2/intro/contact.png (t 2.5-12); intro/frames/f00010.jpg",
+          "fix": "src/camera/paths.js introKeys: route keys 2.6-8.2 along the actual escarpment face (sample groundAt to find where the slope is steepest and fly beside it, so the cliff fills one third of the frame), and look up-slope rather than along the ground so the rim reads as a skyline edge. Pull the crest key (9.2) 1-1.5 km closer to Arad and drop it to 25-35 m above a ridge, so the town rises above a dark foreground line. Bring the 15.6-18 s low tower pass forward to 11-14 s so the title lands on the strongest frame. Ask HUD to raise the title into the upper sky band, or delay it by about 1 s."
+        },
+        {
+          "severity": "major",
+          "area": "trailer: Arrow and Sling-kill shots lose the town",
+          "text": "Shots C (250-254) and E (257.6-262) put the camera 3+ km from Arad, so the town is a 3% sliver of lights on the bottom edge. In E the Arrow 3 star-flashes hang in empty sky over a bare plain, with the only ground interest a Nevatim smoke column at the right edge (f00126). Without the defended town under the flashes the stakes vanish, unlike Broken Arrow's interceptions over a skyline.",
+          "evidence": "status/clips/camera-r2/trailer/frames/f00080.jpg, f00126.jpg",
+          "fix": "paths.js TRAILER C/E: place the camera inside or at the edge of Arad (e.g. p ~[-300, 60-90, 200] with agl:true), looking east and up past the nearest towers, so rooftops fill the lower 25-30% and the flashes sit in the upper third. frameLook already allows this: keep a: [0,30,0] but bring p within 400-800 m of it and raise fov to 64-68 so a 60-70 deg elevation spread still fits."
+        },
+        {
+          "severity": "minor",
+          "area": "trailer feel: hit-stop overuse at distance",
+          "text": "In the trailer the hit-stop distance gate is bypassed (index.js: `|| scriptName === 'trailer'`), so six 55 ms hit-stops fire on kills 8.4-39 km from the camera, and a second slow-mo (Arrow, 258.82) follows 8 s after the Sling one. A freeze for a pinpoint flash 39 km away reads as a dropped frame in the exported video, not impact (TARGET §5: hit-stop must never feel like lag). Two slow-mos in 30 s also dilute the first.",
+          "evidence": "status/clips/camera-r2/trailer/capture.json feelLog (hitstop d=39095, 27400, 26372; slowmo simT 258.82)",
+          "fix": "src/camera/index.js intercept handler: in trailer mode keep the onScreen && d < 9000 gate (or script hit-stops explicitly like slingSlow), and skip the auto Arrow slow-mo when a scripted slow-mo has fired in the last 15 s (set slowDone = true inside script())."
+        },
+        {
+          "severity": "minor",
+          "area": "trailer: Nevatim reads as a sea",
+          "text": "In shot D the camera is so low over the flat, sheen-lit plain that the base ground reads like water, and Nevatim shows as scattered dark boxes with no hangar or shelter silhouette near the camera. The impact is strong, but its setting is anonymous.",
+          "evidence": "status/clips/camera-r2/trailer/frames/f00100.jpg",
+          "fix": "paths.js shot D: raise it to 90-120 m AGL and pick p so that a hardened shelter or the runway edge sits in the near foreground between the camera and the impact (look up Nevatim structure positions in src/world), and pitch down slightly so the runway lines give perspective."
+        }
+      ],
       "note": "r2 scored 6 (r1 5); round 3 building",
       "commit": null,
-      "updated": "2026-10-27T11:21:26.037Z"
+      "updated": "2026-10-27T11:21:36.985Z"
     },
     "perf": {
       "id": "perf",
@@ -430,5 +412,5 @@
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-27T11:21:26.037Z"
+  "updated": "2026-10-27T11:21:36.985Z"
 }
