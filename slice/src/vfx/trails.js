@@ -30,10 +30,10 @@ const VERT = (lit) => /* glsl */`
     float hw = abs(aW) * (1.0 + eo * 1.6); float px = hw * uScale / dz;
     float side = aW < 0.0 ? -1.0 : 1.0;
     float hwu = max(hw, uMinPx * dz / uScale);
-    ${lit ? '' : 'hwu = min(hwu, 18.0 * dz / uScale);'}
+    ${lit ? 'hwu = min(hwu, 120.0 * dz / uScale);' : 'hwu = min(hwu, 18.0 * dz / uScale);'}
     mv.xyz += sd * hwu * side;
     gl_Position = projectionMatrix * mv;
-    vA = aA; vA.x *= min(1.0, px / uMinPx) * (1.0 - 0.55 * eo) * ${lit ? 'smoothstep(hw * 1.5, hw * 6.0, dz)' : 'smoothstep(hw * 4.0, hw * 30.0, dz)'};
+    vA = aA; vA.x *= min(1.0, px / uMinPx) * (1.0 - ${lit ? '0.85' : '0.55'} * eo) * ${lit ? '(1.0 - 0.9 * smoothstep(50.0, 160.0, px)) * ' : ''}${lit ? 'smoothstep(hw * 1.5, hw * 6.0, dz)' : 'smoothstep(hw * 4.0, hw * 30.0, dz)'};
     vSide = side; vC = uCols[int(aCid + 0.5)];
     vAtm = vfxAtm(position); vAtm.a *= mix(1.0, 0.5, smoothstep(6000.0, 10000.0, position.y));
     ${lit ? 'vec3 ld; vLC = vfxLight(position, ld);' : ''}
