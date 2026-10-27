@@ -46,8 +46,12 @@ export function create(ctx) {
       let l = live.find((q) => !q.userData.on) || live.reduce((a, b) => (a.userData.power * (1 - a.userData.t / a.userData.dur) < b.userData.power * (1 - b.userData.t / b.userData.dur) ? a : b));
       l.position.set(pos.x, pos.y, pos.z); l.color.setRGB(color[0], color[1], color[2]);
       l.distance = radius; l.decay = pos.y > 1000 ? 1.0 : 2.0; l.userData = { t: 0, dur, power: pos.y > 1000 ? intensity / Math.max(1, Math.min(4000, pos.y)) : intensity, on: true, sky: Math.min(2.5, intensity / 4e6), col: color }; l.intensity = l.userData.power;
-      flashCol.r += color[0] * l.userData.sky; flashCol.g += color[1] * l.userData.sky; flashCol.b += color[2] * l.userData.sky;
-      flashCol.r = Math.min(flashCol.r, 2); flashCol.g = Math.min(flashCol.g, 2); flashCol.b = Math.min(flashCol.b, 2);
+      // broad top-light: overlapping flashes take the max plus a little, capped, so a salvo of
+      // kills reads as a few bursts rather than the exposure popping on every one
+      const sk = l.userData.sky * 0.5;
+      flashCol.r = Math.min(0.7, Math.max(flashCol.r, color[0] * sk) + color[0] * sk * 0.15);
+      flashCol.g = Math.min(0.7, Math.max(flashCol.g, color[1] * sk) + color[1] * sk * 0.15);
+      flashCol.b = Math.min(0.7, Math.max(flashCol.b, color[2] * sk) + color[2] * sk * 0.15);
       sky.flash(pos, Math.min(3, intensity / 1.5e6), color);
     },
   };

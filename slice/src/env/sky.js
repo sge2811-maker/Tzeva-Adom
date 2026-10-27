@@ -112,7 +112,8 @@ export function createSky(ctx) {
       const fi = flashes.indexOf(f); uniforms.uFlashK.value[fi] = Math.min(30, Math.max(1, tmp.length() / 2500));
       tmp.normalize();
       f.dir.copy(tmp); f.i = intensity; f.c.setRGB(color[0], color[1], color[2]); f.decay = decay;
-      uniforms.uGlobalFlash.value = Math.min(1.5, uniforms.uGlobalFlash.value + intensity * 0.12);
+      // non-directional lift: take the max (not the sum) so rapid salvos don't strobe the whole sky
+      uniforms.uGlobalFlash.value = Math.max(uniforms.uGlobalFlash.value, Math.min(0.3, intensity * 0.06));
     },
     update(dt, t) {
       uniforms.uTime.value = t;

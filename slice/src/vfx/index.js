@@ -261,7 +261,7 @@ export function create(ctx) {
       if (e.kill) for (let i = 0; i < 16; i++) { const f = (i / 15 - 0.3) * 1.2; smoke.add(e.x + e.vx * f + R(-120, 120), e.y + e.vy * f + R(-80, 80), e.z + e.vz * f + R(-120, 120), e.vx * 0.1, e.vy * 0.1, e.vz * 0.1, 0.8, 0.78, 0.75, 500, R(1100, 2000), R(0.07, 0.11), R(16, 24), 0, 0.05, 0.9, T_SMOKE, 0); }
       addLight(e.x, e.y, e.z, 9 * k, 8 * k, 7.5 * k, 1800, 1.0, 0);
       envFlash(e.x, e.y, e.z, [0.95, 0.9, 1], e.kill ? 0.8e5 : 0.4e5, 1, 0.4);
-      ctx.fx.flash = Math.min(2.5, ctx.fx.flash + (e.kill ? 0.12 : 0.04));
+      ctx.fx.flash = Math.max(ctx.fx.flash, e.kill ? 0.08 : 0.03);
       return;
     }
     const big = e.threatType === 'ballistic';
@@ -278,7 +278,7 @@ export function create(ctx) {
       }
     }
     envFlash(e.x, e.y, e.z, [1, 0.8, 0.58], (big ? 1.4e6 : 6e5) * (e.kill ? 1 : 0.4), big ? 16000 : 7000, big ? 0.7 : 0.45);
-    ctx.fx.flash = Math.min(2.5, ctx.fx.flash + (big ? 0.45 : 0.18) * Math.min(1, 3000 / (d + 500)));
+    ctx.fx.flash = Math.min(0.6, Math.max(ctx.fx.flash, (big ? 0.45 : 0.18) * Math.min(1, 3000 / (d + 500))));
     shake(big ? 0.7 : 0.3, d, big ? 9000 : 5000, 0.5, 'intercept', e.t);
   });
 
@@ -336,7 +336,7 @@ export function create(ctx) {
     scorch.add(e.x, e.z, 48 * s, rng.next(), shared.uTime.value, e.kind === 'open' ? 0.5 : 1);
     envFlash(e.x, y + 60, e.z, [1, 0.62, 0.32], 3e7 * s * Math.min(1, Math.max(0, (d0 - 1500) / 3500)), 9000, 0.9);
     const d = camDist(e.x, y, e.z);
-    ctx.fx.flash = Math.min(2.5, ctx.fx.flash + 0.6 * s * Math.min(1, 4000 / (d + 600)));
+    ctx.fx.flash = Math.min(0.7, Math.max(ctx.fx.flash, 0.6 * s * Math.min(1, 4000 / (d + 600))));
     shake(1.2 * s, d, 12000, 0.9, 'impact', e.t);
   });
 
