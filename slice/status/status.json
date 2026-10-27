@@ -151,8 +151,8 @@
       "id": "audio",
       "name": "Audio",
       "scope": "Siren timing, spatial audio, impacts, ambience (original/synthesized only)",
-      "state": "building",
-      "round": 1,
+      "state": "critique",
+      "round": 2,
       "scores": [
         {
           "round": 1,
@@ -205,9 +205,9 @@
           "text": "Every source shares one convolver IR, with fixed discrete slaps at 0.31, 0.57, 1.04 and 1.6 s. Every boom and launch therefore gets the same echo rhythm, independent of where it happened. The cricket loops (7.31 s and 11.07 s) and the 19.7 s wind loop repeat exactly. The wind seam uses a linear crossfade of uncorrelated noise, which dips about 3 dB."
         }
       ],
-      "note": "Critic R1: 6/10 (judged from spectrograms, measurements and code; nobody has listened). Siren contour, speed-of-sound timing and mix hygiene strong; barrage has no weight, siren level fixed at alert start, 808-style sine bodies, silent re-entries. Round 2 building.",
+      "note": "r2 builder done; critic running",
       "commit": null,
-      "updated": "2026-10-26T13:31:35.674Z"
+      "updated": "2026-10-27T11:26:35.931Z"
     },
     "hud": {
       "id": "hud",
@@ -451,5 +451,5 @@
       "text": "Baseline slice committed: Three.js port of Iron Wall plays start to finish (headless sim: good play wins 8/8 seeds, no play loses 8/8). Six builder streams starting."
     }
   ],
-  "updated": "2026-10-27T11:24:18.589Z"
+  "updated": "2026-10-27T11:26:35.931Z"
 }
