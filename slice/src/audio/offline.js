@@ -155,8 +155,11 @@ export async function renderOffline(ctx, rec, t0, t1, opts = {}) {
   const off = Math.round(PRE * SR), n = Math.round(len * SR);
   const ch = [buf.getChannelData(0).subarray(off, off + n), buf.getChannelData(1).subarray(off, off + n)];
   // 5 ms raised-cosine fades so a muxed window never starts or ends mid-waveform
-  const F = Math.round(0.005 * SR);
-  for (let i = 0; i < F; i++) { const w = 0.5 - 0.5 * Math.cos(Math.PI * i / F); for (const c of ch) { c[i] *= w; c[n - 1 - i] *= w; } }
+  // (captures, i.e. the mastered default, get a 0.3 s fade-in so the trailer opens smoothly)
+  const F = Math.round(0.005 * SR), FI = Math.round((opts.fadeIn ?? (opts.master !== false ? 0.3 : 0.005)) * SR);
+  for (let i = 0; i < FI; i++) { const w = 0.5 - 0.5 * Math.cos(Math.PI * i / FI); for (const c of ch) c[i] *= w; }
+  for (let i = 0; i < F; i++) { const w = 0.5 - 0.5 * Math.cos(Math.PI * i / F); for (const c of ch) c[n - 1 - i] *= w; }
+  meta.fades = { inS: FI / SR, outS: F / SR };
   // optional mastering for video (captures): gain toward a loudness target, capped by a -1 dBFS
   // peak ceiling. audio-render.mjs passes { master: false } to show the raw game mix.
   let gain = 1;
